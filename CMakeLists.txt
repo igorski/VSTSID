@@ -32,9 +32,9 @@ set(VSTSDK_PLUGIN_SOURCE
 )
 
 set(AGAIN_SOURCE
-    src/again.cpp
-    src/again.h
-    src/againmain.cpp
+    src/vst.cpp
+    src/vst.h
+    src/vstmain.cpp
     #resources/again.rc
     #resources/vstplug.def
     ${VSTSDK_PLUGIN_SOURCE}
