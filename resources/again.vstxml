@@ -1,0 +1,13 @@
+<!-- =========================================================== -->
+<!-- VST Parameter XML Definition for AGain ==================== -->
+<!-- Version 1.0 =============================================== -->
+<!-- Date: 01/2016 ============================================= -->
+<!-- =========================================================== -->
+
+<VSTPluginProperties>
+	<VSTParametersStructure>
+
+		<Param name="Gain" id="0"/>
+
+	</VSTParametersStructure>
+</VSTPluginProperties>

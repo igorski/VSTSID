@@ -1,0 +1,12 @@
+CMakeCache.txt
+CMakeFiles
+Makefile
+*.cmake
+*.vst
+
+.DS_Store
+Thumbs.db
+
+.idea
+*.swp
+*.bak
