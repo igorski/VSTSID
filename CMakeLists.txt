@@ -2,7 +2,7 @@
 # CMake Project Template for VST Plug-ins #
 ###########################################
 
-project(AGain)
+project(VSTSID)
 cmake_minimum_required(VERSION 3.0.0)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -27,6 +27,8 @@ endif()
 ########################
 # OS X Specific builds #
 ########################
+
+set(CMAKE_LIBRARY_ARCHITECTURE, x86_64)
 
 IF (APPLE)
    find_library(COREFOUNDATION_LIBRARY CoreFoundation )
@@ -59,7 +61,7 @@ set(VSTSDK_PLUGIN_SOURCE
 )
 
 if (SMTG_CREATE_VST2_VERSION)
-    set(again_vst2_sources
+    set(vstsid_vst2_sources
         ${SDK_ROOT}/public.sdk/source/common/memorystream.cpp
         ${SDK_ROOT}/public.sdk/source/vst/hosting/eventlist.cpp
         ${SDK_ROOT}/public.sdk/source/vst/hosting/hostclasses.cpp
@@ -77,25 +79,25 @@ endif()
 # Project sources #
 ###################
 
-set(again_sources
+set(vstsid_sources
     src/vst.cpp
     src/vst.h
     src/ui/controller.cpp
     src/ui/controller.h
     src/main_vst3.cpp
     src/ui/uimessagecontroller.h
-    #resources/again.rc
+    #resources/vstsid.rc
     #resources/vstplug.def
     ${VSTSDK_PLUGIN_SOURCE}
 )
 
 # VST2 is only defined for macOS and Windows
 if(MAC OR WIN)
-    set(again_sources ${again_sources} ${again_vst2_sources})
+    set(vstsid_sources ${vstsid_sources} ${vstsid_vst2_sources})
 endif()
 
-set(target again)
-add_library(${target} MODULE ${again_sources})
+set(target vstsid)
+add_library(${target} MODULE ${vstsid_sources})
 
 ###############################
 # PLATFORM SPECIFIC LIBRARIES #
@@ -143,7 +145,7 @@ endif()
 # Set OSX-specific bundle properties #
 ######################################
 
-set_target_properties(again PROPERTIES 
+set_target_properties(vstsid PROPERTIES
   BUNDLE true
   BUNDLE_EXTENSION "vst"
   XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst"
@@ -160,15 +162,15 @@ set_target_properties(again PROPERTIES
 ####################
 
 if(APPLE)
-  install(TARGETS again
+  install(TARGETS vstsid
     DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/VST"
   )
 elseif(WIN32)
-  install(TARGETS again
+  install(TARGETS vstsid
     DESTINATION "/Program Files (x86)/Common Files/VST3/"
   )
 elseif(UNIX AND NOT APPLE) #Linux
-  install(TARGETS again
+  install(TARGETS vstsid
     DESTINATION "/usr/lib/lxvst"
   )
 endif()
