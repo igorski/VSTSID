@@ -5,10 +5,10 @@
 #include "pluginterfaces/base/funknown.h"
 
 namespace Global {
-    const int ID = 0;
+    static const int ID = 0;
 
-    const char* NAME   = "VSTSID";
-    const char* VENDOR = "igorski.nl";
+    static const char* NAME   = "VSTSID";
+    static const char* VENDOR = "igorski.nl";
 };
 
 namespace Steinberg {
@@ -21,9 +21,6 @@ static const FUID AGainControllerUID (0xD39D5B65, 0xD7AF42FA, 0x843F4AC8, 0x41EB
 //------------------------------------------------------------------------
 } // namespace Vst
 } // namespace Steinberg
-
-#endif
-
 
 #define MAJOR_VERSION_STR "1"
 #define MAJOR_VERSION_INT 1
@@ -52,3 +49,5 @@ static const FUID AGainControllerUID (0xD39D5B65, 0xD7AF42FA, 0x843F4AC8, 0x41EB
 #define stringCompanyName		"Steinberg Media Technologies\0"
 #define stringLegalCopyright	"© 2017 Steinberg Media Technologies"
 #define stringLegalTrademarks	"VST is a trademark of Steinberg Media Technologies GmbH"
+
+#endif

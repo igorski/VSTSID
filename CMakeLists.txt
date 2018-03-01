@@ -36,6 +36,7 @@ IF (APPLE)
    FIND_LIBRARY(CORE_APP_LIBRARY       AppKit )
    FIND_LIBRARY(QUARTZ_CORE_LIBRARY    QuartzCore )
    FIND_LIBRARY(EXPAT_LIBRARY          Expat )
+   FIND_LIBRARY(ACCELERATE_FRAMEWORK   Accelerate )
 ENDIF (APPLE)
 
 ###############
@@ -79,7 +80,6 @@ set(again_sources
     src/vst.h
     src/ui/controller.cpp
     src/ui/controller.h
-    src/entry.cpp
     src/main_vst3.cpp
     src/ui/uimessagecontroller.h
     #resources/again.rc
@@ -109,6 +109,7 @@ IF (APPLE)
    target_link_libraries(${target} ${CORE_APP_LIBRARY})
    target_link_libraries(${target} ${QUARTZ_CORE_LIBRARY})
    target_link_libraries(${target} ${EXPAT_LIBRARY})
+   target_link_libraries(${target} ${ACCELERATE_FRAMEWORK})
 ENDIF (APPLE)
 
 ###########################
