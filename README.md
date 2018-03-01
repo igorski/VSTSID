@@ -9,13 +9,13 @@ The project uses [CMake](https://cmake.org) to generate the build system
 after which you can use _make_ to build the application.
 
 The project has been developed against the VST 3.6.8 Audio Plug-Ins SDK
-on OS X. It should work completely via CLI without requiring XCode. As
-such, Windows and Linux builds might require an update of the CMakeLists.txt
-file (see below).
+on OS X (see dependencies listed below). It should work completely via
+CLI without requiring XCode. As such, Windows and Linux builds might
+require an update of the CMakeLists.txt file (see below).
 
 ### Environment setup
 
-Apart from having CMake and a _g++_ compiler, the only dependency required is
+Apart from having _CMake_ and a _g++_ compiler, the only dependency required is
 the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.html).
 Update _CMakeLists.txt_ to point to the root of the SDK's installation
 location (see "VST Sources").
@@ -38,8 +38,7 @@ Steinberg VST libraries are prebuilt.
 
 ### Building the plugin
 
-Update _CMakeLists.txt_ to point to your VST SDK installation folder. Run CMake to generate the
-Makefiles for your environment, e.g.:
+Run CMake to generate the Makefiles for your environment, e.g.:
 
     cmake .
 
