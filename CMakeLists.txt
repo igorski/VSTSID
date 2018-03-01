@@ -7,6 +7,8 @@ cmake_minimum_required(VERSION 3.0.0)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
 
+set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
+
 # compiler flags
 add_definitions(-DNDEBUG)
 
@@ -27,16 +29,16 @@ endif()
 ########################
 
 IF (APPLE)
-   FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation )
-   FIND_LIBRARY(COREGRAPHICS_LIBRARY   CoreGraphics )
-   FIND_LIBRARY(IMAGE_IO_LIBRARY       ImageIO )
-   FIND_LIBRARY(OPENGL_LIBRARY         OpenGL )
-   FIND_LIBRARY(CORE_TEXT_LIBRARY      CoreText )
-   FIND_LIBRARY(APPLICATION_SERVICES   ApplicationServices )
-   FIND_LIBRARY(CORE_APP_LIBRARY       AppKit )
-   FIND_LIBRARY(QUARTZ_CORE_LIBRARY    QuartzCore )
-   FIND_LIBRARY(EXPAT_LIBRARY          Expat )
-   FIND_LIBRARY(ACCELERATE_FRAMEWORK   Accelerate )
+   find_library(COREFOUNDATION_LIBRARY CoreFoundation )
+   find_library(COREGRAPHICS_LIBRARY   CoreGraphics )
+   find_library(IMAGE_IO_LIBRARY       ImageIO )
+   find_library(OPENGL_LIBRARY         OpenGL )
+   find_library(CORE_TEXT_LIBRARY      CoreText )
+   find_library(APPLICATION_SERVICES   ApplicationServices )
+   find_library(CORE_APP_LIBRARY       AppKit )
+   find_library(QUARTZ_CORE_LIBRARY    QuartzCore )
+   find_library(EXPAT_LIBRARY          Expat )
+   find_library(ACCELERATE_FRAMEWORK   Accelerate )
 ENDIF (APPLE)
 
 ###############
