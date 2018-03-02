@@ -7,7 +7,10 @@ cmake_minimum_required(VERSION 3.0.0)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
 
-# uncomment to build as VST2
+# path to Steinberg VST3 SDK
+set(VSTSDK_PATH "/Library/VST_SDK/VST3_SDK" CACHE PATH "Path to VST3 SDK")
+
+# uncomment to build as VST2.4
 #set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
 # compiler flags
@@ -40,11 +43,24 @@ if(UNIX)
 	endif()
 endif()
 
+
+#-------------------------------------------------------------------------------
+# Includes
+#-------------------------------------------------------------------------------
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+
+include(Global)
+include(AddVST3Library)
+include(Bundle)
+include(ExportedSymbols)
+include(PrefixHeader)
+include(PlatformIOS)
+
 ###############
 # VST sources #
 ###############
 
-set(VSTSDK_PATH "/Library/VST_SDK/VST3_SDK" CACHE PATH "Path to VST3 SDK")
 set(VSTSDK_INCLUDE_DIR ${VSTSDK_PATH})
 set(VSTSDK_PLUGIN_SOURCE
   ${VSTSDK_PATH}/public.sdk/source/vst/vstaudioeffect.cpp

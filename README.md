@@ -5,15 +5,16 @@ synthesizer.
 
 ## On compatibility
 
-VST3.0 is awesome and all, but support is patchy (shoutout to Bitwig Studio for being awesome).
-You can build this plugin as a VST2.x plugin and enjoy it on a wider range of platforms.
+VST3.0 is great and all, but support is patchy (shoutout to Bitwig Studio for being awesome).
+You can however build this plugin as a VST2.4 plugin and enjoy it on a wider range of host platforms.
+Simply uncomment the following line in _CMakeLists.txt_:
+
+    set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
 Depending on plugin your host software having 32-bit or 64-bit support, you can best compile for a
 wider range of architectures, e.g. on OS X:
 
-```
-cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
-```
+    cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
 
 ## Build instructions
 
