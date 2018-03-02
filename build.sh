@@ -7,5 +7,5 @@ mkdir build
 cd build
 echo "Building project"
 echo "----------------"
-cmake ..
+cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
 make
