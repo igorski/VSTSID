@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/againparamids.h
 // Created by  : Steinberg, 12/2007
-// Description : define the parameter IDs used by AGain
+// Description : define the parameter IDs used by VSTSID
 //
 //-----------------------------------------------------------------------------
 // LICENSE

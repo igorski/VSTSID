@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/again.h
 // Created by  : Steinberg, 04/2005
-// Description : AGain Example for VST SDK 3.0
+// Description : VSTSID Example for VST SDK 3.0
 //               Simple gain Plug-in with gain, bypass values and 1 midi input
 //               and the same Plug-in with sidechain
 //
@@ -45,19 +45,19 @@ namespace Steinberg {
 namespace Vst {
 
 //------------------------------------------------------------------------
-// AGain: directly derived from the helper class AudioEffect
+// VSTSID: directly derived from the helper class AudioEffect
 //------------------------------------------------------------------------
-class AGain : public AudioEffect
+class VSTSID : public AudioEffect
 {
 public:
-	AGain ();
-	virtual ~AGain (); // do not forget virtual here
+	VSTSID ();
+	virtual ~VSTSID (); // do not forget virtual here
 
 	//--- ---------------------------------------------------------------------
 	// create function required for Plug-in factory,
 	// it will be called to create new instances of this Plug-in
 	//--- ---------------------------------------------------------------------
-	static FUnknown* createInstance (void* /*context*/) { return (IAudioProcessor*)new AGain; }
+	static FUnknown* createInstance (void* /*context*/) { return (IAudioProcessor*)new VSTSID; }
 
 	//--- ---------------------------------------------------------------------
 	// AudioEffect overrides:

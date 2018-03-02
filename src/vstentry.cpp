@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/againentry.cpp
 // Created by  : Steinberg, 04/2005
-// Description : AGain Example for VST 3
+// Description : VSTSID Example for VST 3
 //
 //-----------------------------------------------------------------------------
 // LICENSE
@@ -34,14 +34,14 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 //-----------------------------------------------------------------------------
 
-#include "vst.h"	// for AGain
-#include "ui/controller.h" // for AGainController
+#include "vst.h"	// for VSTSID
+#include "ui/controller.h" // for VSTSIDController
 #include "global.h"	// for class ids
 
 #include "public.sdk/source/main/pluginfactoryvst3.h"
 
-#define stringPluginName "AGain VST3"
-#define stringPluginSideChainName "AGain SideChain VST3"
+#define stringPluginName "VSTSID VST3"
+#define stringPluginSideChainName "VSTSID SideChain VST3"
 
 //------------------------------------------------------------------------
 //  Module init/exit
@@ -70,13 +70,13 @@ using namespace Steinberg::Vst;
 // GetPluginFactory function!
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF ("Steinberg Media Technologies",
-               "http://www.steinberg.net",
-               "mailto:info@steinberg.de")
+BEGIN_FACTORY_DEF ("igorski.nl",
+               "https://www.igorski.nl",
+               "mailto:info@igorski.nl")
 
     //---First Plug-in included in this factory-------
     // its kVstAudioEffectClass component
-    DEF_CLASS2 (INLINE_UID_FROM_FUID(AGainProcessorUID),
+    DEF_CLASS2 (INLINE_UID_FROM_FUID(VSTSIDProcessorUID),
                 PClassInfo::kManyInstances,	// cardinality
                 kVstAudioEffectClass,		// the component category (do not changed this)
                 stringPluginName,			// here the Plug-in name (to be changed)
@@ -84,10 +84,10 @@ BEGIN_FACTORY_DEF ("Steinberg Media Technologies",
                 "Fx",					// Subcategory for this Plug-in (to be changed)
                 FULL_VERSION_STR,		// Plug-in version (to be changed)
                 kVstVersionString,		// the VST 3 SDK version (do not changed this, use always this define)
-                Steinberg::Vst::AGain::createInstance)	// function pointer called when this component should be instantiated
+                Steinberg::Vst::VSTSID::createInstance)	// function pointer called when this component should be instantiated
 
     // its kVstComponentControllerClass component
-    DEF_CLASS2 (INLINE_UID_FROM_FUID (AGainControllerUID),
+    DEF_CLASS2 (INLINE_UID_FROM_FUID (VSTSIDControllerUID),
                 PClassInfo::kManyInstances,  // cardinality
                 kVstComponentControllerClass,// the Controller category (do not changed this)
                 stringPluginName "Controller",	// controller name (could be the same than component name)
@@ -95,7 +95,7 @@ BEGIN_FACTORY_DEF ("Steinberg Media Technologies",
                 "",						// not used here
                 FULL_VERSION_STR,		// Plug-in version (to be changed)
                 kVstVersionString,		// the VST 3 SDK version (do not changed this, use always this define)
-                Steinberg::Vst::AGainController::createInstance)// function pointer called when this component should be instantiated
+                Steinberg::Vst::VSTSIDController::createInstance)// function pointer called when this component should be instantiated
 
     //----for others Plug-ins contained in this factory, put like for the first Plug-in different DEF_CLASS2---
 

@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/again.cpp
 // Created by  : Steinberg, 04/2005
-// Description : AGain Example for VST SDK 3
+// Description : VSTSID Example for VST SDK 3
 //
 //-----------------------------------------------------------------------------
 // LICENSE
@@ -53,9 +53,9 @@ namespace Steinberg {
 namespace Vst {
 
 //------------------------------------------------------------------------
-// AGain Implementation
+// VSTSID Implementation
 //------------------------------------------------------------------------
-AGain::AGain ()
+VSTSID::VSTSID ()
 : fGain (1.f)
 , fGainReduction (0.f)
 , fVuPPMOld (0.f)
@@ -64,17 +64,17 @@ AGain::AGain ()
 , bBypass (false)
 {
 	// register its editor class (the same as used in entry.cpp)
-	setControllerClass (AGainControllerUID);
+	setControllerClass (VSTSIDControllerUID);
 }
 
 //------------------------------------------------------------------------
-AGain::~AGain ()
+VSTSID::~VSTSID ()
 {
 	// nothing to do here yet..
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::initialize (FUnknown* context)
+tresult PLUGIN_API VSTSID::initialize (FUnknown* context)
 {
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
@@ -96,22 +96,22 @@ tresult PLUGIN_API AGain::initialize (FUnknown* context)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::terminate  ()
+tresult PLUGIN_API VSTSID::terminate  ()
 {
 	// nothing to do here yet...except calling our parent terminate
 	return AudioEffect::terminate ();
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::setActive (TBool state)
+tresult PLUGIN_API VSTSID::setActive (TBool state)
 {
 	if (state)
 	{
-		sendTextMessage ("AGain::setActive (true)");
+		sendTextMessage ("VSTSID::setActive (true)");
 	}
 	else
 	{
-		sendTextMessage ("AGain::setActive (false)");
+		sendTextMessage ("VSTSID::setActive (false)");
 	}
 
 	// reset the VuMeter value
@@ -122,7 +122,7 @@ tresult PLUGIN_API AGain::setActive (TBool state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::process (ProcessData& data)
+tresult PLUGIN_API VSTSID::process (ProcessData& data)
 {
 	// finally the process function
 	// In this example there are 4 steps:
@@ -302,10 +302,10 @@ tresult PLUGIN_API AGain::process (ProcessData& data)
 }
 
 //------------------------------------------------------------------------
-tresult AGain::receiveText (const char* text)
+tresult VSTSID::receiveText (const char* text)
 {
 	// received from Controller
-	fprintf (stderr, "[AGain] received: ");
+	fprintf (stderr, "[VSTSID] received: ");
 	fprintf (stderr, "%s", text);
 	fprintf (stderr, "\n");
 
@@ -315,7 +315,7 @@ tresult AGain::receiveText (const char* text)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::setState (IBStream* state)
+tresult PLUGIN_API VSTSID::setState (IBStream* state)
 {
 	// called when we load a preset, the model has to be reloaded
 
@@ -381,7 +381,7 @@ tresult PLUGIN_API AGain::setState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::getState (IBStream* state)
+tresult PLUGIN_API VSTSID::getState (IBStream* state)
 {
 	// here we need to save the model
 
@@ -403,7 +403,7 @@ tresult PLUGIN_API AGain::getState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::setupProcessing (ProcessSetup& newSetup)
+tresult PLUGIN_API VSTSID::setupProcessing (ProcessSetup& newSetup)
 {
 	// called before the process call, always in a disable state (not active)
 
@@ -414,7 +414,7 @@ tresult PLUGIN_API AGain::setupProcessing (ProcessSetup& newSetup)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::setBusArrangements (SpeakerArrangement* inputs, int32 numIns,
+tresult PLUGIN_API VSTSID::setBusArrangements (SpeakerArrangement* inputs, int32 numIns,
                                               SpeakerArrangement* outputs, int32 numOuts)
 {
 	if (numIns == 1 && numOuts == 1)
@@ -469,7 +469,7 @@ tresult PLUGIN_API AGain::setBusArrangements (SpeakerArrangement* inputs, int32 
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::canProcessSampleSize (int32 symbolicSampleSize)
+tresult PLUGIN_API VSTSID::canProcessSampleSize (int32 symbolicSampleSize)
 {
 	if (symbolicSampleSize == kSample32)
 		return kResultTrue;
@@ -482,7 +482,7 @@ tresult PLUGIN_API AGain::canProcessSampleSize (int32 symbolicSampleSize)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGain::notify (IMessage* message)
+tresult PLUGIN_API VSTSID::notify (IMessage* message)
 {
     if ( !message )
         return kInvalidArgument;
@@ -497,7 +497,7 @@ tresult PLUGIN_API AGain::notify (IMessage* message)
             // size should be 100
             if (size == 100 && ((char*)data)[1] == 1) // yeah...
             {
-                fprintf (stderr, "[AGain] received the binary message!\n");
+                fprintf (stderr, "[VSTSID] received the binary message!\n");
             }
             return kResultOk;
         }

@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/againuimessagecontroller.h
 // Created by  : Steinberg, 04/2005
-// Description : AGain UI Message Controller
+// Description : VSTSID UI Message Controller
 //
 //-----------------------------------------------------------------------------
 // LICENSE
@@ -44,10 +44,10 @@ namespace Steinberg {
 namespace Vst {
 
 //------------------------------------------------------------------------
-// AGainUIMessageController
+// VSTSIDUIMessageController
 //------------------------------------------------------------------------
 template <typename ControllerType>
-class AGainUIMessageController : public VSTGUI::IController, public VSTGUI::IViewListenerAdapter
+class VSTSIDUIMessageController : public VSTGUI::IController, public VSTGUI::IViewListenerAdapter
 {
 public:
 	enum Tags
@@ -55,10 +55,10 @@ public:
 		kSendMessageTag = 1000
 	};
 
-	AGainUIMessageController (ControllerType* againController) : againController (againController), textEdit (nullptr)
+	VSTSIDUIMessageController (ControllerType* againController) : againController (againController), textEdit (nullptr)
 	{
 	}
-	~AGainUIMessageController ()
+	~VSTSIDUIMessageController ()
 	{
 		viewWillDelete (textEdit);
 		againController->removeUIMessageController (this);

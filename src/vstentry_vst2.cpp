@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/again_vst2_entry.cpp
 // Created by  : Steinberg, 04/2008
-// Description : AGain Example for VST 3 to VST 2.4 wrapper
+// Description : VSTSID Example for VST 3 to VST 2.4 wrapper
 //
 //-----------------------------------------------------------------------------
 // LICENSE
@@ -35,10 +35,10 @@
 //-----------------------------------------------------------------------------
 
 #include "public.sdk/source/vst/vst2wrapper/vst2wrapper.h"
-#include "cids.h"
+#include "global.h"
 
 //------------------------------------------------------------------------
 ::AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 {
-	return Steinberg::Vst::Vst2Wrapper::create (GetPluginFactory (), Steinberg::Vst::AGainProcessorUID, 'GnV2', audioMaster);
+	return Steinberg::Vst::Vst2Wrapper::create (GetPluginFactory (), Steinberg::Vst::VSTSIDProcessorUID, 'GnV2', audioMaster);
 }

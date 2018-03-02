@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/againcontroller.cpp
 // Created by  : Steinberg, 04/2005
-// Description : AGain Controller Example for VST 3
+// Description : VSTSID Controller Example for VST 3
 //
 //-----------------------------------------------------------------------------
 // LICENSE
@@ -119,9 +119,9 @@ bool GainParameter::fromString (const TChar* string, ParamValue& normValue) cons
 }
 
 //------------------------------------------------------------------------
-// AGainController Implementation
+// VSTSIDController Implementation
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::initialize (FUnknown* context)
+tresult PLUGIN_API VSTSIDController::initialize (FUnknown* context)
 {
 	tresult result = EditControllerEx1::initialize (context);
 	if (result != kResultOk)
@@ -184,13 +184,13 @@ tresult PLUGIN_API AGainController::initialize (FUnknown* context)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::terminate  ()
+tresult PLUGIN_API VSTSIDController::terminate  ()
 {
 	return EditControllerEx1::terminate ();
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::setComponentState (IBStream* state)
+tresult PLUGIN_API VSTSIDController::setComponentState (IBStream* state)
 {
 	// we receive the current state of the component (processor part)
 	// we read only the gain and bypass value...
@@ -225,7 +225,7 @@ tresult PLUGIN_API AGainController::setComponentState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-IPlugView* PLUGIN_API AGainController::createView (const char* name)
+IPlugView* PLUGIN_API VSTSIDController::createView (const char* name)
 {
 	// someone wants my editor
 	if (name && strcmp (name, "editor") == 0)
@@ -237,7 +237,7 @@ IPlugView* PLUGIN_API AGainController::createView (const char* name)
 }
 
 //------------------------------------------------------------------------
-IController* AGainController::createSubController (UTF8StringPtr name,
+IController* VSTSIDController::createSubController (UTF8StringPtr name,
                                                    const IUIDescription* /*description*/,
                                                    VST3Editor* /*editor*/)
 {
@@ -251,7 +251,7 @@ IController* AGainController::createSubController (UTF8StringPtr name,
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::setState (IBStream* state)
+tresult PLUGIN_API VSTSIDController::setState (IBStream* state)
 {
 	tresult result = kResultFalse;
 
@@ -282,7 +282,7 @@ tresult PLUGIN_API AGainController::setState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::getState (IBStream* state)
+tresult PLUGIN_API VSTSIDController::getState (IBStream* state)
 {
 	// here we can save UI settings for example
 
@@ -296,12 +296,12 @@ tresult PLUGIN_API AGainController::getState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-tresult AGainController::receiveText (const char* text)
+tresult VSTSIDController::receiveText (const char* text)
 {
 	// received from Component
 	if (text)
 	{
-		fprintf (stderr, "[AGainController] received: ");
+		fprintf (stderr, "[VSTSIDController] received: ");
 		fprintf (stderr, "%s", text);
 		fprintf (stderr, "\n");
 	}
@@ -309,7 +309,7 @@ tresult AGainController::receiveText (const char* text)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::setParamNormalized (ParamID tag, ParamValue value)
+tresult PLUGIN_API VSTSIDController::setParamNormalized (ParamID tag, ParamValue value)
 {
 	// called from host to update our parameters state
 	tresult result = EditControllerEx1::setParamNormalized (tag, value);
@@ -317,7 +317,7 @@ tresult PLUGIN_API AGainController::setParamNormalized (ParamID tag, ParamValue 
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::getParamStringByValue (ParamID tag, ParamValue valueNormalized, String128 string)
+tresult PLUGIN_API VSTSIDController::getParamStringByValue (ParamID tag, ParamValue valueNormalized, String128 string)
 {
 	/* example, but better to use a custom Parameter as seen in GainParameter
 	switch (tag)
@@ -341,7 +341,7 @@ tresult PLUGIN_API AGainController::getParamStringByValue (ParamID tag, ParamVal
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::getParamValueByString (ParamID tag, TChar* string, ParamValue& valueNormalized)
+tresult PLUGIN_API VSTSIDController::getParamValueByString (ParamID tag, TChar* string, ParamValue& valueNormalized)
 {
 	/* example, but better to use a custom Parameter as seen in GainParameter
 	switch (tag)
@@ -362,13 +362,13 @@ tresult PLUGIN_API AGainController::getParamValueByString (ParamID tag, TChar* s
 }
 
 //------------------------------------------------------------------------
-void AGainController::addUIMessageController (UIMessageController* controller)
+void VSTSIDController::addUIMessageController (UIMessageController* controller)
 {
 	uiMessageControllers.push_back (controller);
 }
 
 //------------------------------------------------------------------------
-void AGainController::removeUIMessageController (UIMessageController* controller)
+void VSTSIDController::removeUIMessageController (UIMessageController* controller)
 {
 	UIMessageControllerList::const_iterator it = std::find (uiMessageControllers.begin (), uiMessageControllers.end (), controller);
 	if (it != uiMessageControllers.end ())
@@ -376,27 +376,27 @@ void AGainController::removeUIMessageController (UIMessageController* controller
 }
 
 //------------------------------------------------------------------------
-void AGainController::setDefaultMessageText (String128 text)
+void VSTSIDController::setDefaultMessageText (String128 text)
 {
 	String tmp (text);
 	tmp.copyTo16 (defaultMessageText, 0, 127);
 }
 
 //------------------------------------------------------------------------
-TChar* AGainController::getDefaultMessageText ()
+TChar* VSTSIDController::getDefaultMessageText ()
 {
 	return defaultMessageText;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::queryInterface (const char* iid, void** obj)
+tresult PLUGIN_API VSTSIDController::queryInterface (const char* iid, void** obj)
 {
 	QUERY_INTERFACE (iid, obj, IMidiMapping::iid, IMidiMapping)
 	return EditControllerEx1::queryInterface (iid, obj);
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API AGainController::getMidiControllerAssignment (int32 busIndex, int16 /*midiChannel*/,
+tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment (int32 busIndex, int16 /*midiChannel*/,
 																 CtrlNumber midiControllerNumber, ParamID& tag)
 {
 	// we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)

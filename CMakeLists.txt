@@ -7,7 +7,8 @@ cmake_minimum_required(VERSION 3.0.0)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
 
-set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
+# uncomment to build as VST2
+#set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
 # compiler flags
 add_definitions(-DNDEBUG)
@@ -24,24 +25,20 @@ if(UNIX AND NOT APPLE)
   add_definitions( -D__cdecl= )
 endif()
 
-########################
-# OS X Specific builds #
-########################
-
-set(CMAKE_LIBRARY_ARCHITECTURE, x86_64)
-
-IF (APPLE)
-   find_library(COREFOUNDATION_LIBRARY CoreFoundation )
-   find_library(COREGRAPHICS_LIBRARY   CoreGraphics )
-   find_library(IMAGE_IO_LIBRARY       ImageIO )
-   find_library(OPENGL_LIBRARY         OpenGL )
-   find_library(CORE_TEXT_LIBRARY      CoreText )
-   find_library(APPLICATION_SERVICES   ApplicationServices )
-   find_library(CORE_APP_LIBRARY       AppKit )
-   find_library(QUARTZ_CORE_LIBRARY    QuartzCore )
-   find_library(EXPAT_LIBRARY          Expat )
-   find_library(ACCELERATE_FRAMEWORK   Accelerate )
-ENDIF (APPLE)
+if(UNIX)
+	if(XCODE)
+		set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14")
+		set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+	elseif(APPLE)
+		set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -stdlib=libc++")
+		link_libraries(c++)
+	else()
+		set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-multichar")
+		link_libraries(stdc++fs pthread dl)
+	endif()
+endif()
 
 ###############
 # VST sources #
@@ -71,7 +68,7 @@ if (SMTG_CREATE_VST2_VERSION)
         ${SDK_ROOT}/public.sdk/source/vst/vst2wrapper/vst2wrapper.h
         ${SDK_ROOT}/public.sdk/source/vst2.x/audioeffect.cpp
         ${SDK_ROOT}/public.sdk/source/vst2.x/audioeffectx.cpp
-        source/main_vst2.cpp
+        src/vstentry_vst2.cpp
     )
 endif()
 
@@ -80,11 +77,14 @@ endif()
 ###################
 
 set(vstsid_sources
+    src/global.h
+    src/paramids.h
+    src/process.h
     src/vst.cpp
     src/vst.h
     src/ui/controller.cpp
     src/ui/controller.h
-    src/main_vst3.cpp
+    src/vstentry.cpp
     src/ui/uimessagecontroller.h
     #resources/vstsid.rc
     #resources/vstplug.def
@@ -97,24 +97,7 @@ if(MAC OR WIN)
 endif()
 
 set(target vstsid)
-add_library(${target} MODULE ${vstsid_sources})
-
-###############################
-# PLATFORM SPECIFIC LIBRARIES #
-###############################
-
-IF (APPLE)
-   target_link_libraries(${target} ${COREFOUNDATION_LIBRARY})
-   target_link_libraries(${target} ${COREGRAPHICS_LIBRARY})
-   target_link_libraries(${target} ${IMAGE_IO_LIBRARY})
-   target_link_libraries(${target} ${OPENGL_LIBRARY})
-   target_link_libraries(${target} ${CORE_TEXT_LIBRARY})
-   target_link_libraries(${target} ${APPLICATION_SERVICES})
-   target_link_libraries(${target} ${CORE_APP_LIBRARY})
-   target_link_libraries(${target} ${QUARTZ_CORE_LIBRARY})
-   target_link_libraries(${target} ${EXPAT_LIBRARY})
-   target_link_libraries(${target} ${ACCELERATE_FRAMEWORK})
-ENDIF (APPLE)
+smtg_add_vst3plugin(${target} ${VSTSDK_PATH} ${vstsid_sources})
 
 ###########################
 # STEINBERG VST LIBRARIES #
@@ -123,11 +106,11 @@ ENDIF (APPLE)
 include_directories(${VSTSDK_INCLUDE_DIR})
 target_link_libraries(${target} ${VSTSDK_LIBRARIES})
 target_include_directories(${target} PUBLIC ${VSTSDK_PATH}/vstgui4)
-target_link_libraries(${target} /Library/VST_SDK/VST3_SDK/build/lib/libbase.a)
-target_link_libraries(${target} /Library/VST_SDK/VST3_SDK/build/lib/libsdk.a)
-target_link_libraries(${target} /Library/VST_SDK/VST3_SDK/build/lib/libvstgui_support.a)
-target_link_libraries(${target} /Library/VST_SDK/VST3_SDK/build/lib/libvstgui_uidescription.a)
-target_link_libraries(${target} /Library/VST_SDK/VST3_SDK/build/lib/libvstgui.a)
+target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libbase.a)
+target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libsdk.a)
+target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libvstgui_support.a)
+target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libvstgui_uidescription.a)
+target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libvstgui.a)
 
 if (SMTG_CREATE_VST2_VERSION)
     message(STATUS "SMTG_CREATE_VST2_VERSION is set. A VST 2 version of the plug-in will be created (just rename the generated file from .vst3 to .vst).")
@@ -140,22 +123,65 @@ if (SMTG_CREATE_VST2_VERSION)
     endif()
 endif()
 
+###############################
+# PLATFORM SPECIFIC LIBRARIES #
+###############################
 
-######################################
-# Set OSX-specific bundle properties #
-######################################
+IF (APPLE)
+    if(XCODE)
+        target_link_libraries(${target} PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework Accelerate" "-framework QuartzCore" "-framework Carbon")
+    else()
+        find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+        find_library(COCOA_FRAMEWORK Cocoa)
+        find_library(OPENGL_FRAMEWORK OpenGL)
+        find_library(ACCELERATE_FRAMEWORK Accelerate)
+        find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+        find_library(CARBON_FRAMEWORK Carbon)
+        find_library(EXPAT Expat)
+
+        target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK})
+        target_link_libraries(${target} PRIVATE ${COCOA_FRAMEWORK})
+        target_link_libraries(${target} PRIVATE ${OPENGL_FRAMEWORK})
+        target_link_libraries(${target} PRIVATE ${ACCELERATE_FRAMEWORK})
+        target_link_libraries(${target} PRIVATE ${QUARTZCORE_FRAMEWORK})
+        target_link_libraries(${target} PRIVATE ${CARBON_FRAMEWORK})
+        target_link_libraries(${target} PRIVATE ${EXPAT})
+    endif()
+ENDIF (APPLE)
+
+#############
+# Resources #
+#############
+
+smtg_add_vst3_resource(${target} "resources/graphics/again.uidesc")
+smtg_add_vst3_resource(${target} "resources/graphics/background.png")
+smtg_add_vst3_resource(${target} "resources/graphics/slider_background.png")
+smtg_add_vst3_resource(${target} "resources/graphics/slider_handle.png")
+smtg_add_vst3_resource(${target} "resources/graphics/slider_handle_2.0x.png")
+smtg_add_vst3_resource(${target} "resources/graphics/vu_on.png")
+smtg_add_vst3_resource(${target} "resources/graphics/vu_off.png")
+
+#########################
+# Set bundle properties #
+#########################
 
 set_target_properties(vstsid PROPERTIES
   BUNDLE true
   BUNDLE_EXTENSION "vst"
   XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst"
-  MACOSX_BUNDLE_INFO_PLIST "resources/osx/Info.plist"
+  MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist"
   MACOSX_BUNDLE_BUNDLE_NAME "VSTSID"
   MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.VSTSID"
   MACOSX_BUNDLE_ICON_FILE ""
   MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
   MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2018"
 )
+
+if(MAC)
+    smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist" PREPROCESS)
+elseif(WIN)
+    target_sources(${target} PRIVATE resource/vstsid.rc)
+endif()
 
 ####################
 # Set Install Path #

@@ -3,6 +3,18 @@
 This is a VST3.0 plug-in version of the [WebSID](https://www.igorski.nl/experiment/websid) Commodore 64
 synthesizer.
 
+## On compatibility
+
+VST3.0 is awesome and all, but support is patchy (shoutout to Bitwig Studio for being awesome).
+You can build this plugin as a VST2.x plugin and enjoy it on a wider range of platforms.
+
+Depending on plugin your host software having 32-bit or 64-bit support, you can best compile for a
+wider range of architectures, e.g. on OS X:
+
+```
+cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
+```
+
 ## Build instructions
 
 The project uses [CMake](https://cmake.org) to generate the build system
@@ -20,18 +32,17 @@ the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.htm
 Update _CMakeLists.txt_ to point to the root of the SDK's installation
 location (see "VST Sources").
 
-The Steinberg VST3 sources need to be built in a _/build_-subfolder of
+The Steinberg VST sources need to be built in a _/build_-subfolder of
 the _/VST3_SDK_-folder, e.g.:
 
 CLI from VST SDK root:
 
-```
-cd VST3_SDK
-mkdir build
-cd build
-cmake ..
-make
-```
+    ./copy_vst2_to_vst3_sdk.sh
+    cd VST3_SDK
+    mkdir build
+    cd build
+    cmake ..
+    make
 
 The result being that in _/STEINBERG_VST_SDK_ROOT/VST3_SDK/build/lib_ all
 Steinberg VST libraries are prebuilt.

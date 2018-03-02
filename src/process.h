@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/againprocess.h
 // Created by  : Steinberg, 11/2016
-// Description : AGain Example for VST SDK 3.0
+// Description : VSTSID Example for VST SDK 3.0
 //               Simple gain Plug-in with gain, bypass values and 1 midi input
 //               and the same Plug-in with sidechain
 //
@@ -43,7 +43,7 @@ namespace Vst {
 
 //------------------------------------------------------------------------
 template <typename SampleType>
-SampleType AGain::processAudio (SampleType** in, SampleType** out, int32 numChannels,
+SampleType VSTSID::processAudio (SampleType** in, SampleType** out, int32 numChannels,
                                 int32 sampleFrames, float gain)
 {
     SampleType vuPPM = 0;

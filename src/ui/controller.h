@@ -4,7 +4,7 @@
 // Category    : Examples
 // Filename    : public.sdk/samples/vst/again/source/againcontroller.h
 // Created by  : Steinberg, 04/2005
-// Description : AGain Editor Example for VST 3
+// Description : VSTSID Editor Example for VST 3
 //
 //-----------------------------------------------------------------------------
 // LICENSE
@@ -45,22 +45,22 @@ namespace Steinberg {
 namespace Vst {
 
 template <typename T>
-class AGainUIMessageController;
+class VSTSIDUIMessageController;
 
 //------------------------------------------------------------------------
-// AGainController
+// VSTSIDController
 //------------------------------------------------------------------------
-class AGainController : public EditControllerEx1, public IMidiMapping, public VST3EditorDelegate
+class VSTSIDController : public EditControllerEx1, public IMidiMapping, public VST3EditorDelegate
 {
 public:
-	typedef AGainUIMessageController<AGainController> UIMessageController;
+	typedef VSTSIDUIMessageController<VSTSIDController> UIMessageController;
 	//--- ---------------------------------------------------------------------
 	// create function required for Plug-in factory,
 	// it will be called to create new instances of this controller
 	//--- ---------------------------------------------------------------------
 	static FUnknown* createInstance (void* /*context*/)
 	{
-		return (IEditController*)new AGainController;
+		return (IEditController*)new VSTSIDController;
 	}
 
 	//---from IPluginBase--------
