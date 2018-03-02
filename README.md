@@ -11,8 +11,8 @@ Simply uncomment the following line in _CMakeLists.txt_:
 
     set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
-Depending on plugin your host software having 32-bit or 64-bit support, you can best compile for a
-wider range of architectures, e.g. on OS X:
+Depending on your host software having 32-bit or 64-bit support, you can best compile for a
+wider range of architectures, e.g. by replacing all _cmake_ invocations like so:
 
     cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
 
@@ -23,20 +23,20 @@ after which you can use _make_ to build the application.
 
 The project has been developed against the VST 3.6.8 Audio Plug-Ins SDK
 on OS X (see dependencies listed below). It should work completely via
-CLI without requiring XCode. As such, Windows and Linux builds might
-require an update of the CMakeLists.txt file (see below).
+CLI without requiring XCode. Windows and Linux builds are provided, but are as
+yet untested (see _CMakeLists.txt_).
 
 ### Environment setup
 
-Apart from having _CMake_ and a _g++_ compiler, the only dependency required is
+Apart from requiring _CMake_ and a _g++_ compiler, the only other dependency is
 the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.html).
-Update _CMakeLists.txt_ to point to the root of the SDK's installation
-location (see "VST Sources").
+Update _CMakeLists.txt_ to point to the root of the Steinberg SDK installation
+location (update "_VSTSDK_PATH_").
 
-The Steinberg VST sources need to be built in a _/build_-subfolder of
-the _/VST3_SDK_-folder, e.g.:
+Additionally, the Steinberg VST sources need to be built as well. Following
+Steinbergs guidelines, the target is a _/build_-subfolder of the _/VST3_SDK_-folder, e.g.:
 
-CLI from VST SDK root:
+Execute from the Steinberg VST SDK root:
 
     ./copy_vst2_to_vst3_sdk.sh
     cd VST3_SDK
@@ -45,12 +45,12 @@ CLI from VST SDK root:
     cmake ..
     make
 
-The result being that in _{PATH_TO_STEINBERG_SDK}/VST3_SDK/build/lib_ all
+The result being that in _{VSTSDK_PATH}/VST3_SDK/build/lib_ all
 Steinberg VST libraries are prebuilt.
 
-### Building the plugin
+### Building the VSTSID plugin
 
-Run CMake to generate the Makefiles for your environment, e.g.:
+Run CMake to generate VSTSID's Makefile for your environment, e.g.:
 
     cmake .
 
@@ -63,10 +63,11 @@ To compile the plugin. The build output will be stored in _./build/VST3/vstsid.v
 ## Running the plugin
 
 You can copy the build output into your system VST folder and run it directly in a
-VST host / DAW of your choice.
+VST host / DAW of your choice. Note: some DAW's require the file extension to be
+_.vst3_ for a VST3 plugin.
 
 When debugging, you can also choose to run the plugin against Steinbergs validator
 and editor host utilities:
 
-    {PATH_TO_STEINBERG_SDK}/build/bin/validator build/VST3/vstsid.vst
-    {PATH_TO_STEINBERG_SDK}/build/bin/editorhost build/VST3/vstsid.vst
+    {VSTSDK_PATH}/build/bin/validator build/VST3/vstsid.vst
+    {VSTSDK_PATH}/build/bin/editorhost build/VST3/vstsid.vst
