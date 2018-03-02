@@ -20,27 +20,24 @@ if(MSVC)
     add_definitions(/D _CRT_SECURE_NO_WARNINGS)
 endif()
 
-############################
-# API fix for Linux builds #
-############################
-
-if(UNIX AND NOT APPLE)
-  add_definitions( -D__cdecl= )
-endif()
+###############
+# Unix builds #
+###############
 
 if(UNIX)
-	if(XCODE)
-		set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14")
-		set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-	elseif(APPLE)
-		set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -stdlib=libc++")
-		link_libraries(c++)
-	else()
-		set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-multichar")
-		link_libraries(stdc++fs pthread dl)
-	endif()
+    if(XCODE)
+       set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14")
+       set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+    elseif(APPLE)
+       set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -stdlib=libc++")
+       link_libraries(c++)
+    else()
+        add_definitions( -D__cdecl= )
+        set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-multichar")
+        link_libraries(stdc++fs pthread dl)
+    endif()
 endif()
 
 
@@ -48,7 +45,7 @@ endif()
 # Includes
 #-------------------------------------------------------------------------------
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${VSTSDK_PATH}/cmake/modules")
 
 include(Global)
 include(AddVST3Library)
@@ -122,11 +119,11 @@ smtg_add_vst3plugin(${target} ${VSTSDK_PATH} ${vstsid_sources})
 include_directories(${VSTSDK_INCLUDE_DIR})
 target_link_libraries(${target} ${VSTSDK_LIBRARIES})
 target_include_directories(${target} PUBLIC ${VSTSDK_PATH}/vstgui4)
-target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libbase.a)
-target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libsdk.a)
-target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libvstgui_support.a)
-target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libvstgui_uidescription.a)
-target_link_libraries(${target} PRIVATE /Library/VST_SDK/VST3_SDK/build/lib/libvstgui.a)
+target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libbase.a)
+target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libsdk.a)
+target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_support.a)
+target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_uidescription.a)
+target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui.a)
 
 if (SMTG_CREATE_VST2_VERSION)
     message(STATUS "SMTG_CREATE_VST2_VERSION is set. A VST 2 version of the plug-in will be created (just rename the generated file from .vst3 to .vst).")
@@ -154,14 +151,7 @@ IF (APPLE)
         find_library(QUARTZCORE_FRAMEWORK QuartzCore)
         find_library(CARBON_FRAMEWORK Carbon)
         find_library(EXPAT Expat)
-
-        target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK})
-        target_link_libraries(${target} PRIVATE ${COCOA_FRAMEWORK})
-        target_link_libraries(${target} PRIVATE ${OPENGL_FRAMEWORK})
-        target_link_libraries(${target} PRIVATE ${ACCELERATE_FRAMEWORK})
-        target_link_libraries(${target} PRIVATE ${QUARTZCORE_FRAMEWORK})
-        target_link_libraries(${target} PRIVATE ${CARBON_FRAMEWORK})
-        target_link_libraries(${target} PRIVATE ${EXPAT})
+        target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${ACCELERATE_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} ${CARBON_FRAMEWORK} ${EXPAT})
     endif()
 ENDIF (APPLE)
 

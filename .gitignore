@@ -1,8 +1,4 @@
-CMakeCache.txt
-CMakeFiles
-Makefile
-*.cmake
-*.vst
+build
 
 .DS_Store
 Thumbs.db

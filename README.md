@@ -45,7 +45,7 @@ CLI from VST SDK root:
     cmake ..
     make
 
-The result being that in _/STEINBERG_VST_SDK_ROOT/VST3_SDK/build/lib_ all
+The result being that in _{PATH_TO_STEINBERG_SDK}_/VST3_SDK/build/lib_ all
 Steinberg VST libraries are prebuilt.
 
 ### Building the plugin
@@ -58,4 +58,15 @@ After which you can run:
 
     make
 
-To compile the plugin.
+To compile the plugin. The build output will be stored in _./build/VST3/vstsid.vst_.
+
+## Running the plugin
+
+You can copy the build output into your system VST folder and run it directly in a
+VST host / DAW of your choice.
+
+When debugging, you can also choose to run the plugin against Steinbergs validator
+and editor host utilities:
+
+    {PATH_TO_STEINBERG_SDK}/build/bin/validator build/VST3/vstsid.vst
+    {PATH_TO_STEINBERG_SDK}/build/bin/editorhost build/VST3/vstsid.vst
