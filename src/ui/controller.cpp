@@ -70,34 +70,27 @@ GainParameter::GainParameter (int32 flags, int32 id)
 }
 
 //------------------------------------------------------------------------
-void GainParameter::toString (ParamValue normValue, String128 string) const
+void GainParameter::toString( ParamValue normValue, String128 string ) const
 {
     char text[32];
-    if (normValue > 0.0001)
-    {
-        sprintf (text, "%.2f", 20 * log10f ((float)normValue));
-    }
-    else
-    {
-        strcpy (text, "-oo");
-    }
-
-    Steinberg::UString (string, 128).fromAscii (text);
+    sprintf( text, "%.2f", ( float ) normValue );
+    Steinberg::UString( string, 128 ).fromAscii( text );
 }
 
 //------------------------------------------------------------------------
 bool GainParameter::fromString (const TChar* string, ParamValue& normValue) const
 {
-    String wrapper ((TChar*)string); // don't know buffer size here!
+    String wrapper(( TChar* ) string ); // don't know buffer size here!
     double tmp = 0.0;
-    if (wrapper.scanFloat (tmp))
+    if ( wrapper.scanFloat( tmp ))
     {
-        // allow only values between -oo and 0dB
-        if (tmp > 0.0)
-        {
-            tmp = -tmp;
-        }
-        normValue = expf( logf(10.f) * (float) tmp / 20.f );
+        // allow only values between 0 and 1
+        if ( tmp < 0.0 )
+            tmp = 0.0;
+        else if ( tmp > 1.0 )
+            tmp = 1.0;
+
+        normValue = tmp;
         return true;
     }
     return false;
@@ -127,11 +120,11 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     unit = new Unit (unitInfo);
     addUnitInfo (unit);*/
 
-    // create a unit1 for the gain
+    // create a unit1 for the ADSR
     unitInfo.id = 1;
-    unitInfo.parentUnitId = kRootUnitId;	// attached to the root unit
+    unitInfo.parentUnitId = kRootUnitId;    // attached to the root unit
 
-    Steinberg::UString(unitInfo.name, USTRINGSIZE (unitInfo.name)).assign(USTRING ("Unit1"));
+    Steinberg::UString( unitInfo.name, USTRINGSIZE( unitInfo.name )).assign( USTRING( "Unit1" ));
 
     unitInfo.programListId = kNoProgramListId;
 
@@ -140,25 +133,25 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     //---Create ADSR Parameters------------
 
-    GainParameter* attackParam = new GainParameter(ParameterInfo::kCanAutomate, kAttackId);
-    parameters.addParameter(attackParam);
-    attackParam->setUnitID(1);
+    GainParameter* attackParam = new GainParameter( ParameterInfo::kCanAutomate, kAttackId );
+    parameters.addParameter( attackParam );
+    attackParam->setUnitID( 1 );
 
-    GainParameter* decayParam = new GainParameter(ParameterInfo::kCanAutomate, kAttackId);
-    parameters.addParameter(decayParam);
-    decayParam->setUnitID(2);
+    GainParameter* decayParam = new GainParameter( ParameterInfo::kCanAutomate, kDecayId );
+    parameters.addParameter( decayParam );
+    decayParam->setUnitID( 1 );
 
-    GainParameter* sustainParam = new GainParameter(ParameterInfo::kCanAutomate, kAttackId);
-    parameters.addParameter(sustainParam);
-    sustainParam->setUnitID(3);
+    GainParameter* sustainParam = new GainParameter( ParameterInfo::kCanAutomate, kSustainId );
+    parameters.addParameter( sustainParam );
+    sustainParam->setUnitID( 1 );
 
-    GainParameter* releaseParam = new GainParameter(ParameterInfo::kCanAutomate, kAttackId);
-    parameters.addParameter(releaseParam);
-    releaseParam->setUnitID(4);
+    GainParameter* releaseParam = new GainParameter( ParameterInfo::kCanAutomate, kReleaseId );
+    parameters.addParameter( releaseParam );
+    releaseParam->setUnitID( 1 );
 
     //---Custom state init------------
 
-    String str ("VST SID");
+    String str( "VST SID" );
     str.copyTo16( defaultMessageText, 0, 127 );
 
     return result;
@@ -171,7 +164,7 @@ tresult PLUGIN_API VSTSIDController::terminate  ()
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::setComponentState (IBStream* state)
+tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
 {
     // we receive the current state of the component (processor part)
     // we read only the ADSR envelope values
@@ -179,14 +172,30 @@ tresult PLUGIN_API VSTSIDController::setComponentState (IBStream* state)
     {
         float savedAttack = 1.f;
         if ( state->read( &savedAttack, sizeof( float )) != kResultOk )
-        {
             return kResultFalse;
-        }
 
-    #if BYTEORDER == kBigEndian
-        SWAP_32 (savedAttack)
-    #endif
-        setParamNormalized( kAttackId, savedAttack );
+        float savedDecay = 1.f;
+        if ( state->read( &savedDecay, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedSustain = 1.f;
+        if ( state->read( &savedSustain, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedRelease = 1.f;
+        if ( state->read( &savedRelease, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+#if BYTEORDER == kBigEndian
+    SWAP_32( savedAttack )
+    SWAP_32( savedDecay )
+    SWAP_32( savedSustain )
+    SWAP_32( savedRelease )
+#endif
+        setParamNormalized( kAttackId,  savedAttack );
+        setParamNormalized( kDecayId,   savedDecay );
+        setParamNormalized( kSustainId, savedSustain );
+        setParamNormalized( kReleaseId, savedRelease );
 
         // jump the GainReduction
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
@@ -195,7 +204,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-IPlugView* PLUGIN_API VSTSIDController::createView (const char* name)
+IPlugView* PLUGIN_API VSTSIDController::createView( const char* name )
 {
     // create the visual editor
     if ( name && strcmp( name, "editor" ) == 0 )
@@ -211,7 +220,7 @@ IController* VSTSIDController::createSubController (UTF8StringPtr name,
                                                    const IUIDescription* /*description*/,
                                                    VST3Editor* /*editor*/)
 {
-    if (UTF8StringView (name) == "MessageController")
+    if ( UTF8StringView( name ) == "MessageController" )
     {
         UIMessageController* controller = new UIMessageController( this );
         addUIMessageController( controller );
@@ -226,27 +235,22 @@ tresult PLUGIN_API VSTSIDController::setState (IBStream* state)
     tresult result = kResultFalse;
 
     int8 byteOrder;
-    if ((result = state->read (&byteOrder, sizeof (int8))) != kResultTrue)
-    {
+    if (( result = state->read( &byteOrder, sizeof( int8 ))) != kResultTrue )
         return result;
-    }
-    if ((result = state->read (defaultMessageText, 128 * sizeof (TChar))) != kResultTrue)
-    {
+
+    if (( result = state->read( defaultMessageText, 128 * sizeof( TChar ))) != kResultTrue )
         return result;
-    }
 
     // if the byteorder doesn't match, byte swap the text array ...
-    if (byteOrder != BYTEORDER)
+    if ( byteOrder != BYTEORDER )
     {
         for (int32 i = 0; i < 128; i++)
-        {
-            SWAP_16 (defaultMessageText[i])
-        }
+            SWAP_16( defaultMessageText[ i ])
     }
 
     // update our editors
     for ( UIMessageControllerList::iterator it = uiMessageControllers.begin (), end = uiMessageControllers.end (); it != end; ++it )
-        (*it)->setMessageText( defaultMessageText );
+        ( *it )->setMessageText( defaultMessageText );
 
     return result;
 }
@@ -258,9 +262,9 @@ tresult PLUGIN_API VSTSIDController::getState (IBStream* state)
 
     // as we save a Unicode string, we must know the byteorder when setState is called
     int8 byteOrder = BYTEORDER;
-    if ( state->write (&byteOrder, sizeof (int8)) == kResultTrue )
+    if ( state->write( &byteOrder, sizeof( int8 )) == kResultTrue )
     {
-        return state->write (defaultMessageText, 128 * sizeof (TChar));
+        return state->write( defaultMessageText, 128 * sizeof( TChar ));
     }
     return kResultFalse;
 }
@@ -299,7 +303,7 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
         case kReleaseId:
         {
             char text[32];
-            sprintf (text, "%.2f", ( float ) valueNormalized );
+            sprintf( text, "%.2f", ( float ) valueNormalized );
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -333,37 +337,39 @@ tresult PLUGIN_API VSTSIDController::getParamValueByString( ParamID tag, TChar* 
 }
 
 //------------------------------------------------------------------------
-void VSTSIDController::addUIMessageController (UIMessageController* controller)
+void VSTSIDController::addUIMessageController( UIMessageController* controller )
 {
-    uiMessageControllers.push_back (controller);
+    uiMessageControllers.push_back( controller );
 }
 
 //------------------------------------------------------------------------
-void VSTSIDController::removeUIMessageController (UIMessageController* controller)
+void VSTSIDController::removeUIMessageController( UIMessageController* controller )
 {
-    UIMessageControllerList::const_iterator it = std::find (uiMessageControllers.begin (), uiMessageControllers.end (), controller);
-    if (it != uiMessageControllers.end ())
-        uiMessageControllers.erase (it);
+    UIMessageControllerList::const_iterator it = std::find(
+        uiMessageControllers.begin(), uiMessageControllers.end (), controller
+    );
+    if ( it != uiMessageControllers.end())
+        uiMessageControllers.erase( it );
 }
 
 //------------------------------------------------------------------------
-void VSTSIDController::setDefaultMessageText (String128 text)
+void VSTSIDController::setDefaultMessageText( String128 text )
 {
-    String tmp (text);
-    tmp.copyTo16 (defaultMessageText, 0, 127);
+    String tmp( text );
+    tmp.copyTo16( defaultMessageText, 0, 127 );
 }
 
 //------------------------------------------------------------------------
-TChar* VSTSIDController::getDefaultMessageText ()
+TChar* VSTSIDController::getDefaultMessageText()
 {
     return defaultMessageText;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::queryInterface (const char* iid, void** obj)
+tresult PLUGIN_API VSTSIDController::queryInterface( const char* iid, void** obj )
 {
-    QUERY_INTERFACE (iid, obj, IMidiMapping::iid, IMidiMapping)
-    return EditControllerEx1::queryInterface (iid, obj);
+    QUERY_INTERFACE( iid, obj, IMidiMapping::iid, IMidiMapping );
+    return EditControllerEx1::queryInterface( iid, obj );
 }
 
 //------------------------------------------------------------------------
@@ -371,7 +377,7 @@ tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex
     CtrlNumber midiControllerNumber, ParamID& tag)
 {
     // we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)
-    if (busIndex == 0 && midiControllerNumber == kCtrlVolume)
+    if ( busIndex == 0 && midiControllerNumber == kCtrlVolume )
     {
         tag = kAttackId;
         return kResultTrue;

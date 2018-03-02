@@ -92,7 +92,8 @@ endif()
 set(vstsid_sources
     src/global.h
     src/paramids.h
-    src/process.h
+    src/synthesizer.h
+    src/synthesizer.cpp
     src/vst.cpp
     src/vst.h
     src/ui/controller.cpp

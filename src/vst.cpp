@@ -22,7 +22,7 @@
  */
 #include "global.h"
 #include "vst.h"
-#include "process.h"
+#include "synthesizer.h"
 #include "paramids.h"
 
 #include "public.sdk/source/vst/vstaudioprocessoralgo.h"
@@ -46,10 +46,10 @@ VSTSID::VSTSID ()
 , fDecay (1.f)
 , fSustain (1.f)
 , fRelease (1.f)
-, currentProcessMode (-1) // -1 means not initialized
+, currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
-    setControllerClass (VSTSIDControllerUID);
+    setControllerClass( VSTSIDControllerUID );
 }
 
 //------------------------------------------------------------------------
@@ -104,15 +104,14 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     // 1) Read inputs parameters coming from host (in order to adapt our model values)
     // 2) Read inputs events coming from host (note on/off events)
     // 3) Process the gain of the input buffer to the output buffer
-    // 4) Write the new VUmeter value to the output Parameters queue
 
-    //---1) Read inputs parameter changes-----------
+    //---1) Read input parameter changes-----------
     IParameterChanges* paramChanges = data.inputParameterChanges;
-    if (paramChanges)
+    if ( paramChanges )
     {
         int32 numParamsChanged = paramChanges->getParameterCount ();
         // for each parameter which are some changes in this audio block:
-        for (int32 i = 0; i < numParamsChanged; i++)
+        for ( int32 i = 0; i < numParamsChanged; i++ )
         {
             IParamValueQueue* paramQueue = paramChanges->getParameterData (i);
             if (paramQueue)
@@ -152,26 +151,26 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     //---2) Read input events-------------
     IEventList* eventList = data.inputEvents;
-    if (eventList)
+    if ( eventList )
     {
         int32 numEvent = eventList->getEventCount ();
-        for (int32 i = 0; i < numEvent; i++)
+        for ( int32 i = 0; i < numEvent; i++ )
         {
             Event event;
-            if (eventList->getEvent (i, event) == kResultOk)
+            if ( eventList->getEvent( i, event ) == kResultOk )
             {
-                switch (event.type)
+                switch ( event.type )
                 {
                     //----------------------
                     case Event::kNoteOnEvent:
-                        // use the velocity as gain modifier
-                        //fGainReduction = event.noteOn.velocity;
+                        // event has properties: channel, pitch, velocity, length, tuning, noteId
+                        Synthesizer::noteOn();
                         break;
 
                     //----------------------
                     case Event::kNoteOffEvent:
                         // noteOff reset the reduction
-                        //fGainReduction = 0.f;
+                        Synthesizer::noteOff();
                         break;
                 }
             }
@@ -181,63 +180,39 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     //-------------------------------------
     //---3) Process Audio---------------------
     //-------------------------------------
-    if ( data.numInputs == 0 || data.numOutputs == 0 )
+
+    if ( data.numOutputs == 0 )
     {
         // nothing to do
         return kResultOk;
     }
 
-    // (simplification) we suppose in this example that we have the same input channel count than the output
-    int32 numChannels = data.inputs[0].numChannels;
+    int32 numChannels = data.outputs[ 0 ].numChannels;
 
-    //---get audio buffers----------------
-    uint32 sampleFramesSize = getSampleFramesSizeInBytes (processSetup, data.numSamples);
-    void** in = getChannelBuffersPointer (processSetup, data.inputs[0]);
-    void** out = getChannelBuffersPointer (processSetup, data.outputs[0]);
+    // --- get audio buffers----------------
+    uint32 sampleFramesSize = getSampleFramesSizeInBytes( processSetup, data.numSamples );
+//    void** in  = getChannelBuffersPointer( processSetup, data.inputs [ 0 ] );
+    void** out = getChannelBuffersPointer( processSetup, data.outputs[ 0 ] );
 
-    //---check if silence---------------
-    // normally we have to check each channel (simplification)
-    if (data.inputs[0].silenceFlags != 0)
-    {
-        // mark output silence too
-        data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
+    // synthesize !
 
-        // the Plug-in has to be sure that if it sets the flags silence that the output buffer are clear
-        for (int32 i = 0; i < numChannels; i++)
-        {
-            // do not need to be cleared if the buffers are the same (in this case input buffer are already cleared by the host)
-            if (in[i] != out[i])
-            {
-                memset (out[i], 0, sampleFramesSize);
-            }
-        }
+    bool hasContent = Synthesizer::synthesize(
+        ( float ** ) out, numChannels, data.numSamples, sampleFramesSize
+    );
 
-        // nothing to do at this point
-        return kResultOk;
-    }
+    // mark our outputs as not silent if content had been synthesized
+    data.outputs[ 0 ].silenceFlags = !hasContent;
 
-    // mark our outputs has not silent
-    data.outputs[0].silenceFlags = 0;
-
-    // if the applied gain is nearly zero, we could say that the outputs are zeroed and we set the silence flags.
-//    if (gain < 0.0000001)
-//    {
-//        for (int32 i = 0; i < numChannels; i++)
-//        {
-//            memset (out[i], 0, sampleFramesSize);
-//        }
-//        data.outputs[0].silenceFlags = (1 << numChannels) - 1;  // this will set to 1 all channels
-//    }
     return kResultOk;
 }
 
 //------------------------------------------------------------------------
-tresult VSTSID::receiveText (const char* text)
+tresult VSTSID::receiveText( const char* text )
 {
     // received from Controller
-    fprintf (stderr, "[VSTSID] received: ");
-    fprintf (stderr, "%s", text);
-    fprintf (stderr, "\n");
+    fprintf( stderr, "[VSTSID] received: " );
+    fprintf( stderr, "%s", text );
+    fprintf( stderr, "\n" );
 
     return kResultOk;
 }
@@ -298,7 +273,7 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
             // get the full file path of this state
             TChar fullPath[1024];
             memset (fullPath, 0, 1024 * sizeof (TChar));
-            if (list->getString (PresetAttributes::kFilePathStringType, fullPath, 1024 * sizeof (TChar)) == kResultTrue)
+            if (list->getString( PresetAttributes::kFilePathStringType, fullPath, 1024 * sizeof (TChar)) == kResultTrue )
             {
                 // here we have the full path ...
             }
@@ -344,24 +319,24 @@ tresult PLUGIN_API VSTSID::setupProcessing (ProcessSetup& newSetup)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs, int32 numIns,
+tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int32 numIns,
                                                SpeakerArrangement* outputs, int32 numOuts )
 {
     if (numIns == 1 && numOuts == 1)
     {
         // the host wants Mono => Mono (or 1 channel -> 1 channel)
-        if (SpeakerArr::getChannelCount (inputs[0]) == 1 &&
-            SpeakerArr::getChannelCount (outputs[0]) == 1)
+        if ( SpeakerArr::getChannelCount( inputs[0])  == 1 &&
+             SpeakerArr::getChannelCount( outputs[0]) == 1 )
         {
-            AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
-            if (bus)
+            AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
+            if ( bus )
             {
                 // check if we are Mono => Mono, if not we need to recreate the buses
-                if (bus->getArrangement () != inputs[0])
+                if ( bus->getArrangement () != inputs[0])
                 {
-                    removeAudioBusses ();
-                    addAudioInput  (STR16 ("Mono In"),  inputs[0]);
-                    addAudioOutput (STR16 ("Mono Out"), inputs[0]);
+                    removeAudioBusses();
+                    addAudioInput ( STR16( "Mono In" ),  inputs[0] );
+                    addAudioOutput( STR16( "Mono Out" ), inputs[0] );
                 }
                 return kResultOk;
             }
@@ -375,19 +350,19 @@ tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs, int32
                 tresult result = kResultFalse;
 
                 // the host wants 2->2 (could be LsRs -> LsRs)
-                if (SpeakerArr::getChannelCount (inputs[0]) == 2 && SpeakerArr::getChannelCount (outputs[0]) == 2)
+                if ( SpeakerArr::getChannelCount (inputs[0]) == 2 && SpeakerArr::getChannelCount( outputs[0]) == 2 )
                 {
-                    removeAudioBusses ();
-                    addAudioInput  (STR16 ("Stereo In"),  inputs[0]);
-                    addAudioOutput (STR16 ("Stereo Out"), outputs[0]);
+                    removeAudioBusses();
+                    addAudioInput  ( STR16( "Stereo In"),  inputs[0] );
+                    addAudioOutput ( STR16( "Stereo Out"), outputs[0]);
                     result = kResultTrue;
                 }
                 // the host want something different than 1->1 or 2->2 : in this case we want stereo
-                else if (bus->getArrangement () != SpeakerArr::kStereo)
+                else if ( bus->getArrangement () != SpeakerArr::kStereo )
                 {
-                    removeAudioBusses ();
-                    addAudioInput  (STR16 ("Stereo In"),  SpeakerArr::kStereo);
-                    addAudioOutput (STR16 ("Stereo Out"), SpeakerArr::kStereo);
+                    removeAudioBusses();
+                    addAudioInput ( STR16( "Stereo In"),  SpeakerArr::kStereo );
+                    addAudioOutput( STR16( "Stereo Out"), SpeakerArr::kStereo );
                     result = kResultFalse;
                 }
 
@@ -417,11 +392,11 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
     if ( !message )
         return kInvalidArgument;
 
-    if (!strcmp (message->getMessageID (), "BinaryMessage"))
+    if ( !strcmp (message->getMessageID (), "BinaryMessage" ))
     {
         const void* data;
         uint32 size;
-        if (message->getAttributes ()->getBinary ("MyData", data, size) == kResultOk)
+        if ( message->getAttributes ()->getBinary( "MyData", data, size ) == kResultOk )
         {
             // we are in UI thread
             // size should be 100

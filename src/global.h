@@ -6,9 +6,9 @@
 
 namespace Igorski {
 namespace Vst {
-    static const int   ID     = 0;
-    static const char* NAME   = "VSTSID";
-    static const char* VENDOR = "igorski.nl";
+    static const int   ID       = 0;
+    static const char* NAME     = "VSTSID";
+    static const char* VENDOR   = "igorski.nl";
 }
 }
 

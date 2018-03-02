@@ -20,43 +20,24 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PROCESS_HEADER__
-#define __PROCESS_HEADER__
+#ifndef __SYNTHESIZER_HEADER__
+#define __SYNTHESIZER_HEADER__
 
-namespace Steinberg {
-namespace Vst {
+#include "global.h"
+#include <vector>
 
-//------------------------------------------------------------------------
-template <typename SampleType>
-SampleType VSTSID::processAudio (SampleType** in, SampleType** out, int32 numChannels,
-                                int32 sampleFrames, float gain)
-{
-    SampleType vuPPM = 0;
+using namespace Steinberg;
 
-    // in real Plug-in it would be better to do dezippering to avoid jump (click) in gain value
-    for (int32 i = 0; i < numChannels; i++)
-    {
-        int32 samples = sampleFrames;
-        SampleType* ptrIn = (SampleType*)in[i];
-        SampleType* ptrOut = (SampleType*)out[i];
-        SampleType tmp;
-        while (--samples >= 0)
-        {
-            // apply gain
-            tmp = (*ptrIn++) * gain;
-            (*ptrOut++) = tmp;
+namespace Synthesizer {
 
-            // check only positive values
-            if (tmp > vuPPM)
-            {
-                vuPPM = tmp;
-            }
-        }
-    }
-    return vuPPM;
+    extern void noteOn();
+    extern void noteOff();
+
+    extern bool synthesize( float** outputBuffers, int numChannels,
+        int bufferSize, Steinberg::uint32 sampleFramesSize );
+
+    extern std::vector<int> notes;
+
 }
-
-} // Vst
-} // Igorski
 
 #endif

@@ -53,28 +53,28 @@ bool DeinitModule ()
 // GetPluginFactory function!
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF("igorski.nl",
-                  "https://www.igorski.nl",
-                  "mailto:info@igorski.nl")
+BEGIN_FACTORY_DEF( "igorski.nl",
+                   "https://www.igorski.nl",
+                   "mailto:info@igorski.nl")
 
     //---First Plug-in included in this factory-------
     // its kVstAudioEffectClass component
-    DEF_CLASS2 (INLINE_UID_FROM_FUID(VSTSIDProcessorUID),
-                PClassInfo::kManyInstances, // cardinality
-                kVstAudioEffectClass,       // the component category (do not change this)
-                Igorski::Vst::NAME,         // plug-in name
-                Vst::kDistributable,        // means that component and controller could be distributed on different computers
-                "Fx",                       // Subcategory for this Plug-in
-                FULL_VERSION_STR,           // Plug-in version
-                kVstVersionString,          // the VST 3 SDK version (do not change this)
-                VSTSID::createInstance)    // function pointer called when this component should be instantiated
+    DEF_CLASS2( INLINE_UID_FROM_FUID( VSTSIDProcessorUID ),
+                PClassInfo::kManyInstances,      // cardinality
+                kVstAudioEffectClass,            // the component category (do not change this)
+                Igorski::Vst::NAME,              // plug-in name
+                Vst::kDistributable,             // means that component and controller could be distributed on different computers
+                Vst::PlugType::kInstrumentSynth, // Subcategory for this Plug-in
+                FULL_VERSION_STR,                // Plug-in version
+                kVstVersionString,               // the VST 3 SDK version (do not change this)
+                VSTSID::createInstance)          // function pointer called when this component should be instantiated
 
     // its kVstComponentControllerClass component
-    DEF_CLASS2 (INLINE_UID_FROM_FUID (VSTSIDControllerUID),
+    DEF_CLASS2( INLINE_UID_FROM_FUID( VSTSIDControllerUID ),
                 PClassInfo::kManyInstances,   // cardinality
-                kVstComponentControllerClass, // the Controller category (do not changed this)
+                kVstComponentControllerClass, // the Controller category (do not change this)
                 "IgorskiVSTController",       // controller name (could be the same as component name)
-                0, "",                        // neither are used here
+                0, "",                        // neither of these are used here
                 FULL_VERSION_STR,             // Plug-in version
                 kVstVersionString,            // the VST 3 SDK version (do not change this)
                 VSTSIDController::createInstance) // function pointer called when this component should be instantiated

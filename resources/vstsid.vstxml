@@ -1,13 +1,16 @@
 <!-- =========================================================== -->
 <!-- VST Parameter XML Definition for Plugin =================== -->
 <!-- Version 1.0 =============================================== -->
-<!-- Date: 03/2018 ============================================= -->
+<!-- Date: 2018/03/02 ========================================== -->
 <!-- =========================================================== -->
 
 <VSTPluginProperties>
-	<VSTParametersStructure>
+    <VSTParametersStructure>
 
-		<Param name="Gain" id="0"/>
+        <Param name="Attack"  id="0" />
+        <Param name="Decay"   id="1" />
+        <Param name="Sustain" id="2" />
+        <Param name="Release" id="3" />
 
-	</VSTParametersStructure>
+    </VSTParametersStructure>
 </VSTPluginProperties>
