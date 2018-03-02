@@ -1,40 +1,27 @@
-//------------------------------------------------------------------------
-// Project     : VST SDK
-//
-// Category    : Examples
-// Filename    : public.sdk/samples/vst/again/source/againuimessagecontroller.h
-// Created by  : Steinberg, 04/2005
-// Description : VSTSID UI Message Controller
-//
-//-----------------------------------------------------------------------------
-// LICENSE
-// (c) 2016, Steinberg Media Technologies GmbH, All Rights Reserved
-//-----------------------------------------------------------------------------
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-//
-//   * Redistributions of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
-//   * Redistributions in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
-//   * Neither the name of the Steinberg Media Technologies nor the names of its
-//     contributors may be used to endorse or promote products derived from this
-//     software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-// OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-// OF THE POSSIBILITY OF SUCH DAMAGE.
-//-----------------------------------------------------------------------------
-
-#pragma once
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+#ifndef __MESSAGE_CONTROLLER_HEADER__
+#define __MESSAGE_CONTROLLER_HEADER__
 
 #include "vstgui/lib/iviewlistener.h"
 #include "vstgui/uidescription/icontroller.h"
@@ -49,113 +36,116 @@ namespace Vst {
 template <typename ControllerType>
 class VSTSIDUIMessageController : public VSTGUI::IController, public VSTGUI::IViewListenerAdapter
 {
-public:
-	enum Tags
-	{
-		kSendMessageTag = 1000
-	};
+    public:
+        enum Tags
+        {
+            kSendMessageTag = 1000
+        };
 
-	VSTSIDUIMessageController (ControllerType* againController) : againController (againController), textEdit (nullptr)
-	{
-	}
-	~VSTSIDUIMessageController ()
-	{
-		viewWillDelete (textEdit);
-		againController->removeUIMessageController (this);
-	}
+        VSTSIDUIMessageController (ControllerType* vstsidController) : vstsidController (vstsidController), textEdit (nullptr)
+        {
+        }
 
-	void setMessageText (String128 msgText)
-	{
-		if (!textEdit)
-			return;
-		String str (msgText);
-		str.toMultiByte (kCP_Utf8);
-		textEdit->setText (str.text8 ());
-	}
+        ~VSTSIDUIMessageController ()
+        {
+            viewWillDelete (textEdit);
+            vstsidController->removeUIMessageController (this);
+        }
 
-private:
-	typedef VSTGUI::CControl CControl;
-	typedef VSTGUI::CView CView;
-	typedef VSTGUI::CTextEdit CTextEdit;
-	typedef VSTGUI::UTF8String UTF8String;
+        void setMessageText (String128 msgText)
+        {
+            if (!textEdit)
+                return;
+            String str (msgText);
+            str.toMultiByte (kCP_Utf8);
+            textEdit->setText (str.text8 ());
+        }
 
-	//--- from IControlListener ----------------------
-	void valueChanged (CControl* /*pControl*/) override {}
-	void controlBeginEdit (CControl* /*pControl*/) override {}
-	void controlEndEdit (CControl* pControl) override
-	{
-		if (pControl->getTag () == kSendMessageTag)
-		{
-			if (pControl->getValueNormalized () > 0.5f)
-			{
-				againController->sendTextMessage (textEdit->getText ().data ());
-				pControl->setValue (0.f);
-				pControl->invalid ();
+    private:
+        typedef VSTGUI::CControl CControl;
+        typedef VSTGUI::CView CView;
+        typedef VSTGUI::CTextEdit CTextEdit;
+        typedef VSTGUI::UTF8String UTF8String;
 
-				//---send a binary message
-				if (IPtr<IMessage> message = owned (againController->allocateMessage ()))
-				{
-					message->setMessageID ("BinaryMessage");
-					uint32 size = 100;
-					char8 data[100];
-					memset (data, 0, size * sizeof (char));
-					// fill my data with dummy stuff
-					for (uint32 i = 0; i < size; i++)
-						data[i] = i;
-					message->getAttributes ()->setBinary ("MyData", data, size);
-					againController->sendMessage (message);
-				}
-			}
-		}
-	}
-	//--- from IControlListener ----------------------
-	//--- is called when a view is created -----
-	CView* verifyView (CView* view, const UIAttributes& /*attributes*/,
-					   const IUIDescription* /*description*/) override
-	{
-		if (CTextEdit* te = dynamic_cast<CTextEdit*> (view))
-		{
-			// this allows us to keep a pointer of the text edit view
-			textEdit = te;
+        //--- from IControlListener ----------------------
+        void valueChanged (CControl* /*pControl*/) override {}
+        void controlBeginEdit (CControl* /*pControl*/) override {}
+        void controlEndEdit (CControl* pControl) override
+        {
+            if (pControl->getTag () == kSendMessageTag)
+            {
+                if (pControl->getValueNormalized () > 0.5f)
+                {
+                    vstsidController->sendTextMessage (textEdit->getText ().data ());
+                    pControl->setValue (0.f);
+                    pControl->invalid ();
 
-			// add this as listener in order to get viewWillDelete and viewLostFocus calls
-			textEdit->registerViewListener (this);
+                    //---send a binary message
+                    if (IPtr<IMessage> message = owned( vstsidController->allocateMessage()))
+                    {
+                        message->setMessageID ("BinaryMessage");
+                        uint32 size = 100;
+                        char8 data[100];
+                        memset (data, 0, size * sizeof (char));
+                        // fill my data with dummy stuff
+                        for (uint32 i = 0; i < size; i++)
+                            data[i] = i;
+                        message->getAttributes ()->setBinary ("MyData", data, size);
+                        vstsidController->sendMessage (message);
+                    }
+                }
+            }
+        }
+        //--- from IControlListener ----------------------
+        //--- is called when a view is created -----
+        CView* verifyView (CView* view, const UIAttributes& /*attributes*/,
+                           const IUIDescription* /*description*/) override
+        {
+            if (CTextEdit* te = dynamic_cast<CTextEdit*> (view))
+            {
+                // this allows us to keep a pointer of the text edit view
+                textEdit = te;
 
-			// initialize it content
-			String str (againController->getDefaultMessageText ());
-			str.toMultiByte (kCP_Utf8);
-			textEdit->setText (str.text8 ());
-		}
-		return view;
-	}
-	//--- from IViewListenerAdapter ----------------------
-	//--- is called when a view will be deleted: the editor is closed -----
-	void viewWillDelete (CView* view) override
-	{
-		if (dynamic_cast<CTextEdit*> (view) == textEdit)
-		{
-			textEdit->unregisterViewListener (this);
-			textEdit = nullptr;
-		}
-	}
-	//--- is called when the view is loosing the focus -----------------
-	void viewLostFocus (CView* view) override
-	{
-		if (dynamic_cast<CTextEdit*> (view) == textEdit)
-		{
-			// save the last content of the text edit view
-			const UTF8String& text = textEdit->getText ();
-			String128 messageText;
-			String str;
-			str.fromUTF8 (text.data ());
-			str.copyTo (messageText, 128);
-			againController->setDefaultMessageText (messageText);
-		}
-	}
-	ControllerType* againController;
-	CTextEdit* textEdit;
+                // add this as listener in order to get viewWillDelete and viewLostFocus calls
+                textEdit->registerViewListener (this);
+
+                // initialize it content
+                String str (vstsidController->getDefaultMessageText ());
+                str.toMultiByte (kCP_Utf8);
+                textEdit->setText (str.text8 ());
+            }
+            return view;
+        }
+        //--- from IViewListenerAdapter ----------------------
+        //--- is called when a view will be deleted: the editor is closed -----
+        void viewWillDelete (CView* view) override
+        {
+            if (dynamic_cast<CTextEdit*> (view) == textEdit)
+            {
+                textEdit->unregisterViewListener (this);
+                textEdit = nullptr;
+            }
+        }
+        //--- is called when the view is unfocused -----------------
+        void viewLostFocus (CView* view) override
+        {
+            if (dynamic_cast<CTextEdit*> (view) == textEdit)
+            {
+                // save the last content of the text edit view
+                const UTF8String& text = textEdit->getText ();
+                String128 messageText;
+                String str;
+                str.fromUTF8 (text.data ());
+                str.copyTo (messageText, 128);
+                vstsidController->setDefaultMessageText (messageText);
+            }
+        }
+        ControllerType* vstsidController;
+        CTextEdit* textEdit;
 };
 
 //------------------------------------------------------------------------
 } // Vst
-} // Steinberg
+} // Igorski
+
+#endif

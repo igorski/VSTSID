@@ -1,47 +1,32 @@
-//------------------------------------------------------------------------
-// Project     : VST SDK
-//
-// Category    : Examples
-// Filename    : public.sdk/samples/vst/again/source/againentry.cpp
-// Created by  : Steinberg, 04/2005
-// Description : VSTSID Example for VST 3
-//
-//-----------------------------------------------------------------------------
-// LICENSE
-// (c) 2017, Steinberg Media Technologies GmbH, All Rights Reserved
-//-----------------------------------------------------------------------------
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-//
-//   * Redistributions of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
-//   * Redistributions in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
-//   * Neither the name of the Steinberg Media Technologies nor the names of its
-//     contributors may be used to endorse or promote products derived from this
-//     software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-// OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-// OF THE POSSIBILITY OF SUCH DAMAGE.
-//-----------------------------------------------------------------------------
-
-#include "vst.h"	// for VSTSID
-#include "ui/controller.h" // for VSTSIDController
-#include "global.h"	// for class ids
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+#include "vst.h"
+#include "ui/controller.h"
+#include "global.h"
 
 #include "public.sdk/source/main/pluginfactoryvst3.h"
 
-#define stringPluginName "VSTSID VST3"
-#define stringPluginSideChainName "VSTSID SideChain VST3"
+using namespace Steinberg::Vst;
 
 //------------------------------------------------------------------------
 //  Module init/exit
@@ -61,8 +46,6 @@ bool DeinitModule ()
     return true;
 }
 
-using namespace Steinberg::Vst;
-
 //------------------------------------------------------------------------
 //  VST Plug-in Entry
 //------------------------------------------------------------------------
@@ -70,33 +53,30 @@ using namespace Steinberg::Vst;
 // GetPluginFactory function!
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF ("igorski.nl",
-               "https://www.igorski.nl",
-               "mailto:info@igorski.nl")
+BEGIN_FACTORY_DEF("igorski.nl",
+                  "https://www.igorski.nl",
+                  "mailto:info@igorski.nl")
 
     //---First Plug-in included in this factory-------
     // its kVstAudioEffectClass component
     DEF_CLASS2 (INLINE_UID_FROM_FUID(VSTSIDProcessorUID),
-                PClassInfo::kManyInstances,	// cardinality
-                kVstAudioEffectClass,		// the component category (do not changed this)
-                stringPluginName,			// here the Plug-in name (to be changed)
-                Vst::kDistributable,	// means that component and controller could be distributed on different computers
-                "Fx",					// Subcategory for this Plug-in (to be changed)
-                FULL_VERSION_STR,		// Plug-in version (to be changed)
-                kVstVersionString,		// the VST 3 SDK version (do not changed this, use always this define)
-                Steinberg::Vst::VSTSID::createInstance)	// function pointer called when this component should be instantiated
+                PClassInfo::kManyInstances, // cardinality
+                kVstAudioEffectClass,       // the component category (do not change this)
+                Igorski::Vst::NAME,         // plug-in name
+                Vst::kDistributable,        // means that component and controller could be distributed on different computers
+                "Fx",                       // Subcategory for this Plug-in
+                FULL_VERSION_STR,           // Plug-in version
+                kVstVersionString,          // the VST 3 SDK version (do not change this)
+                VSTSID::createInstance)    // function pointer called when this component should be instantiated
 
     // its kVstComponentControllerClass component
     DEF_CLASS2 (INLINE_UID_FROM_FUID (VSTSIDControllerUID),
-                PClassInfo::kManyInstances,  // cardinality
-                kVstComponentControllerClass,// the Controller category (do not changed this)
-                stringPluginName "Controller",	// controller name (could be the same than component name)
-                0,						// not used here
-                "",						// not used here
-                FULL_VERSION_STR,		// Plug-in version (to be changed)
-                kVstVersionString,		// the VST 3 SDK version (do not changed this, use always this define)
-                Steinberg::Vst::VSTSIDController::createInstance)// function pointer called when this component should be instantiated
-
-    //----for others Plug-ins contained in this factory, put like for the first Plug-in different DEF_CLASS2---
+                PClassInfo::kManyInstances,   // cardinality
+                kVstComponentControllerClass, // the Controller category (do not changed this)
+                "IgorskiVSTController",       // controller name (could be the same as component name)
+                0, "",                        // neither are used here
+                FULL_VERSION_STR,             // Plug-in version
+                kVstVersionString,            // the VST 3 SDK version (do not change this)
+                VSTSIDController::createInstance) // function pointer called when this component should be instantiated
 
 END_FACTORY

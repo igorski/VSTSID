@@ -27,7 +27,7 @@
 		<attributes name="UIAttributesController"/>
 		<attributes SelectedRow="23" name="UIViewCreatorDataSource"/>
 		<attributes SelectedRow="4" name="UIBitmapsDataSource"/>
-		<attributes Path="/Volumes/git_brauhaus/VST3Linux/public.sdk/samples/vst/again/resource/again.uidesc" name="VST3Editor"/>
+		<attributes Path="resources/graphics/vstsid.uidesc" name="VST3Editor"/>
 		<attributes SelectedRow="2" name="UITagsDataSource"/>
 		<attributes SelectedRow="0" name="UIColorsDataSource"/>
 		<attributes SelectedRow="-1" name="UIGradientsDataSource"/>

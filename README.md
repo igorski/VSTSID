@@ -5,7 +5,7 @@ synthesizer.
 
 ## On compatibility
 
-VST3.0 is great and all, but support is patchy (shoutout to Bitwig Studio for being awesome).
+VST3.0 is great and all, but support across DAW's is poor (shout out to Bitwig Studio for being awesome).
 You can however build this plugin as a VST2.4 plugin and enjoy it on a wider range of host platforms.
 Simply uncomment the following line in _CMakeLists.txt_:
 
@@ -45,7 +45,7 @@ CLI from VST SDK root:
     cmake ..
     make
 
-The result being that in _{PATH_TO_STEINBERG_SDK}_/VST3_SDK/build/lib_ all
+The result being that in _{PATH_TO_STEINBERG_SDK}/VST3_SDK/build/lib_ all
 Steinberg VST libraries are prebuilt.
 
 ### Building the plugin
