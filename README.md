@@ -11,6 +11,8 @@ Simply uncomment the following line in _CMakeLists.txt_:
 
     set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
+And rename the plugin extension from _.vst3_ to _.vst_.
+
 Depending on your host software having 32-bit or 64-bit support, you can best compile for a
 wider range of architectures, e.g. by replacing all _cmake_ invocations like so:
 
@@ -62,9 +64,8 @@ To compile the plugin. The build output will be stored in _./build/VST3/vstsid.v
 
 ## Running the plugin
 
-You can copy the build output into your system VST folder and run it directly in a
-VST host / DAW of your choice. Note: some DAW's require the file extension to be
-_.vst3_ for a VST3 plugin.
+You can copy the build output into your system VST(3) folder and run it directly in a
+VST host / DAW of your choice.
 
 When debugging, you can also choose to run the plugin against Steinbergs validator
 and editor host utilities:

@@ -174,8 +174,8 @@ smtg_add_vst3_resource(${target} "resources/graphics/vu_off.png")
 
 set_target_properties(vstsid PROPERTIES
   BUNDLE true
-  BUNDLE_EXTENSION "vst"
-  XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst"
+  BUNDLE_EXTENSION "vst3"
+  XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist"
   MACOSX_BUNDLE_BUNDLE_NAME "VSTSID"
   MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.VSTSID"
