@@ -3,7 +3,7 @@
 
 #define APSTUDIO_READONLY_SYMBOLS
 
-vstsid.uidesc           DATA "vstsid.uidesc"
+vstsid.xml              DATA "vstsid.xml"
 slider_handle.png		PNG  "slider_handle.png"
 slider_handle_2.0x.png	PNG  "slider_handle_2.0x.png"
 slider_background.png	PNG  "slider_background.png"

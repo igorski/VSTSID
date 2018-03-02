@@ -42,433 +42,377 @@ namespace Vst {
 // VSTSID Implementation
 //------------------------------------------------------------------------
 VSTSID::VSTSID ()
-: fGain (1.f)
-, fGainReduction (0.f)
-, fVuPPMOld (0.f)
+: fAttack (1.f)
+, fDecay (1.f)
+, fSustain (1.f)
+, fRelease (1.f)
 , currentProcessMode (-1) // -1 means not initialized
-, bHalfGain (false)
-, bBypass (false)
 {
-	// register its editor class (the same as used in entry.cpp)
-	setControllerClass (VSTSIDControllerUID);
+    // register its editor class (the same as used in entry.cpp)
+    setControllerClass (VSTSIDControllerUID);
 }
 
 //------------------------------------------------------------------------
 VSTSID::~VSTSID ()
 {
-	// nothing to do here yet..
+
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::initialize (FUnknown* context)
 {
-	//---always initialize the parent-------
-	tresult result = AudioEffect::initialize (context);
-	// if everything Ok, continue
-	if (result != kResultOk)
-	{
-		return result;
-	}
+    //---always initialize the parent-------
+    tresult result = AudioEffect::initialize (context);
+    // if everything Ok, continue
+    if ( result != kResultOk )
+        return result;
 
-	//---create Audio In/Out buses------
-	// we want a stereo Input and a Stereo Output
-	addAudioInput  (STR16 ("Stereo In"),  SpeakerArr::kStereo);
-	addAudioOutput (STR16 ("Stereo Out"), SpeakerArr::kStereo);
+    //---create Audio In/Out buses------
+    // we want a stereo Input and a Stereo Output
+    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
+    addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
 
-	//---create Event In/Out buses (1 bus with only 1 channel)------
-	addEventInput (STR16 ("Event In"), 1);
+    //---create Event In/Out buses (1 bus with only 1 channel)------
+    addEventInput( STR16( "Event In" ), 1 );
 
-	return kResultOk;
+    return kResultOk;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::terminate  ()
 {
-	// nothing to do here yet...except calling our parent terminate
-	return AudioEffect::terminate ();
+    // nothing to do here yet...except calling our parent terminate
+    return AudioEffect::terminate();
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setActive (TBool state)
 {
-	if (state)
-	{
-		sendTextMessage ("VSTSID::setActive (true)");
-	}
-	else
-	{
-		sendTextMessage ("VSTSID::setActive (false)");
-	}
+    if (state)
+        sendTextMessage( "VSTSID::setActive (true)" );
+    else
+        sendTextMessage( "VSTSID::setActive (false)" );
 
-	// reset the VuMeter value
-	fVuPPMOld = 0.f;
-
-	// call our parent setActive
-	return AudioEffect::setActive (state);
+    // call our parent setActive
+    return AudioEffect::setActive (state);
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::process (ProcessData& data)
+tresult PLUGIN_API VSTSID::process( ProcessData& data )
 {
-	// finally the process function
-	// In this example there are 4 steps:
-	// 1) Read inputs parameters coming from host (in order to adapt our model values)
-	// 2) Read inputs events coming from host (we apply a gain reduction depending of the velocity of pressed key)
-	// 3) Process the gain of the input buffer to the output buffer
-	// 4) Write the new VUmeter value to the output Parameters queue
+    // In this example there are 4 steps:
+    // 1) Read inputs parameters coming from host (in order to adapt our model values)
+    // 2) Read inputs events coming from host (note on/off events)
+    // 3) Process the gain of the input buffer to the output buffer
+    // 4) Write the new VUmeter value to the output Parameters queue
 
+    //---1) Read inputs parameter changes-----------
+    IParameterChanges* paramChanges = data.inputParameterChanges;
+    if (paramChanges)
+    {
+        int32 numParamsChanged = paramChanges->getParameterCount ();
+        // for each parameter which are some changes in this audio block:
+        for (int32 i = 0; i < numParamsChanged; i++)
+        {
+            IParamValueQueue* paramQueue = paramChanges->getParameterData (i);
+            if (paramQueue)
+            {
+                ParamValue value;
+                int32 sampleOffset;
+                int32 numPoints = paramQueue->getPointCount ();
+                switch ( paramQueue->getParameterId())
+                {
+                    // we use in this example only the last point of the queue.
+                    // in some wanted case for specific kind of parameter it makes sense to retrieve all points
+                    // and process the whole audio block in small blocks.
 
-	//---1) Read inputs parameter changes-----------
-	IParameterChanges* paramChanges = data.inputParameterChanges;
-	if (paramChanges)
-	{
-		int32 numParamsChanged = paramChanges->getParameterCount ();
-		// for each parameter which are some changes in this audio block:
-		for (int32 i = 0; i < numParamsChanged; i++)
-		{
-			IParamValueQueue* paramQueue = paramChanges->getParameterData (i);
-			if (paramQueue)
-			{
-				ParamValue value;
-				int32 sampleOffset;
-				int32 numPoints = paramQueue->getPointCount ();
-				switch (paramQueue->getParameterId ())
-				{
-					case kGainId:
-						// we use in this example only the last point of the queue.
-						// in some wanted case for specific kind of parameter it makes sense to retrieve all points
-						// and process the whole audio block in small blocks.
-						if (paramQueue->getPoint (numPoints - 1, sampleOffset, value) == kResultTrue)
-						{
-							fGain = (float)value;
-						}
-						break;
+                    case kAttackId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fAttack = ( float ) value;
+                        break;
 
-					case kBypassId:
-						if (paramQueue->getPoint (numPoints - 1, sampleOffset, value) == kResultTrue)
-						{
-							bBypass = (value > 0.5f);
-						}
-						break;
-				}
-			}
-		}
-	}
+                    case kDecayId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fDecay = ( float ) value;
+                        break;
 
-	//---2) Read input events-------------
-	IEventList* eventList = data.inputEvents;
-	if (eventList)
-	{
-		int32 numEvent = eventList->getEventCount ();
-		for (int32 i = 0; i < numEvent; i++)
-		{
-			Event event;
-			if (eventList->getEvent (i, event) == kResultOk)
-			{
-				switch (event.type)
-				{
-					//----------------------
-					case Event::kNoteOnEvent:
-						// use the velocity as gain modifier
-						fGainReduction = event.noteOn.velocity;
-						break;
+                    case kSustainId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fSustain = ( float ) value;
+                        break;
 
-					//----------------------
-					case Event::kNoteOffEvent:
-						// noteOff reset the reduction
-						fGainReduction = 0.f;
-						break;
-				}
-			}
-		}
-	}
+                    case kReleaseId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fRelease = ( float ) value;
+                        break;
+                }
+            }
+        }
+    }
 
-	//-------------------------------------
-	//---3) Process Audio---------------------
-	//-------------------------------------
-	if (data.numInputs == 0 || data.numOutputs == 0)
-	{
-		// nothing to do
-		return kResultOk;
-	}
+    //---2) Read input events-------------
+    IEventList* eventList = data.inputEvents;
+    if (eventList)
+    {
+        int32 numEvent = eventList->getEventCount ();
+        for (int32 i = 0; i < numEvent; i++)
+        {
+            Event event;
+            if (eventList->getEvent (i, event) == kResultOk)
+            {
+                switch (event.type)
+                {
+                    //----------------------
+                    case Event::kNoteOnEvent:
+                        // use the velocity as gain modifier
+                        //fGainReduction = event.noteOn.velocity;
+                        break;
 
-	// (simplification) we suppose in this example that we have the same input channel count than the output
-	int32 numChannels = data.inputs[0].numChannels;
+                    //----------------------
+                    case Event::kNoteOffEvent:
+                        // noteOff reset the reduction
+                        //fGainReduction = 0.f;
+                        break;
+                }
+            }
+        }
+    }
 
-	//---get audio buffers----------------
-	uint32 sampleFramesSize = getSampleFramesSizeInBytes (processSetup, data.numSamples);
-	void** in = getChannelBuffersPointer (processSetup, data.inputs[0]);
-	void** out = getChannelBuffersPointer (processSetup, data.outputs[0]);
+    //-------------------------------------
+    //---3) Process Audio---------------------
+    //-------------------------------------
+    if ( data.numInputs == 0 || data.numOutputs == 0 )
+    {
+        // nothing to do
+        return kResultOk;
+    }
 
-	//---check if silence---------------
-	// normally we have to check each channel (simplification)
-	if (data.inputs[0].silenceFlags != 0)
-	{
-		// mark output silence too
-		data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
+    // (simplification) we suppose in this example that we have the same input channel count than the output
+    int32 numChannels = data.inputs[0].numChannels;
 
-		// the Plug-in has to be sure that if it sets the flags silence that the output buffer are clear
-		for (int32 i = 0; i < numChannels; i++)
-		{
-			// do not need to be cleared if the buffers are the same (in this case input buffer are already cleared by the host)
-			if (in[i] != out[i])
-			{
-				memset (out[i], 0, sampleFramesSize);
-			}
-		}
+    //---get audio buffers----------------
+    uint32 sampleFramesSize = getSampleFramesSizeInBytes (processSetup, data.numSamples);
+    void** in = getChannelBuffersPointer (processSetup, data.inputs[0]);
+    void** out = getChannelBuffersPointer (processSetup, data.outputs[0]);
 
-		// nothing to do at this point
-		return kResultOk;
-	}
+    //---check if silence---------------
+    // normally we have to check each channel (simplification)
+    if (data.inputs[0].silenceFlags != 0)
+    {
+        // mark output silence too
+        data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 
-	// mark our outputs has not silent
-	data.outputs[0].silenceFlags = 0;
+        // the Plug-in has to be sure that if it sets the flags silence that the output buffer are clear
+        for (int32 i = 0; i < numChannels; i++)
+        {
+            // do not need to be cleared if the buffers are the same (in this case input buffer are already cleared by the host)
+            if (in[i] != out[i])
+            {
+                memset (out[i], 0, sampleFramesSize);
+            }
+        }
 
-	//---in bypass mode outputs should be like inputs-----
-	if (bBypass)
-	{
-		for (int32 i = 0; i < numChannels; i++)
-		{
-			// do not need to be copied if the buffers are the same
-			if (in[i] != out[i])
-			{
-				memcpy (out[i], in[i], sampleFramesSize);
-			}
-		}
-		// in this example we do not update the VuMeter in Bypass
-	}
-	else
-	{
-		float fVuPPM = 0.f;
+        // nothing to do at this point
+        return kResultOk;
+    }
 
-		//---apply gain factor----------
-		float gain = (fGain - fGainReduction);
-		if (bHalfGain)
-		{
-			gain = gain * 0.5f;
-		}
+    // mark our outputs has not silent
+    data.outputs[0].silenceFlags = 0;
 
-		// if the applied gain is nearly zero, we could say that the outputs are zeroed and we set the silence flags.
-		if (gain < 0.0000001)
-		{
-			for (int32 i = 0; i < numChannels; i++)
-			{
-				memset (out[i], 0, sampleFramesSize);
-			}
-			data.outputs[0].silenceFlags = (1 << numChannels) - 1;  // this will set to 1 all channels
-		}
-		else
-		{
-			if (data.symbolicSampleSize == kSample32)
-				fVuPPM = processAudio<Sample32> ((Sample32**)in, (Sample32**)out, numChannels,
-				                                 data.numSamples, gain);
-			else
-				fVuPPM = processAudio<Sample64> ((Sample64**)in, (Sample64**)out, numChannels,
-				                                 data.numSamples, gain);
-		}
-
-		//---3) Write outputs parameter changes-----------
-		IParameterChanges* outParamChanges = data.outputParameterChanges;
-		// a new value of VuMeter will be send to the host
-		// (the host will send it back in sync to our controller for updating our editor)
-		if (outParamChanges && fVuPPMOld != fVuPPM)
-		{
-			int32 index = 0;
-			IParamValueQueue* paramQueue = outParamChanges->addParameterData (kVuPPMId, index);
-			if (paramQueue)
-			{
-				int32 index2 = 0;
-				paramQueue->addPoint (0, fVuPPM, index2);
-			}
-		}
-		fVuPPMOld = fVuPPM;
-	}
-
-	return kResultOk;
+    // if the applied gain is nearly zero, we could say that the outputs are zeroed and we set the silence flags.
+//    if (gain < 0.0000001)
+//    {
+//        for (int32 i = 0; i < numChannels; i++)
+//        {
+//            memset (out[i], 0, sampleFramesSize);
+//        }
+//        data.outputs[0].silenceFlags = (1 << numChannels) - 1;  // this will set to 1 all channels
+//    }
+    return kResultOk;
 }
 
 //------------------------------------------------------------------------
 tresult VSTSID::receiveText (const char* text)
 {
-	// received from Controller
-	fprintf (stderr, "[VSTSID] received: ");
-	fprintf (stderr, "%s", text);
-	fprintf (stderr, "\n");
+    // received from Controller
+    fprintf (stderr, "[VSTSID] received: ");
+    fprintf (stderr, "%s", text);
+    fprintf (stderr, "\n");
 
-	bHalfGain = !bHalfGain;
-
-	return kResultOk;
+    return kResultOk;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setState (IBStream* state)
 {
-	// called when we load a preset, the model has to be reloaded
+    // called when we load a preset, the model has to be reloaded
 
-	float savedGain = 0.f;
-	if (state->read (&savedGain, sizeof (float)) != kResultOk)
-	{
-		return kResultFalse;
-	}
+    float savedAttack = 0.f;
+    if ( state->read( &savedAttack, sizeof ( float )) != kResultOk )
+        return kResultFalse;
 
-	float savedGainReduction = 0.f;
-	if (state->read (&savedGainReduction, sizeof (float)) != kResultOk)
-	{
-		return kResultFalse;
-	}
+    float savedDecay = 0.f;
+    if ( state->read( &savedDecay, sizeof ( float )) != kResultOk )
+        return kResultFalse;
 
-	int32 savedBypass = 0;
-	if (state->read (&savedBypass, sizeof (int32)) != kResultOk)
-	{
-		return kResultFalse;
-	}
+    float savedSustain = 0.f;
+    if ( state->read( &savedSustain, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
+    float savedRelease = 0.f;
+    if ( state->read( &savedRelease, sizeof ( float )) != kResultOk )
+        return kResultFalse;
 
 #if BYTEORDER == kBigEndian
-	SWAP_32 (savedGain)
-	SWAP_32 (savedGainReduction)
-	SWAP_32 (savedBypass)
+    SWAP_32( savedAttack )
+    SWAP_32( savedDecay )
+    SWAP_32( savedSustain )
+    SWAP_32( savedRelease )
 #endif
 
-	fGain = savedGain;
-	fGainReduction = savedGainReduction;
-	bBypass = savedBypass > 0;
+    fAttack  = savedAttack;
+    fDecay   = savedDecay;
+    fSustain = savedSustain;
+    fRelease = savedRelease;
 
-	// Example of using the IStreamAttributes interface
-	FUnknownPtr<IStreamAttributes> stream (state);
-	if (stream)
-	{
-		IAttributeList* list = stream->getAttributes ();
-		if (list)
-		{
-			// get the current type (project/Default..) of this state
-			String128 string = {0};
-			if (list->getString (PresetAttributes::kStateType, string, 128 * sizeof (TChar)) == kResultTrue)
-			{
-				UString128 tmp (string);
-				char ascii[128];
-				tmp.toAscii (ascii, 128);
-				if (!strncmp (ascii, StateType::kProject, strlen (StateType::kProject)))
-				{
-					// we are in project loading context...
-				}
-			}
+    // Example of using the IStreamAttributes interface
+    FUnknownPtr<IStreamAttributes> stream (state);
+    if (stream)
+    {
+        IAttributeList* list = stream->getAttributes ();
+        if (list)
+        {
+            // get the current type (project/Default..) of this state
+            String128 string = {0};
+            if (list->getString (PresetAttributes::kStateType, string, 128 * sizeof (TChar)) == kResultTrue)
+            {
+                UString128 tmp (string);
+                char ascii[128];
+                tmp.toAscii (ascii, 128);
+                if (!strncmp (ascii, StateType::kProject, strlen (StateType::kProject)))
+                {
+                    // we are in project loading context...
+                }
+            }
 
-			// get the full file path of this state
-			TChar fullPath[1024];
-			memset (fullPath, 0, 1024 * sizeof (TChar));
-			if (list->getString (PresetAttributes::kFilePathStringType, fullPath, 1024 * sizeof (TChar)) == kResultTrue)
-			{
-				// here we have the full path ...
-			}
-		}
-	}
-
-	return kResultOk;
+            // get the full file path of this state
+            TChar fullPath[1024];
+            memset (fullPath, 0, 1024 * sizeof (TChar));
+            if (list->getString (PresetAttributes::kFilePathStringType, fullPath, 1024 * sizeof (TChar)) == kResultTrue)
+            {
+                // here we have the full path ...
+            }
+        }
+    }
+    return kResultOk;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::getState (IBStream* state)
+tresult PLUGIN_API VSTSID::getState( IBStream* state )
 {
-	// here we need to save the model
+    // here we need to save the model
 
-	float toSaveGain = fGain;
-	float toSaveGainReduction = fGainReduction;
-	int32 toSaveBypass = bBypass ? 1 : 0;
+    float toSaveAttack  = fAttack;
+    float toSaveDecay   = fDecay;
+    float toSaveSustain = fSustain;
+    float toSaveRelease = fRelease;
 
 #if BYTEORDER == kBigEndian
-	SWAP_32 (toSaveGain)
-	SWAP_32 (toSaveGainReduction)
-	SWAP_32 (toSaveBypass)
+    SWAP_32( toSaveAttack )
+    SWAP_32( toSaveDecay )
+    SWAP_32( toSaveSustain )
+    SWAP_32( toSaveRelease )
 #endif
 
-	state->write (&toSaveGain, sizeof (float));
-	state->write (&toSaveGainReduction, sizeof (float));
-	state->write (&toSaveBypass, sizeof (int32));
+    state->write( &toSaveAttack,  sizeof( float ));
+    state->write( &toSaveDecay,   sizeof( float ));
+    state->write( &toSaveSustain, sizeof( float ));
+    state->write( &toSaveRelease, sizeof( float ));
 
-	return kResultOk;
+    return kResultOk;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setupProcessing (ProcessSetup& newSetup)
 {
-	// called before the process call, always in a disable state (not active)
+    // called before the process call, always in a disable state (not active)
 
-	// here we keep a trace of the processing mode (offline,...) for example.
-	currentProcessMode = newSetup.processMode;
+    // here we keep a trace of the processing mode (offline,...) for example.
+    currentProcessMode = newSetup.processMode;
 
-	return AudioEffect::setupProcessing (newSetup);
+    return AudioEffect::setupProcessing( newSetup );
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::setBusArrangements (SpeakerArrangement* inputs, int32 numIns,
-                                              SpeakerArrangement* outputs, int32 numOuts)
+tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs, int32 numIns,
+                                               SpeakerArrangement* outputs, int32 numOuts )
 {
-	if (numIns == 1 && numOuts == 1)
-	{
-		// the host wants Mono => Mono (or 1 channel -> 1 channel)
-		if (SpeakerArr::getChannelCount (inputs[0]) == 1 &&
-		    SpeakerArr::getChannelCount (outputs[0]) == 1)
-		{
-			AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
-			if (bus)
-			{
-				// check if we are Mono => Mono, if not we need to recreate the buses
-				if (bus->getArrangement () != inputs[0])
-				{
-					removeAudioBusses ();
-					addAudioInput  (STR16 ("Mono In"),  inputs[0]);
-					addAudioOutput (STR16 ("Mono Out"), inputs[0]);
-				}
-				return kResultOk;
-			}
-		}
-		// the host wants something else than Mono => Mono, in this case we are always Stereo => Stereo
-		else
-		{
-			AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
-			if (bus)
-			{
-				tresult result = kResultFalse;
+    if (numIns == 1 && numOuts == 1)
+    {
+        // the host wants Mono => Mono (or 1 channel -> 1 channel)
+        if (SpeakerArr::getChannelCount (inputs[0]) == 1 &&
+            SpeakerArr::getChannelCount (outputs[0]) == 1)
+        {
+            AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
+            if (bus)
+            {
+                // check if we are Mono => Mono, if not we need to recreate the buses
+                if (bus->getArrangement () != inputs[0])
+                {
+                    removeAudioBusses ();
+                    addAudioInput  (STR16 ("Mono In"),  inputs[0]);
+                    addAudioOutput (STR16 ("Mono Out"), inputs[0]);
+                }
+                return kResultOk;
+            }
+        }
+        // the host wants something else than Mono => Mono, in this case we are always Stereo => Stereo
+        else
+        {
+            AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
+            if (bus)
+            {
+                tresult result = kResultFalse;
 
-				// the host wants 2->2 (could be LsRs -> LsRs)
-				if (SpeakerArr::getChannelCount (inputs[0]) == 2 && SpeakerArr::getChannelCount (outputs[0]) == 2)
-				{
-					removeAudioBusses ();
-					addAudioInput  (STR16 ("Stereo In"),  inputs[0]);
-					addAudioOutput (STR16 ("Stereo Out"), outputs[0]);
-					result = kResultTrue;
-				}
-				// the host want something different than 1->1 or 2->2 : in this case we want stereo
-				else if (bus->getArrangement () != SpeakerArr::kStereo)
-				{
-					removeAudioBusses ();
-					addAudioInput  (STR16 ("Stereo In"),  SpeakerArr::kStereo);
-					addAudioOutput (STR16 ("Stereo Out"), SpeakerArr::kStereo);
-					result = kResultFalse;
-				}
+                // the host wants 2->2 (could be LsRs -> LsRs)
+                if (SpeakerArr::getChannelCount (inputs[0]) == 2 && SpeakerArr::getChannelCount (outputs[0]) == 2)
+                {
+                    removeAudioBusses ();
+                    addAudioInput  (STR16 ("Stereo In"),  inputs[0]);
+                    addAudioOutput (STR16 ("Stereo Out"), outputs[0]);
+                    result = kResultTrue;
+                }
+                // the host want something different than 1->1 or 2->2 : in this case we want stereo
+                else if (bus->getArrangement () != SpeakerArr::kStereo)
+                {
+                    removeAudioBusses ();
+                    addAudioInput  (STR16 ("Stereo In"),  SpeakerArr::kStereo);
+                    addAudioOutput (STR16 ("Stereo Out"), SpeakerArr::kStereo);
+                    result = kResultFalse;
+                }
 
-				return result;
-			}
-		}
-	}
-	return kResultFalse;
+                return result;
+            }
+        }
+    }
+    return kResultFalse;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::canProcessSampleSize (int32 symbolicSampleSize)
+tresult PLUGIN_API VSTSID::canProcessSampleSize( int32 symbolicSampleSize )
 {
-	if (symbolicSampleSize == kSample32)
-		return kResultTrue;
+    if ( symbolicSampleSize == kSample32 )
+        return kResultTrue;
 
-	// we support double processing
-	if (symbolicSampleSize == kSample64)
-		return kResultTrue;
+    // we support double processing
+    if ( symbolicSampleSize == kSample64 )
+        return kResultTrue;
 
-	return kResultFalse;
+    return kResultFalse;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::notify (IMessage* message)
+tresult PLUGIN_API VSTSID::notify( IMessage* message )
 {
     if ( !message )
         return kInvalidArgument;

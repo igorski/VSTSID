@@ -88,14 +88,12 @@ class VSTSID : public AudioEffect
                                  int32 sampleFrames, float gain);
 
         // our model values
-        float fGain;
-        float fGainReduction;
-        float fVuPPMOld;
+        float fAttack;
+        float fDecay;
+        float fSustain;
+        float fRelease;
 
         int32 currentProcessMode;
-
-        bool bHalfGain;
-        bool bBypass;
 };
 
 //------------------------------------------------------------------------

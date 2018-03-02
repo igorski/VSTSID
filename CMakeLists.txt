@@ -159,7 +159,7 @@ ENDIF (APPLE)
 # Resources #
 #############
 
-smtg_add_vst3_resource(${target} "resources/graphics/vstsid.uidesc")
+smtg_add_vst3_resource(${target} "resources/graphics/vstsid.xml")
 smtg_add_vst3_resource(${target} "resources/graphics/background.png")
 smtg_add_vst3_resource(${target} "resources/graphics/slider_background.png")
 smtg_add_vst3_resource(${target} "resources/graphics/slider_handle.png")

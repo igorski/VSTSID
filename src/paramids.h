@@ -25,10 +25,12 @@
 
 enum
 {
-    /** parameter ID */
-    kGainId = 0,    // < for the gain value (is automatable)
-    kVuPPMId,       // < for the Vu value return to host (ReadOnly parameter for our UI)
-    kBypassId       // < Bypass value (we will handle the bypass process) (is automatable)
+    // ids for all visual parameters
+
+    kAttackId = 0, // < ADSR attack value  (automatable)
+    kDecayId,      // < ADSR decay value   (automatable)
+    kSustainId,    // < ADSR sustain value (automatable)
+    kReleaseId     // < ADSR release value (automatable)
 };
 
 #endif
