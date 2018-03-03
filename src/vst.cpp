@@ -42,10 +42,10 @@ namespace Vst {
 // VSTSID Implementation
 //------------------------------------------------------------------------
 VSTSID::VSTSID ()
-: fAttack (1.f)
-, fDecay (1.f)
-, fSustain (1.f)
-, fRelease (1.f)
+: fAttack( 1.f )
+, fDecay( 1.f )
+, fSustain( 1.f )
+, fRelease( 1.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
@@ -55,7 +55,8 @@ VSTSID::VSTSID ()
 //------------------------------------------------------------------------
 VSTSID::~VSTSID ()
 {
-
+    // free all allocated Notes
+    Synthesizer::reset();
 }
 
 //------------------------------------------------------------------------
@@ -114,7 +115,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
         for ( int32 i = 0; i < numParamsChanged; i++ )
         {
             IParamValueQueue* paramQueue = paramChanges->getParameterData (i);
-            if (paramQueue)
+            if ( paramQueue )
             {
                 ParamValue value;
                 int32 sampleOffset;
@@ -196,6 +197,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     // synthesize !
 
+    Synthesizer::updateADSR( fAttack, fDecay, fSustain, fRelease );
     bool hasContent = Synthesizer::synthesize(
         ( float ** ) out, numChannels, data.numSamples, sampleFramesSize
     );
@@ -308,12 +310,13 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::setupProcessing (ProcessSetup& newSetup)
+tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 {
-    // called before the process call, always in a disable state (not active)
+    // called before the process call, always in a disabled state (not active)
 
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
+    Synthesizer::init( newSetup.sampleRate );
 
     return AudioEffect::setupProcessing( newSetup );
 }
