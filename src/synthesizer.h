@@ -43,11 +43,9 @@ namespace Synthesizer {
 
     // event model (e.g. all currently playing notes)
 
-    extern int IDs;
-
     // data type for a single Note
     struct Note {
-        int id;
+        int16 pitch;
         bool released;
         bool muted;
         float frequency;
@@ -109,16 +107,16 @@ namespace Synthesizer {
     extern void init( int sampleRate );
 
     // create a new Note for a MIDI noteOn/noteOff Event
-    extern void noteOn();
-    extern void noteOff();
+    extern void noteOn ( int16 pitch );
+    extern void noteOff( int16 pitch );
+
+    // retrieves an existing Note for given arguments, if none
+    // could be found, nullptr is returned
+    extern Note* getExistingNote( int16 pitch );
 
     // removes a Note from the list (used internally when
     // release phase has completed after "noteOff")
     extern bool removeNote( Note* note );
-
-    // retrieves an existing Note for given arguments, if none
-    // could be found, nullptr is returned
-    extern Note* getExistingNote();
 
     // removes all currently playing notes
     extern void reset();

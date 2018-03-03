@@ -165,13 +165,13 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     //----------------------
                     case Event::kNoteOnEvent:
                         // event has properties: channel, pitch, velocity, length, tuning, noteId
-                        Synthesizer::noteOn();
+                        Synthesizer::noteOn( event.noteOn.pitch );
                         break;
 
                     //----------------------
                     case Event::kNoteOffEvent:
                         // noteOff reset the reduction
-                        Synthesizer::noteOff();
+                        Synthesizer::noteOff( event.noteOff.pitch );
                         break;
                 }
             }

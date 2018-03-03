@@ -91,14 +91,15 @@ endif()
 
 set(vstsid_sources
     src/global.h
+    src/miditable.h
     src/paramids.h
     src/synthesizer.h
     src/synthesizer.cpp
-    src/vst.cpp
     src/vst.h
-    src/ui/controller.cpp
-    src/ui/controller.h
+    src/vst.cpp
     src/vstentry.cpp
+    src/ui/controller.h
+    src/ui/controller.cpp
     src/ui/uimessagecontroller.h
     #resources/vstsid.rc
     #resources/vstplug.def

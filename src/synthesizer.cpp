@@ -21,13 +21,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "synthesizer.h"
+#include "miditable.h"
 #include <math.h>
 
 using namespace Steinberg;
 
 namespace Synthesizer {
 
-    int IDs = 0;
     std::vector<Note*> notes;
     bool doAttack, doDecay, doRelease = false;
 
@@ -45,14 +45,14 @@ namespace Synthesizer {
         MAX_ENVELOPE_LENGTH = ( int ) round( 1000.f / ( SAMPLE_RATE / 1000.f ));
     }
 
-    void noteOn()
+    void noteOn( int16 pitch )
     {
         Note* note = new Note();
 
-        note->id         = ++IDs;
+        note->pitch      = pitch;
         note->released   = false;
         note->muted      = false;
-        note->frequency  = 440.0f, // TODO
+        note->frequency  = MIDITable::frequencies[ pitch ];
         note->phase      = 0.f;
         note->pwm        = 0.f;
         note->arpeggiate = false; // TODO
@@ -91,13 +91,12 @@ namespace Synthesizer {
         */
     }
 
-    void noteOff()
+    void noteOff( int16 pitch )
     {
-        // TODO : retrieve existing note and set its release phase
-        if ( notes.size() == 0 )
-            return;
+        Note* note = getExistingNote( pitch );
 
-        Note* note = notes.at( 0 );
+        if ( note == nullptr )
+            return;
 
         // instant removal when release is at 0
         // TODO: take last model value of release ?
@@ -123,6 +122,15 @@ namespace Synthesizer {
         //}
     }
 
+    Note* getExistingNote( int16 pitch )
+    {
+        for ( int32 i = 0; i < notes.size(); ++i ) {
+            if ( notes.at( i )->pitch == pitch )
+                return notes.at( i );
+        }
+        return nullptr;
+    }
+
     bool removeNote( Note* note )
     {
         bool removed = false;
@@ -135,18 +143,10 @@ namespace Synthesizer {
         return removed;
     }
 
-    Note* getExistingNote()
-    {
-        // TODO: finish implementation, how do we identify this note
-        return nullptr;
-    }
-
     void reset()
     {
         while ( notes.size() > 0 )
             removeNote( notes.at( 0 ));
-
-        IDs = 0;
     }
 
     void updateADSR( float fAttack, float fDecay, float fSustain, float fRelease )
