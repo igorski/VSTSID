@@ -22,6 +22,7 @@
  */
 #include "synthesizer.h"
 #include "miditable.h"
+#include <algorithm>
 #include <math.h>
 
 using namespace Steinberg;
@@ -29,7 +30,7 @@ using namespace Steinberg;
 namespace Synthesizer {
 
     std::vector<Note*> notes;
-    bool doAttack, doDecay, doRelease = false;
+    bool doArpeggiate, doAttack, doDecay, doRelease = false;
 
     float TWO_PI_OVER_SR      = TWO_PI / 44100.f,
           ENVELOPE_INCREMENT  = 0.0f;
@@ -42,50 +43,51 @@ namespace Synthesizer {
     {
         SAMPLE_RATE         = sampleRate;
         TWO_PI_OVER_SR      = TWO_PI / ( float ) SAMPLE_RATE;
-        MAX_ENVELOPE_LENGTH = ( int ) round( 1000.f / ( SAMPLE_RATE / 1000.f ));
+
+        // max envelope length is desired time in milliseconds
+        int envelopeMaxInMillis = 1000.f;
+        MAX_ENVELOPE_LENGTH = ( int ) round( envelopeMaxInMillis / ( SAMPLE_RATE / 1000.f ));
     }
 
     void noteOn( int16 pitch )
     {
         Note* note = new Note();
 
-        note->pitch      = pitch;
-        note->released   = false;
-        note->muted      = false;
-        note->frequency  = MIDITable::frequencies[ pitch ];
-        note->phase      = 0.f;
-        note->pwm        = 0.f;
-        note->arpeggiate = false; // TODO
-        note->arpIndex   = 0;
-        note->arpeggioLength = 0;
+        bool hadNotes = notes.size() > 0;
 
-        // TODO: can we just store this inside Synthesizer ?
-        note->voiceAmount    = 0;
+        note->pitch          = pitch;
+        note->released       = false;
+        note->muted          = false;
+        note->baseFrequency  = MIDITable::frequencies[ pitch ];
+        note->frequency      = note->baseFrequency;
+        note->phase          = 0.f;
+        note->pwm            = 0.f;
+        note->arpIndex       = 0;
+        note->arpOffset = 0;
 
         // TODO: set ADSR from current model settings
 
         notes.push_back( note );
+        handleNoteAmountChange();
 
         /*
-                if ( audioEvent.sid.arpeggiate ) {
-                    self.arpeggioLength = Math.round(
+                if ( arpeggiate ) {
+                    arpeggioDuration = round(
                         websid.helpers.BufferHelper.calculateSamplesPerBeat( self.BPM, self.SAMPLE_RATE ) / 16
                     );
                 }
                 // no note ringing prior to this one ? reset instrument envelopes
 
-                if ( q.length === 0 ) {
-                    var adsr  = self.adsr;
+                if ( !hadNotes ) {
                     var props = self.modules.properties;
 
                     if ( props.envelopes.slope === 0 ) {
                         props.envelopes.slope = websid.helpers.BufferHelper.bufferToMilliseconds( self.BUFFER_SIZE, self.SAMPLE_RATE );
                     }
-                    // max envelope length is desired time in seconds (multiplied by 1000 for milliseconds)
-                    adsr.maxLength = websid.helpers.BufferHelper.millisecondsToBuffer( 1 * 1000, self.SAMPLE_RATE );
+
                 }
 
-                // set envelopes from the current instrument setting
+                // set event envelopes from the current instrument setting
 
                 audioEvent.sid.adsr = self.adsr.clone();
         */
@@ -138,6 +140,7 @@ namespace Synthesizer {
         if ( std::find( notes.begin(), notes.end(), note ) != notes.end())
         {
             notes.erase( std::find( notes.begin(), notes.end(), note ));
+            handleNoteAmountChange();
             removed = true;
         }
         return removed;
@@ -147,6 +150,11 @@ namespace Synthesizer {
     {
         while ( notes.size() > 0 )
             removeNote( notes.at( 0 ));
+    }
+
+    void handleNoteAmountChange()
+    {
+        doArpeggiate = notes.size() >= ARPEGGIATOR_THRESHOLD;
     }
 
     void updateADSR( float fAttack, float fDecay, float fSustain, float fRelease )
@@ -201,14 +209,12 @@ namespace Synthesizer {
 
         float pmv, dpw, amp, phase, envelope;
 
-        int ARPEGGIO_LENGTH_IN_SAMPLES = 2048;
-        // TODO
-        //.arpeggioLength = Math.round(
-        //                websid.helpers.BufferHelper.calculateSamplesPerBeat( self.BPM, self.SAMPLE_RATE ) / 16
-        //            );
+        int voiceAmount = notes.size();
+        int arpIndex    = -1;
 
-        int arpeggioLength = ARPEGGIO_LENGTH_IN_SAMPLES;
-        int arpIndex       = -1;
+        // TODO: set these on note amount/tempo change
+        int ARPEGGIO_LENGTH_IN_SAMPLES = 2048;
+        int arpeggioDuration = ARPEGGIO_LENGTH_IN_SAMPLES;
 
         int32 j = notes.size();
 
@@ -221,10 +227,9 @@ namespace Synthesizer {
             if ( event->muted )
                 continue;
 
-            float phase     = event->phase;
-            bool arpeggiate = event->arpeggiate && event->voiceAmount > 2;
+            float phase = event->phase;
 
-            if ( arpIndex == -1 && arpeggiate )
+            if ( arpIndex == -1 && doArpeggiate )
                 arpIndex = event->arpIndex;
 
             bool disposeEvent = false;
@@ -242,18 +247,20 @@ namespace Synthesizer {
 
             for ( int32 i = 0; i < bufferSize; ++i )
             {
-                // update note's frequency when arpeggiating
+                // update note's frequency when arpeggiators offset
+                // has exceeded the current length
 
-                if ( arpeggiate && event->arpeggioLength == 0 ) {
+                if ( doArpeggiate && event->arpOffset == 0 ) {
 
-                    if ( ++arpIndex == event->voiceAmount )
+                    if ( ++arpIndex == voiceAmount )
                         arpIndex = 0;
 
-                    event->frequency      = event->arpFreqs[ arpIndex ];
-                    event->arpeggioLength = arpeggioLength;
+                    event->frequency = getArpeggiatorFrequency( arpIndex );
+                    event->arpOffset = arpeggioDuration;
 
-                    if ( event->voiceAmount > 4 )
-                        break;
+                    // WebSID had a maximum, not sure why we'd want that actually =)
+//                    if ( voiceAmount > 4 )
+//                        break;
                 }
 
                 // synthesize waveform
@@ -265,14 +272,14 @@ namespace Synthesizer {
                 phase = phase > TWO_PI ? phase - TWO_PI : phase;
                 //am    = sin( pmv / ( float ) 0x1000 );
 
-                amp *= 4.0f; // make louder !
+                amp *= 4.f; // make louder !
 
-                if ( event->arpeggioLength > 0 )
-                    --event->arpeggioLength;
+                if ( event->arpOffset > 0 )
+                    --event->arpOffset;
 
                 // apply envelopes
 
-                envelope = 1.0f;
+                envelope = 1.f;
 
                 // release
 
@@ -301,12 +308,12 @@ namespace Synthesizer {
                     // decay
                     else if ( doDecay && event->adsr.decayStep < event->adsr.decayAmount ) {
 
-                        event->adsr.envelope  *= ( 1.0f - ( event->adsr.decayStep / event->adsr.decayAmount ));
+                        event->adsr.envelope  *= ( 1.f - ( event->adsr.decayStep / event->adsr.decayAmount ));
                         event->adsr.envelope  += event->adsr.sustain;
                         event->adsr.decayStep += ENVELOPE_INCREMENT;
 
-                        if ( event->adsr.envelope > 1.0f )
-                            event->adsr.envelope = 1.0f;
+                        if ( event->adsr.envelope > 1.f )
+                            event->adsr.envelope = 1.f;
 
                         amp *= event->adsr.envelope;
                     }
@@ -337,10 +344,19 @@ namespace Synthesizer {
                 // commit updated properties back into event
                 event->phase = phase;
 
-                if ( arpeggiate )
+                if ( doArpeggiate )
                     event->arpIndex = arpIndex;
             }
         }
         return true;
+    }
+
+    float getArpeggiatorFrequency( int index )
+    {
+        if ( notes.size() == 0 )
+            return 0.f;
+
+        index = std::min( index, ( int ) ( notes.size() - 1 ));
+        return notes.at( index )->baseFrequency;
     }
 }

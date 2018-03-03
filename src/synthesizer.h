@@ -32,14 +32,18 @@ namespace Synthesizer {
 
     // synthesis related properties
 
-    const float PI      = 3.141592653589793f;
-    const float TWO_PI  = 2.0f * PI;
-    const float PWR     = PI / 1.05f;
-    const float PW_AMP  = 0.075f;
+    const float PI     = 3.141592653589793f;
+    const float TWO_PI = 2.0f * PI;
+    const float PWR    = PI / 1.05f;
+    const float PW_AMP = 0.075f;
 
     extern float TWO_PI_OVER_SR, ENVELOPE_INCREMENT;
-    extern bool doAttack, doDecay, doRelease;
     extern int SAMPLE_RATE, BUFFER_SIZE, MAX_ENVELOPE_LENGTH;
+    extern bool doArpeggiate, doAttack, doDecay, doRelease;
+
+    // the amount of simultaneous notes at which arpeggiation begins
+
+    const int ARPEGGIATOR_THRESHOLD = 3;
 
     // event model (e.g. all currently playing notes)
 
@@ -48,15 +52,14 @@ namespace Synthesizer {
         int16 pitch;
         bool released;
         bool muted;
-        float frequency;
+        float baseFrequency; // frequency for event's noteOn
+        float frequency;     // current render frequency (can be shifted by arpeggiator!)
         float phase;
         float pwm;
 
         // arpeggio specific
-        bool arpeggiate;
-        int arpeggioLength;
+        int arpOffset;
         int arpIndex;
-        int voiceAmount;
         float* arpFreqs;
 
         struct ADSR {
@@ -102,6 +105,10 @@ namespace Synthesizer {
         ADSR adsr;
     };
 
+    // collection of Notes registered for playback
+
+    extern std::vector<Note*> notes;
+
     // methods
 
     extern void init( int sampleRate );
@@ -121,14 +128,15 @@ namespace Synthesizer {
     // removes all currently playing notes
     extern void reset();
 
+    // internal update routines
+    extern void handleNoteAmountChange();
     extern void updateADSR( float fAttack, float fDecay, float fSustain, float fRelease );
 
     // the whole point of this exercise: synthesizing sweet, sweet PWM !
     extern bool synthesize( float** outputBuffers, int numChannels,
         int bufferSize, Steinberg::uint32 sampleFramesSize );
 
-    // collection of Notes registered for playback
-    extern std::vector<Note*> notes;
+    extern float getArpeggiatorFrequency( int index );
 }
 
 #endif
