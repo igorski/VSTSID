@@ -76,7 +76,7 @@ set(VSTSDK_PLUGIN_SOURCE
   ${VSTSDK_PATH}/pluginterfaces/vst/vstpresetkeys.h
 )
 
-if (SMTG_CREATE_VST2_VERSION)
+#if (SMTG_CREATE_VST2_VERSION)
     set(vstsid_vst2_sources
         ${VSTSDK_PATH}/public.sdk/source/common/memorystream.cpp
         ${VSTSDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp
@@ -89,7 +89,7 @@ if (SMTG_CREATE_VST2_VERSION)
         ${VSTSDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp
         src/vstentry_vst2.cpp
     )
-endif()
+#endif()
 
 ###################
 # Project sources #
@@ -133,7 +133,7 @@ target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_suppo
 target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_uidescription.a)
 target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui.a)
 
-if (SMTG_CREATE_VST2_VERSION)
+#if (SMTG_CREATE_VST2_VERSION)
     message(STATUS "SMTG_CREATE_VST2_VERSION is set. A VST 2 version of the plug-in will be created (just rename the generated file from .vst3 to .vst).")
     if(XCODE)
         # fix missing VSTPluginMain symbol when also building VST 2 version
@@ -142,7 +142,7 @@ if (SMTG_CREATE_VST2_VERSION)
     if (WIN)
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     endif()
-endif()
+#endif()
 
 ###############################
 # PLATFORM SPECIFIC LIBRARIES #
