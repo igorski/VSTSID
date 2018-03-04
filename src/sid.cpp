@@ -36,13 +36,10 @@ namespace SID {
 
     double TEMPO = 120.f;
 
-    float TWO_PI_OVER_SR     = TWO_PI / 44100.f,
-          ENVELOPE_INCREMENT = 0.f,
-          ENVELOPE_LENGTH    = 0.f;
-
+    float TWO_PI_OVER_SR     = TWO_PI / 44100.f;
     int SAMPLE_RATE          = 44100,
         BUFFER_SIZE          = 256,
-        MAX_ENVELOPE_LENGTH  = 22,
+        MAX_ENVELOPE_SAMPLES = 44100,
         ARPEGGIO_DURATION    = 16;
 
     void init( int sampleRate, double tempo )
@@ -50,15 +47,18 @@ namespace SID {
         SAMPLE_RATE    = sampleRate;
         TWO_PI_OVER_SR = TWO_PI / ( float ) SAMPLE_RATE;
 
-        // max envelope length is the desired envelope time in milliseconds, translated to buffer samples
-        int envelopeMaxInMillis = 1000.f;
-        MAX_ENVELOPE_LENGTH     = ( int ) round( envelopeMaxInMillis * ( SAMPLE_RATE / 1000.f ));
+        // max envelope length is the desired envelope time in seconds, translated to buffer samples
+        MAX_ENVELOPE_SAMPLES = ( int ) round( 1.f * SAMPLE_RATE );
 
         TEMPO = tempo;
     }
 
     void noteOn( int16 pitch )
     {
+        // do not allow a noteOn for the same pitch twice
+        if ( getExistingNote( pitch ) != nullptr )
+            removeNote( getExistingNote( pitch ));
+
         Note* note = new Note();
 
         bool hadNotes = notes.size() > 0;
@@ -81,23 +81,19 @@ namespace SID {
             ARPEGGIO_DURATION = fullMeasure / ARPEGGIATOR_SPEED;
         }
 
-        // no note ringing prior to this one ? reset instrument envelopes
-
-        if ( !hadNotes && ENVELOPE_LENGTH == 0 ) {
-            ENVELOPE_LENGTH = ( float ) BUFFER_SIZE / (( float ) SAMPLE_RATE / 1000.f );
-        }
-
         // set Note ADSR properties from current model
 
-        note->adsr.attack     = SID.attack;
-        note->adsr.attackStep = 0.f;
+        note->adsr.attack          = SID.attack;
+        note->adsr.attackValue     = 0.f;
+        note->adsr.attackDuration  = ( float ) MAX_ENVELOPE_SAMPLES * note->adsr.attack;
+        note->adsr.attackIncrement = 1.0f / std::max( 1.0f, note->adsr.attackDuration );
 
-        if ( note->adsr.attack > 0.f ) {
-            note->adsr.attackLength = ( float ) MAX_ENVELOPE_LENGTH * note->adsr.attack;
-        }
-        note->adsr.decay     = SID.decay;
-        note->adsr.decayStep = 0.f;
-        note->adsr.sustain   = SID.sustain;
+        note->adsr.sustain = SID.sustain;
+
+        note->adsr.decay          = SID.decay;
+        note->adsr.decayValue     = 0.f;
+        note->adsr.decayDuration  = ( float ) MAX_ENVELOPE_SAMPLES * note->adsr.decay;
+        note->adsr.decayIncrement = ( 1.0f - note->adsr.sustain ) / std::max( 1.0f, note->adsr.decayDuration );
 
         // release is only set on noteOff (so the last known release is used if it is updated during Note playback)
     }
@@ -109,9 +105,9 @@ namespace SID {
         if ( note == nullptr )
             return;
 
-        // instant removal when release is at 0
+        // instant removal when release is at 0 or note's sustain level is at 0
 
-        if ( SID.release == 0 ) {
+        if ( SID.release == 0 || note->adsr.sustain == 0 ) {
             removeNote( note );
             return;
         };
@@ -119,17 +115,19 @@ namespace SID {
         // apply release envelope to this event (will be disposed in render loop)
 
         if ( !note->released ) {
-            note->adsr.release     = SID.release;
-            note->adsr.releaseStep = 0.f;
-            note->released         = true;
+            note->adsr.release          = SID.release;
+            note->adsr.releaseValue     = 0.f;
+            note->adsr.releaseDuration  =  ( float ) MAX_ENVELOPE_SAMPLES * note->adsr.release;
+            note->adsr.releaseIncrement = note->adsr.sustain / std::max( 1.f, note->adsr.releaseDuration );
+
+            note->released = true;
         }
 
         // reset arpeggiator of associated keyboard (event is never removed for
         // arpeggiated sequences as they weren't added in this queue list!)
 
         //if ( doArpeggiate  ) {
-        //    var rm = audioEvent.sid.keyboard.removePitchFromArpeggiatorSequence( audioEvent.sid.frequency );
-            //lib.debug.log("freq " + sidEvent.frequency + " removed from arp seq > " + rm);
+        //    removePitchFromArpeggiatorSequence( note->baseFrequency );
         //}
     }
 
@@ -195,8 +193,6 @@ namespace SID {
         if ( notes.size() < 0 )
             return false; // nothing to do
 
-        ENVELOPE_INCREMENT = 1.0f / ( float ) bufferSize;
-
         float pmv, dpw, amp, phase, envelope;
 
         int voiceAmount = notes.size();
@@ -221,17 +217,8 @@ namespace SID {
             bool disposeEvent = false;
 
             bool doAttack  = event->adsr.attack  > 0.f;
-            bool doDecay   = event->adsr.decay   > 0.f;
+            bool doDecay   = event->adsr.decay   > 0.f && event->adsr.sustain != 1.f;
             bool doRelease = event->adsr.release > 0.f && event->released;
-
-            float attackIncrement = doAttack ? 1.0f / event->adsr.attackLength : 0.0f;
-
-            // TODO: can we cache this upfront ?
-
-            event->adsr.decayAmount   = ENVELOPE_LENGTH * ( event->adsr.decay - event->adsr.sustain );
-            event->adsr.releaseAmount = ENVELOPE_LENGTH * event->adsr.release;
-
-            // E.O. TODO
 
             for ( int32 i = 0; i < bufferSize; ++i )
             {
@@ -273,39 +260,32 @@ namespace SID {
 
                 if ( doRelease ) {
 
-                    envelope = event->adsr.sustain - ( event->adsr.releaseStep / event->adsr.releaseAmount );
+                    envelope = event->adsr.sustain - event->adsr.releaseValue;
 
-                    if ( envelope < 0.f )
+                    if ( envelope < 0.f ) {
                         envelope = 0.f;
-
-                    if (( event->adsr.releaseStep += ENVELOPE_INCREMENT ) > event->adsr.releaseAmount ) {
                         disposeEvent = true;
                     }
+                    event->adsr.releaseValue += event->adsr.releaseIncrement;
                     amp *= envelope;
                 }
                 else {
 
-                    // attack
-                    if ( doAttack && event->adsr.attackStep < 1.f ) {
+                    // attack phase
+                    if ( doAttack && event->adsr.attackValue < event->adsr.attack ) {
 
-                        event->adsr.envelope    = event->adsr.attackStep;
-                        event->adsr.attackStep += attackIncrement;
-
-                        amp *= event->adsr.envelope;
-                    }
-                    // decay
-                    else if ( doDecay && event->adsr.decayStep < event->adsr.decayAmount ) {
-
-                        event->adsr.envelope   = ( 1.f - ( event->adsr.decayStep / event->adsr.decayAmount ));
-                        event->adsr.envelope  += event->adsr.sustain;
-                        event->adsr.decayStep += ENVELOPE_INCREMENT;
-
-                        if ( event->adsr.envelope > 1.f )
-                            event->adsr.envelope = 1.f;
+                        event->adsr.envelope     = event->adsr.attackValue;
+                        event->adsr.attackValue += event->adsr.attackIncrement;
 
                         amp *= event->adsr.envelope;
                     }
-                    // sustain
+                    // decay phase
+                    else if ( doDecay && event->adsr.envelope > event->adsr.sustain ) {
+
+                        event->adsr.envelope -= event->adsr.decayIncrement;
+                        amp *= event->adsr.envelope;
+                    }
+                    // sustain phase
                     else {
                         amp *= event->adsr.sustain;
                     }

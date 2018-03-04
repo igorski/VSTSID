@@ -37,12 +37,12 @@ namespace SID {
     const float TWO_PI = 2.0f * PI;
     const float PWR    = PI / 1.05f;
     const float PW_AMP = 0.075f;
+    extern float TWO_PI_OVER_SR;
 
-    extern float TWO_PI_OVER_SR, ENVELOPE_INCREMENT, ENVELOPE_LENGTH;
     extern double TEMPO;        // in BPM, taken from host
     extern int SAMPLE_RATE,     // in Hz, taken from host
                BUFFER_SIZE,
-               MAX_ENVELOPE_LENGTH,
+               MAX_ENVELOPE_SAMPLES,
                ARPEGGIO_DURATION;
 
     extern bool doArpeggiate;
@@ -92,12 +92,17 @@ namespace SID {
             // the "_step"-properties describe the current offset in the total attack
             // envelope slope (relative to total slope length "attack_length")
 
-            float attackLength;
-            float attackStep;
-            float decayAmount;
-            float decayStep;
-            float releaseAmount;
-            float releaseStep;
+            float attackDuration;
+            float attackValue;
+            float attackIncrement;
+
+            float decayDuration;
+            float decayValue;
+            float decayIncrement;
+
+            float releaseDuration;
+            float releaseValue;
+            float releaseIncrement;
 
             // data type for a Note's ADSR properties
             // ADSR is applied per Note, note for the entirety of the
@@ -111,12 +116,15 @@ namespace SID {
                 envelope  = 1.0f;
                 maxLength = 0;
 
-                attackLength  = 0.f;
-                attackStep    = 0.f;
-                decayAmount   = 0.f;
-                decayStep     = 0.f;
-                releaseAmount = 0.f;
-                releaseStep   = 0.f;
+                attackDuration   = 0.f;
+                attackValue      = 0.f;
+                attackIncrement  = 0.f;
+                decayDuration    = 0.f;
+                decayValue       = 0.f;
+                decayIncrement   = 0.f;
+                releaseDuration  = 0.f;
+                releaseValue     = 0.f;
+                releaseIncrement = 0.f;
             }
         };
         ADSR adsr;
