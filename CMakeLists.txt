@@ -53,6 +53,12 @@ include(Bundle)
 include(ExportedSymbols)
 include(PrefixHeader)
 include(PlatformIOS)
+include(PlatformToolset)
+include(CoreAudioSupport)
+include(AAXSupport)
+include(VstGuiSupport)
+include(UniversalBinary)
+include(AddVST3Options)
 
 ###############
 # VST sources #

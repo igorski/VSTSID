@@ -14,7 +14,7 @@ Simply uncomment the following line in _CMakeLists.txt_:
 And rename the plugin extension from _.vst3_ to _.vst_.
 
 Depending on your host software having 32-bit or 64-bit support, you can best compile for a
-wider range of architectures, e.g. by replacing all _cmake_ invocations like so:
+wider range of architectures, e.g. by replacing all _cmake_ invocations listed here like so:
 
     cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
 
@@ -23,7 +23,7 @@ wider range of architectures, e.g. by replacing all _cmake_ invocations like so:
 The project uses [CMake](https://cmake.org) to generate the build system
 after which you can use _make_ to build the application.
 
-The project has been developed against the VST 3.6.8 Audio Plug-Ins SDK
+The project has been developed against the VST 3.6.9 Audio Plug-Ins SDK
 on OS X (see dependencies listed below). It should work completely via
 CLI without requiring XCode. Windows and Linux builds are provided, but are as
 yet untested (see _CMakeLists.txt_).
@@ -60,7 +60,8 @@ After which you can run:
 
     make
 
-To compile the plugin. The build output will be stored in _./build/VST3/vstsid.vst_.
+To compile the plugin. The build output will be stored in _./build/VST3/vstsid.vst_
+as well as copied to your systems VST3 plugin folder.
 
 ## Running the plugin
 
