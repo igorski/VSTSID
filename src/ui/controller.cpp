@@ -46,19 +46,19 @@ namespace Vst {
 class GainParameter : public Parameter
 {
     public:
-        GainParameter (int32 flags, int32 id);
+        GainParameter( int32 flags, int32 id, const char* title, const char* units );
 
-        void toString (ParamValue normValue, String128 string) const SMTG_OVERRIDE;
-        bool fromString (const TChar* string, ParamValue& normValue) const SMTG_OVERRIDE;
+        void toString( ParamValue normValue, String128 string ) const SMTG_OVERRIDE;
+        bool fromString( const TChar* string, ParamValue& normValue ) const SMTG_OVERRIDE;
 };
 
 //------------------------------------------------------------------------
 // GainParameter Implementation
 //------------------------------------------------------------------------
-GainParameter::GainParameter (int32 flags, int32 id)
+GainParameter::GainParameter( int32 flags, int32 id, const char* title, const char* units )
 {
-    Steinberg::UString (info.title, USTRINGSIZE (info.title)).assign(USTRING ("Value"));
-    Steinberg::UString (info.units, USTRINGSIZE (info.units)).assign(USTRING ("dB"));
+    Steinberg::UString( info.title, USTRINGSIZE( info.title )).assign( USTRING( title ));
+    Steinberg::UString( info.units, USTRINGSIZE( info.units )).assign( USTRING( units ));
 
     info.flags = flags;
     info.id = id;
@@ -124,7 +124,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     unitInfo.id = 1;
     unitInfo.parentUnitId = kRootUnitId;    // attached to the root unit
 
-    Steinberg::UString( unitInfo.name, USTRINGSIZE( unitInfo.name )).assign( USTRING( "Unit1" ));
+    Steinberg::UString( unitInfo.name, USTRINGSIZE( unitInfo.name )).assign( USTRING( "ADSR" ));
 
     unitInfo.programListId = kNoProgramListId;
 
@@ -133,19 +133,19 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     //---Create ADSR Parameters------------
 
-    GainParameter* attackParam = new GainParameter( ParameterInfo::kCanAutomate, kAttackId );
+    GainParameter* attackParam = new GainParameter( ParameterInfo::kCanAutomate, kAttackId, "AttackTime", "seconds" );
     parameters.addParameter( attackParam );
     attackParam->setUnitID( 1 );
 
-    GainParameter* decayParam = new GainParameter( ParameterInfo::kCanAutomate, kDecayId );
+    GainParameter* decayParam = new GainParameter( ParameterInfo::kCanAutomate, kDecayId, "DecayTime", "seconds" );
     parameters.addParameter( decayParam );
     decayParam->setUnitID( 1 );
 
-    GainParameter* sustainParam = new GainParameter( ParameterInfo::kCanAutomate, kSustainId );
+    GainParameter* sustainParam = new GainParameter( ParameterInfo::kCanAutomate, kSustainId, "SustainVolume", "0 - 1" );
     parameters.addParameter( sustainParam );
     sustainParam->setUnitID( 1 );
 
-    GainParameter* releaseParam = new GainParameter( ParameterInfo::kCanAutomate, kReleaseId );
+    GainParameter* releaseParam = new GainParameter( ParameterInfo::kCanAutomate, kReleaseId, "ReleaseTime", "seconds" );
     parameters.addParameter( releaseParam );
     releaseParam->setUnitID( 1 );
 

@@ -41,9 +41,8 @@ location (update _"VSTSDK_PATH"_).
 
 ## Generating the Makefiles
 
-The project has been developed against the VST 3.6.9 Audio Plug-Ins SDK
-on OS X (see dependencies listed below), it should work completely via
-CLI without requiring XCode. Windows and Linux builds are provided, but are as
+The project has been developed against the VST 3.6.9 Audio Plug-Ins SDK on OS X and should
+work completely via CLI without requiring XCode. Windows and Linux builds are provided, but are as
 yet untested.
 
 Additionally, the Steinberg VST sources need to be built as well. Following

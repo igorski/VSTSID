@@ -42,10 +42,10 @@ namespace Vst {
 // VSTSID Implementation
 //------------------------------------------------------------------------
 VSTSID::VSTSID ()
-: fAttack( 1.f )
+: fAttack( 0.f )
 , fDecay( 1.f )
-, fSustain( 1.f )
-, fRelease( 1.f )
+, fSustain( .5f )
+, fRelease( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
