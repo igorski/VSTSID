@@ -71,5 +71,5 @@ VST host / DAW of your choice.
 When debugging, you can also choose to run the plugin against Steinbergs validator
 and editor host utilities:
 
-    {VSTSDK_PATH}/build/bin/validator build/VST3/vstsid.vst
-    {VSTSDK_PATH}/build/bin/editorhost build/VST3/vstsid.vst
+    {VSTSDK_PATH}/build/bin/validator  build/VST3/vstsid.vst3
+    {VSTSDK_PATH}/build/bin/editorhost build/VST3/vstsid.vst3
