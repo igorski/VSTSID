@@ -50,9 +50,9 @@ namespace SID {
         SAMPLE_RATE    = sampleRate;
         TWO_PI_OVER_SR = TWO_PI / ( float ) SAMPLE_RATE;
 
-        // max envelope length is desired time in milliseconds
+        // max envelope length is the desired envelope time in milliseconds, translated to buffer samples
         int envelopeMaxInMillis = 1000.f;
-        MAX_ENVELOPE_LENGTH = ( int ) round( envelopeMaxInMillis / ( SAMPLE_RATE / 1000.f ));
+        MAX_ENVELOPE_LENGTH     = ( int ) round( envelopeMaxInMillis * ( SAMPLE_RATE / 1000.f ));
 
         TEMPO = tempo;
     }
@@ -222,10 +222,9 @@ namespace SID {
 
             bool doAttack  = event->adsr.attack  > 0.f;
             bool doDecay   = event->adsr.decay   > 0.f;
-            bool doRelease = event->adsr.release > 0.f;
+            bool doRelease = event->adsr.release > 0.f && event->released;
 
             float attackIncrement = doAttack ? 1.0f / event->adsr.attackLength : 0.0f;
-            float releaseAmount   = event->adsr.envelope;
 
             // TODO: can we cache this upfront ?
 
@@ -259,7 +258,7 @@ namespace SID {
                 amp   = phase < PI - dpw ? PW_AMP : -PW_AMP;
                 phase = phase + ( TWO_PI_OVER_SR * event->frequency );
                 phase = phase > TWO_PI ? phase - TWO_PI : phase;
-                //am    = sin( pmv / ( float ) 0x1000 );
+                //am    = sinf( pmv / ( float ) 0x1000 );
 
                 amp *= 4.f; // make louder !
 
@@ -270,16 +269,16 @@ namespace SID {
 
                 envelope = 1.f;
 
-                // release
+                // release cancels all other phases (e.g. early noteOff before other phases have completed)
 
-                if ( doRelease && event->released ) {
+                if ( doRelease ) {
 
-                    envelope = event->adsr.sustain - ( event->adsr.releaseStep / releaseAmount );
+                    envelope = event->adsr.sustain - ( event->adsr.releaseStep / event->adsr.releaseAmount );
 
                     if ( envelope < 0.f )
                         envelope = 0.f;
 
-                    if (( event->adsr.releaseStep += ENVELOPE_INCREMENT ) > releaseAmount ) {
+                    if (( event->adsr.releaseStep += ENVELOPE_INCREMENT ) > event->adsr.releaseAmount ) {
                         disposeEvent = true;
                     }
                     amp *= envelope;
@@ -297,7 +296,7 @@ namespace SID {
                     // decay
                     else if ( doDecay && event->adsr.decayStep < event->adsr.decayAmount ) {
 
-                        event->adsr.envelope  *= ( 1.f - ( event->adsr.decayStep / event->adsr.decayAmount ));
+                        event->adsr.envelope   = ( 1.f - ( event->adsr.decayStep / event->adsr.decayAmount ));
                         event->adsr.envelope  += event->adsr.sustain;
                         event->adsr.decayStep += ENVELOPE_INCREMENT;
 
@@ -318,7 +317,7 @@ namespace SID {
                 for ( int32 c = 0; c < numChannels; ++c )
                     outputBuffers[ c ][ i ] += amp;
 
-                // if event can be disposed, halt this loop
+                // if event can be disposed, break this evens write loop
 
                 if ( disposeEvent ) {
                     break;
