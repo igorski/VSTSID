@@ -46,13 +46,13 @@ class VSTSIDUIMessageController : public VSTGUI::IController, public VSTGUI::IVi
         {
         }
 
-        ~VSTSIDUIMessageController ()
+        ~VSTSIDUIMessageController()
         {
             viewWillDelete (textEdit);
-            vstsidController->removeUIMessageController (this);
+            vstsidController->removeUIMessageController( this );
         }
 
-        void setMessageText (String128 msgText)
+        void setMessageText( String128 msgText )
         {
             if (!textEdit)
                 return;

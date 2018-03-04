@@ -22,7 +22,7 @@
  */
 #include "global.h"
 #include "vst.h"
-#include "synthesizer.h"
+#include "sid.h"
 #include "paramids.h"
 
 #include "public.sdk/source/vst/vstaudioprocessoralgo.h"
@@ -56,7 +56,7 @@ VSTSID::VSTSID ()
 VSTSID::~VSTSID ()
 {
     // free all allocated Notes
-    Synthesizer::reset();
+    Igorski::SID::reset();
 }
 
 //------------------------------------------------------------------------
@@ -80,7 +80,7 @@ tresult PLUGIN_API VSTSID::initialize (FUnknown* context)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::terminate  ()
+tresult PLUGIN_API VSTSID::terminate()
 {
     // nothing to do here yet...except calling our parent terminate
     return AudioEffect::terminate();
@@ -150,6 +150,12 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
         }
     }
 
+    // according to docs: processing context (optional, but most welcome)
+
+    if ( data.processContext != nullptr && Igorski::SID::TEMPO != data.processContext->tempo ) {
+        Igorski::SID::init(( int ) data.processContext->sampleRate, data.processContext->tempo );
+    }
+
     //---2) Read input events-------------
     IEventList* eventList = data.inputEvents;
     if ( eventList )
@@ -165,13 +171,13 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     //----------------------
                     case Event::kNoteOnEvent:
                         // event has properties: channel, pitch, velocity, length, tuning, noteId
-                        Synthesizer::noteOn( event.noteOn.pitch );
+                        Igorski::SID::noteOn( event.noteOn.pitch );
                         break;
 
                     //----------------------
                     case Event::kNoteOffEvent:
                         // noteOff reset the reduction
-                        Synthesizer::noteOff( event.noteOff.pitch );
+                        Igorski::SID::noteOff( event.noteOff.pitch );
                         break;
                 }
             }
@@ -197,8 +203,10 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     // synthesize !
 
-    Synthesizer::updateADSR( fAttack, fDecay, fSustain, fRelease );
-    bool hasContent = Synthesizer::synthesize(
+    // updateADSR is a bit brute force, we're syncing the registered notes
+    // with this model, can we do it when there is an actual CHANGE in the model?
+    Igorski::SID::updateSIDProperties( fAttack, fDecay, fSustain, fRelease );
+    bool hasContent = Igorski::SID::synthesize(
         ( float ** ) out, numChannels, data.numSamples, sampleFramesSize
     );
 
@@ -316,7 +324,7 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
-    Synthesizer::init( newSetup.sampleRate );
+    Igorski::SID::init( newSetup.sampleRate, 120.f );
 
     return AudioEffect::setupProcessing( newSetup );
 }
@@ -325,7 +333,7 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int32 numIns,
                                                SpeakerArrangement* outputs, int32 numOuts )
 {
-    if (numIns == 1 && numOuts == 1)
+    if ( numIns == 1 && numOuts == 1 )
     {
         // the host wants Mono => Mono (or 1 channel -> 1 channel)
         if ( SpeakerArr::getChannelCount( inputs[0])  == 1 &&

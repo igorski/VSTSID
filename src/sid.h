@@ -28,7 +28,8 @@
 
 using namespace Steinberg;
 
-namespace Synthesizer {
+namespace Igorski {
+namespace SID {
 
     // synthesis related properties
 
@@ -37,13 +38,29 @@ namespace Synthesizer {
     const float PWR    = PI / 1.05f;
     const float PW_AMP = 0.075f;
 
-    extern float TWO_PI_OVER_SR, ENVELOPE_INCREMENT;
-    extern int SAMPLE_RATE, BUFFER_SIZE, MAX_ENVELOPE_LENGTH;
-    extern bool doArpeggiate, doAttack, doDecay, doRelease;
+    extern float TWO_PI_OVER_SR, ENVELOPE_INCREMENT, ENVELOPE_LENGTH;
+    extern double TEMPO;        // in BPM, taken from host
+    extern int SAMPLE_RATE,     // in Hz, taken from host
+               BUFFER_SIZE,
+               MAX_ENVELOPE_LENGTH,
+               ARPEGGIO_DURATION;
+
+    extern bool doArpeggiate;
 
     // the amount of simultaneous notes at which arpeggiation begins
 
     const int ARPEGGIATOR_THRESHOLD = 3;
+    const int ARPEGGIATOR_SPEED     = 16;   // is a subdivision of a full measure, e.g. "16" is 16th note
+
+    // SID model (e.g. synthesizer properties)
+
+    struct SIDProperties {
+        float attack;
+        float decay;
+        float sustain;
+        float release;
+    };
+    extern SIDProperties SID;
 
     // event model (e.g. all currently playing notes)
 
@@ -111,7 +128,7 @@ namespace Synthesizer {
 
     // methods
 
-    extern void init( int sampleRate );
+    extern void init( int sampleRate, double tempo );
 
     // create a new Note for a MIDI noteOn/noteOff Event
     extern void noteOn ( int16 pitch );
@@ -130,13 +147,14 @@ namespace Synthesizer {
 
     // internal update routines
     extern void handleNoteAmountChange();
-    extern void updateADSR( float fAttack, float fDecay, float fSustain, float fRelease );
+    extern void updateSIDProperties( float fAttack, float fDecay, float fSustain, float fRelease );
 
     // the whole point of this exercise: synthesizing sweet, sweet PWM !
     extern bool synthesize( float** outputBuffers, int numChannels,
         int bufferSize, Steinberg::uint32 sampleFramesSize );
 
     extern float getArpeggiatorFrequency( int index );
+}
 }
 
 #endif

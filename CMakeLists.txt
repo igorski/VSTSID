@@ -93,8 +93,8 @@ set(vstsid_sources
     src/global.h
     src/miditable.h
     src/paramids.h
-    src/synthesizer.h
-    src/synthesizer.cpp
+    src/sid.h
+    src/sid.cpp
     src/vst.h
     src/vst.cpp
     src/vstentry.cpp

@@ -20,33 +20,41 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "synthesizer.h"
+#include "sid.h"
 #include "miditable.h"
 #include <algorithm>
 #include <math.h>
 
 using namespace Steinberg;
 
-namespace Synthesizer {
+namespace Igorski {
+namespace SID {
 
+    SIDProperties      SID;
     std::vector<Note*> notes;
-    bool doArpeggiate, doAttack, doDecay, doRelease = false;
+    bool doArpeggiate  = false;
 
-    float TWO_PI_OVER_SR      = TWO_PI / 44100.f,
-          ENVELOPE_INCREMENT  = 0.0f;
+    double TEMPO = 120.f;
 
-    int SAMPLE_RATE = 44100,
-        BUFFER_SIZE = 256,
-        MAX_ENVELOPE_LENGTH = 22;
+    float TWO_PI_OVER_SR     = TWO_PI / 44100.f,
+          ENVELOPE_INCREMENT = 0.f,
+          ENVELOPE_LENGTH    = 0.f;
 
-    void init( int sampleRate )
+    int SAMPLE_RATE          = 44100,
+        BUFFER_SIZE          = 256,
+        MAX_ENVELOPE_LENGTH  = 22,
+        ARPEGGIO_DURATION    = 16;
+
+    void init( int sampleRate, double tempo )
     {
-        SAMPLE_RATE         = sampleRate;
-        TWO_PI_OVER_SR      = TWO_PI / ( float ) SAMPLE_RATE;
+        SAMPLE_RATE    = sampleRate;
+        TWO_PI_OVER_SR = TWO_PI / ( float ) SAMPLE_RATE;
 
         // max envelope length is desired time in milliseconds
         int envelopeMaxInMillis = 1000.f;
         MAX_ENVELOPE_LENGTH = ( int ) round( envelopeMaxInMillis / ( SAMPLE_RATE / 1000.f ));
+
+        TEMPO = tempo;
     }
 
     void noteOn( int16 pitch )
@@ -63,34 +71,35 @@ namespace Synthesizer {
         note->phase          = 0.f;
         note->pwm            = 0.f;
         note->arpIndex       = 0;
-        note->arpOffset = 0;
-
-        // TODO: set ADSR from current model settings
+        note->arpOffset      = 0;
 
         notes.push_back( note );
         handleNoteAmountChange();
 
-        /*
-                if ( arpeggiate ) {
-                    arpeggioDuration = round(
-                        websid.helpers.BufferHelper.calculateSamplesPerBeat( self.BPM, self.SAMPLE_RATE ) / 16
-                    );
-                }
-                // no note ringing prior to this one ? reset instrument envelopes
+        if ( doArpeggiate ) {
+            int fullMeasure   = round((( float ) SAMPLE_RATE * 60.f ) / TEMPO );
+            ARPEGGIO_DURATION = fullMeasure / ARPEGGIATOR_SPEED;
+        }
 
-                if ( !hadNotes ) {
-                    var props = self.modules.properties;
+        // no note ringing prior to this one ? reset instrument envelopes
 
-                    if ( props.envelopes.slope === 0 ) {
-                        props.envelopes.slope = websid.helpers.BufferHelper.bufferToMilliseconds( self.BUFFER_SIZE, self.SAMPLE_RATE );
-                    }
+        if ( !hadNotes && ENVELOPE_LENGTH == 0 ) {
+            ENVELOPE_LENGTH = ( float ) BUFFER_SIZE / (( float ) SAMPLE_RATE / 1000.f );
+        }
 
-                }
+        // set Note ADSR properties from current model
 
-                // set event envelopes from the current instrument setting
+        note->adsr.attack     = SID.attack;
+        note->adsr.attackStep = 0.f;
 
-                audioEvent.sid.adsr = self.adsr.clone();
-        */
+        if ( note->adsr.attack > 0.f ) {
+            note->adsr.attackLength = ( float ) MAX_ENVELOPE_LENGTH * note->adsr.attack;
+        }
+        note->adsr.decay     = SID.decay;
+        note->adsr.decayStep = 0.f;
+        note->adsr.sustain   = SID.sustain;
+
+        // release is only set on noteOff (so the last known release is used if it is updated during Note playback)
     }
 
     void noteOff( int16 pitch )
@@ -101,8 +110,8 @@ namespace Synthesizer {
             return;
 
         // instant removal when release is at 0
-        // TODO: take last model value of release ?
-        if ( note->adsr.release == 0 ) {
+
+        if ( SID.release == 0 ) {
             removeNote( note );
             return;
         };
@@ -110,15 +119,15 @@ namespace Synthesizer {
         // apply release envelope to this event (will be disposed in render loop)
 
         if ( !note->released ) {
-            // TODO: take last model value of release ?
-            //note->adsr.release = ( self.adsr.release );
-            note->released = true;
+            note->adsr.release     = SID.release;
+            note->adsr.releaseStep = 0.f;
+            note->released         = true;
         }
 
         // reset arpeggiator of associated keyboard (event is never removed for
         // arpeggiated sequences as they weren't added in this queue list!)
 
-        //if ( audioEvent.sid.keyboard.arpeggiated ) {
+        //if ( doArpeggiate  ) {
         //    var rm = audioEvent.sid.keyboard.removePitchFromArpeggiatorSequence( audioEvent.sid.frequency );
             //lib.debug.log("freq " + sidEvent.frequency + " removed from arp seq > " + rm);
         //}
@@ -154,46 +163,27 @@ namespace Synthesizer {
 
     void handleNoteAmountChange()
     {
-        doArpeggiate = notes.size() >= ARPEGGIATOR_THRESHOLD;
-    }
+        int amountOfNotes = notes.size();
+        doArpeggiate = amountOfNotes >= ARPEGGIATOR_THRESHOLD;
 
-    void updateADSR( float fAttack, float fDecay, float fSustain, float fRelease )
-    {
-        doAttack  = fAttack  > 0.0f;
-        doDecay   = fDecay   > 0.0f;
-        doRelease = fRelease > 0.0f;
-
-        for ( int32 i = 0; i < notes.size(); ++i ) {
+        for ( int32 i = 0; i < amountOfNotes; ++i )
+        {
             Note* note = notes.at( i );
 
-            // attack
-            if ( note->adsr.attack != fAttack ) {
-                note->adsr.attack     = fAttack;
-                note->adsr.attackStep = 0;
+            // when arpeggiated, we impose a limit on audible notes as we will use
+            // a pitch cycle in the render function to play this notes frequency
 
-                if ( fAttack > 0 ) {
-                    note->adsr.attackLength = ( float ) MAX_ENVELOPE_LENGTH * fAttack;
-                }
-            }
-
-            // decay
-
-            if ( note->adsr.decay != fDecay ) {
-                note->adsr.decay     = fDecay;
-                note->adsr.decayStep = 0;
-            }
-
-            // sustain
-
-            note->adsr.sustain = fSustain;
-
-            // release
-
-            if ( note->adsr.release != fRelease ) {
-                note->adsr.release     = fRelease;
-                note->adsr.releaseStep = 0;
-            }
+            bool audible = !doArpeggiate || ( i < ARPEGGIATOR_THRESHOLD );
+            note->muted  = ( i == 0 ) ? false : !audible;
         }
+    }
+
+    void updateSIDProperties( float fAttack, float fDecay, float fSustain, float fRelease )
+    {
+        SID.attack  = fAttack;
+        SID.decay   = fDecay;
+        SID.sustain = fSustain;
+        SID.release = fRelease;
     }
 
     bool synthesize( float** outputBuffers, int numChannels, int bufferSize, uint32 sampleFramesSize )
@@ -212,17 +202,13 @@ namespace Synthesizer {
         int voiceAmount = notes.size();
         int arpIndex    = -1;
 
-        // TODO: set these on note amount/tempo change
-        int ARPEGGIO_LENGTH_IN_SAMPLES = 2048;
-        int arpeggioDuration = ARPEGGIO_LENGTH_IN_SAMPLES;
-
         int32 j = notes.size();
 
         while ( j-- )
         {
             Note* event = notes.at( j );
 
-            // is event muted (e.g. amount of notes above the arpeggio threshold) ?
+            // is event muted (e.g. is the amount of notes above the arpeggio threshold) ?
 
             if ( event->muted )
                 continue;
@@ -234,14 +220,17 @@ namespace Synthesizer {
 
             bool disposeEvent = false;
 
+            bool doAttack  = event->adsr.attack  > 0.f;
+            bool doDecay   = event->adsr.decay   > 0.f;
+            bool doRelease = event->adsr.release > 0.f;
+
             float attackIncrement = doAttack ? 1.0f / event->adsr.attackLength : 0.0f;
             float releaseAmount   = event->adsr.envelope;
 
             // TODO: can we cache this upfront ?
 
-            float envelopeLength = ( float ) bufferSize / (( float ) SAMPLE_RATE / 1000.f );
-            event->adsr.decayAmount   = envelopeLength * ( event->adsr.decay - event->adsr.sustain );
-            event->adsr.releaseAmount = envelopeLength * event->adsr.release;
+            event->adsr.decayAmount   = ENVELOPE_LENGTH * ( event->adsr.decay - event->adsr.sustain );
+            event->adsr.releaseAmount = ENVELOPE_LENGTH * event->adsr.release;
 
             // E.O. TODO
 
@@ -256,7 +245,7 @@ namespace Synthesizer {
                         arpIndex = 0;
 
                     event->frequency = getArpeggiatorFrequency( arpIndex );
-                    event->arpOffset = arpeggioDuration;
+                    event->arpOffset = ARPEGGIO_DURATION;
 
                     // WebSID had a maximum, not sure why we'd want that actually =)
 //                    if ( voiceAmount > 4 )
@@ -359,4 +348,5 @@ namespace Synthesizer {
         index = std::min( index, ( int ) ( notes.size() - 1 ));
         return notes.at( index )->baseFrequency;
     }
+}
 }
