@@ -10,9 +10,6 @@ set(CMAKE_CXX_STANDARD 11)
 # path to Steinberg VST3 SDK
 set(VSTSDK_PATH "/Library/VST_SDK/VST3_SDK" CACHE PATH "Path to VST3 SDK")
 
-# uncomment to build as VST2.4
-#set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
-
 # compiler flags
 add_definitions(-DNDEBUG)
 
@@ -63,6 +60,9 @@ include(AddVST3Options)
 ###############
 # VST sources #
 ###############
+
+# uncomment to build as VST2.4 instead of VST3.0 (provides wider DAW compatibility)
+#set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
 set(VSTSDK_INCLUDE_DIR ${VSTSDK_PATH})
 set(VSTSDK_PLUGIN_SOURCE
@@ -133,7 +133,7 @@ target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_suppo
 target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_uidescription.a)
 target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui.a)
 
-#if (SMTG_CREATE_VST2_VERSION)
+if (SMTG_CREATE_VST2_VERSION)
     message(STATUS "SMTG_CREATE_VST2_VERSION is set. A VST 2 version of the plug-in will be created (just rename the generated file from .vst3 to .vst).")
     if(XCODE)
         # fix missing VSTPluginMain symbol when also building VST 2 version
@@ -142,7 +142,7 @@ target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui.a)
     if (WIN)
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     endif()
-#endif()
+endif()
 
 ###############################
 # PLATFORM SPECIFIC LIBRARIES #
