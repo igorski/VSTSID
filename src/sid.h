@@ -133,6 +133,7 @@ namespace SID {
     // collection of Notes registered for playback
 
     extern std::vector<Note*> notes;
+    extern std::vector<Note*> arpNotes;
 
     // methods
 

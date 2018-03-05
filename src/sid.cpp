@@ -162,9 +162,22 @@ namespace SID {
     void handleNoteAmountChange()
     {
         int amountOfNotes = notes.size();
-        doArpeggiate = amountOfNotes >= ARPEGGIATOR_THRESHOLD;
+        int activeNotes   = 0;
 
-        for ( int32 i = 0; i < amountOfNotes; ++i )
+        int32 i;
+
+        for ( i = 0; i < amountOfNotes; ++i )
+        {
+            if ( !notes.at( i )->released )
+                ++activeNotes;
+        }
+        // we only arpeggiate when the current amount of unreleased
+        // notes meets or exceeds the arpeggiator threshold
+        // (released notes do not arpeggiate)
+
+        doArpeggiate = activeNotes >= ARPEGGIATOR_THRESHOLD;
+
+        for ( i = 0; i < amountOfNotes; ++i )
         {
             Note* note = notes.at( i );
 
@@ -326,7 +339,14 @@ namespace SID {
             return 0.f;
 
         index = std::min( index, ( int ) ( notes.size() - 1 ));
-        return notes.at( index )->baseFrequency;
+
+        for ( int32 i = index; i < notes.size(); ++i ) {
+            // only arpeggiate notes that haven't been released
+            if ( !notes.at( i )->released ) {
+                return notes.at( i )->baseFrequency;
+            }
+        }
+        return notes.at( 0 )->baseFrequency;
     }
 }
 }
