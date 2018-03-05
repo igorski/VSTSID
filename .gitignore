@@ -1,4 +1,7 @@
 build
+*.cmake
+Makefile
+CMakeCache.txt
 
 .DS_Store
 Thumbs.db

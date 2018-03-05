@@ -117,7 +117,7 @@ namespace SID {
         if ( !note->released ) {
             note->adsr.release          = SID.release;
             note->adsr.releaseValue     = 0.f;
-            note->adsr.releaseDuration  =  ( float ) MAX_ENVELOPE_SAMPLES * note->adsr.release;
+            note->adsr.releaseDuration  = ( float ) MAX_ENVELOPE_SAMPLES * note->adsr.release;
             note->adsr.releaseIncrement = note->adsr.sustain / std::max( 1.f, note->adsr.releaseDuration );
 
             note->released = true;
@@ -169,10 +169,11 @@ namespace SID {
             Note* note = notes.at( i );
 
             // when arpeggiated, we impose a limit on audible notes as we will use
-            // a pitch cycle in the render function to play this notes frequency
+            // a pitch cycle in the render function to play the muted notes frequency
+            // once the arpeggiator step shifts to the next step
 
-            bool audible = !doArpeggiate || ( i < ARPEGGIATOR_THRESHOLD );
-            note->muted  = ( i == 0 ) ? false : !audible;
+            bool audible = ( i == 0 ) || !doArpeggiate;
+            note->muted  = !audible;
         }
     }
 
