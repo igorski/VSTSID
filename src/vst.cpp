@@ -46,10 +46,14 @@ VSTSID::VSTSID ()
 , fDecay( 1.f )
 , fSustain( .5f )
 , fRelease( 0.f )
+, fCutoff( 440.f )
+, fResonance( 1.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
     setControllerClass( VSTSIDControllerUID );
+
+    filter = new Filter( 440.0f, 1.0f );
 }
 
 //------------------------------------------------------------------------
@@ -57,6 +61,7 @@ VSTSID::~VSTSID ()
 {
     // free all allocated Notes
     Igorski::SID::reset();
+    delete filter;
 }
 
 //------------------------------------------------------------------------
@@ -207,8 +212,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     // with this model, can we do it when there is an actual CHANGE in the model?
     Igorski::SID::updateSIDProperties( fAttack, fDecay, fSustain, fRelease );
     bool hasContent = Igorski::SID::synthesize(
-        ( float ** ) out, numChannels, data.numSamples, sampleFramesSize
+        ( float** ) out, numChannels, data.numSamples, sampleFramesSize
     );
+
+    if ( hasContent )
+        filter->process(( float** ) out, numChannels, data.numSamples );
 
     // mark our outputs as not silent if content had been synthesized
     data.outputs[ 0 ].silenceFlags = !hasContent;
@@ -248,17 +256,29 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
     if ( state->read( &savedRelease, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
+    float savedCutoff = 0.f;
+    if ( state->read( &savedCutoff, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
+    float savedResonance = 0.f;
+    if ( state->read( &savedResonance, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
 #if BYTEORDER == kBigEndian
     SWAP_32( savedAttack )
     SWAP_32( savedDecay )
     SWAP_32( savedSustain )
     SWAP_32( savedRelease )
+    SWAP_32( savedCutoff )
+    SWAP_32( savedResonance )
 #endif
 
-    fAttack  = savedAttack;
-    fDecay   = savedDecay;
-    fSustain = savedSustain;
-    fRelease = savedRelease;
+    fAttack    = savedAttack;
+    fDecay     = savedDecay;
+    fSustain   = savedSustain;
+    fRelease   = savedRelease;
+    fCutoff    = savedCutoff;
+    fResonance = savedResonance;
 
     // Example of using the IStreamAttributes interface
     FUnknownPtr<IStreamAttributes> stream (state);
@@ -297,22 +317,28 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
 {
     // here we need to save the model
 
-    float toSaveAttack  = fAttack;
-    float toSaveDecay   = fDecay;
-    float toSaveSustain = fSustain;
-    float toSaveRelease = fRelease;
+    float toSaveAttack    = fAttack;
+    float toSaveDecay     = fDecay;
+    float toSaveSustain   = fSustain;
+    float toSaveRelease   = fRelease;
+    float toSaveCutoff    = fCutoff;
+    float toSaveResonance = fResonance;
 
 #if BYTEORDER == kBigEndian
     SWAP_32( toSaveAttack )
     SWAP_32( toSaveDecay )
     SWAP_32( toSaveSustain )
     SWAP_32( toSaveRelease )
+    SWAP_32( toSaveCutoff )
+    SWAP_32( toSaveResonance )
 #endif
 
-    state->write( &toSaveAttack,  sizeof( float ));
-    state->write( &toSaveDecay,   sizeof( float ));
-    state->write( &toSaveSustain, sizeof( float ));
-    state->write( &toSaveRelease, sizeof( float ));
+    state->write( &toSaveAttack,    sizeof( float ));
+    state->write( &toSaveDecay,     sizeof( float ));
+    state->write( &toSaveSustain,   sizeof( float ));
+    state->write( &toSaveRelease,   sizeof( float ));
+    state->write( &toSaveCutoff,    sizeof( float ));
+    state->write( &toSaveResonance, sizeof( float ));
 
     return kResultOk;
 }
@@ -325,6 +351,9 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
     Igorski::SID::init( newSetup.sampleRate, 120.f );
+
+    filter->sampleRate = ( float ) newSetup.sampleRate;
+    filter->calculateParameters();
 
     return AudioEffect::setupProcessing( newSetup );
 }

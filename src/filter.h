@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2013-2018 Igor Zinken - http://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -20,20 +20,47 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __PARAMIDS_HEADER__
-#define __PARAMIDS_HEADER__
+#ifndef __FILTER_H_INCLUDED__
+#define __FILTER_H_INCLUDED__
 
-enum
+#include "global.h"
+
+using namespace Steinberg;
+
+class Filter
 {
-    // ids for all visual parameters
+    public:
+        Filter( float aCutoffFrequency, float aResonance );
+        ~Filter();
 
-    kAttackId = 0,  // < ADSR attack time
-    kDecayId,       // < ADSR decay time
-    kSustainId,     // < ADSR sustain level
-    kReleaseId,     // < ADSR release time
+        float sampleRate;
 
-    kCutoffId,      // filter cutoff
-    kResonanceId    // filter resonance
+        void setCutoff( float frequency );
+        float getCutoff();
+        void setResonance( float resonance );
+        float getResonance();
+
+        void calculateParameters();
+        void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
+
+    protected:
+        float _cutoff;
+        float _resonance;
+
+        // used internally
+
+        float a1;
+        float a2;
+        float a3;
+        float b1;
+        float b2;
+        float c;
+        float output;
+
+        float* in1;
+        float* in2;
+        float* out1;
+        float* out2;
 };
 
 #endif

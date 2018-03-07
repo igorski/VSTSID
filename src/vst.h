@@ -23,8 +23,9 @@
 #ifndef _VST_HEADER__
 #define _VST_HEADER__
 
-#include "global.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
+#include "global.h"
+#include "filter.h"
 
 namespace Steinberg {
 namespace Vst {
@@ -42,7 +43,7 @@ class VSTSID : public AudioEffect
         // create function required for Plug-in factory,
         // it will be called to create new instances of this Plug-in
         //--- ---------------------------------------------------------------------
-        static FUnknown* createInstance (void* /*context*/) { return (IAudioProcessor*)new VSTSID; }
+        static FUnknown* createInstance (void* /*context*/) { return ( IAudioProcessor* )new VSTSID; }
 
         //--- ---------------------------------------------------------------------
         // AudioEffect overrides:
@@ -85,10 +86,18 @@ class VSTSID : public AudioEffect
         //==============================================================================
 
         // our model values
+
         float fAttack;
         float fDecay;
         float fSustain;
         float fRelease;
+
+        float fCutoff;
+        float fResonance;
+
+        // modules
+
+        Filter* filter;
 
         int32 currentProcessMode;
 };
