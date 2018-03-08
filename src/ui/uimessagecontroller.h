@@ -110,7 +110,7 @@ class VSTSIDUIMessageController : public VSTGUI::IController, public VSTGUI::IVi
                 textEdit->registerViewListener (this);
 
                 // initialize it content
-                String str (vstsidController->getDefaultMessageText ());
+                String str( vstsidController->getDefaultMessageText());
                 str.toMultiByte (kCP_Utf8);
                 textEdit->setText (str.text8 ());
             }

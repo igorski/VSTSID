@@ -62,7 +62,7 @@ include(AddVST3Options)
 ###############
 
 # uncomment to build as VST2.4 instead of VST3.0 (provides wider DAW compatibility)
-set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
+#set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 
 set(VSTSDK_INCLUDE_DIR ${VSTSDK_PATH})
 set(VSTSDK_PLUGIN_SOURCE
@@ -99,6 +99,8 @@ set(vstsid_sources
     src/global.h
     src/miditable.h
     src/paramids.h
+    src/filter.h
+    src/filter.cpp
     src/sid.h
     src/sid.cpp
     src/vst.h

@@ -123,6 +123,58 @@
               style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
               value-precision="2" wheel-inc-value="0.1" />
 
+        <!-- cutoff slider -->
+        <view title="Cutoff:" origin="10, 140" size="80, 18" class="CTextLabel"
+            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
+            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
+            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
+            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
+            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
+            transparent="true" value-precision="2" wheel-inc-value="0.1" />
+
+        <view control-tag="Unit1::Cutoff" origin="90, 140" size="130, 18" class="CSlider"
+            background-offset="0, 0" bitmap="slider_background"
+            bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
+            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
+
+        <view control-tag="Unit1::Cutoff" origin="230, 140" size="90, 18" class="CTextEdit"
+              back-color="~ BlackCColor" background-offset="0, 0"
+              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
+              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
+              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
+              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
+              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
+              value-precision="2" wheel-inc-value="0.1" />
+
+        <!-- resonance slider -->
+        <view title="Resonance:" origin="10, 140" size="80, 18" class="CTextLabel"
+            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
+            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
+            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
+            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
+            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
+            transparent="true" value-precision="2" wheel-inc-value="0.1" />
+
+        <view control-tag="Unit1::Resonance" origin="90, 140" size="130, 18" class="CSlider"
+            background-offset="0, 0" bitmap="slider_background"
+            bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
+            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
+
+        <view control-tag="Unit1::Resonance" origin="230, 140" size="90, 18" class="CTextEdit"
+              back-color="~ BlackCColor" background-offset="0, 0"
+              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
+              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
+              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
+              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
+              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
+              value-precision="2" wheel-inc-value="0.1" />
+
     </template>
     <variables/>
     <custom>
@@ -155,11 +207,13 @@
         <bitmap name="vu_on" path="vu_on.png"/>
     </bitmaps>
     <control-tags>
-        <control-tag name="UI::SendMessage" tag="1000"/>
-        <control-tag name="Unit1::Attack"   tag="0"/>
-        <control-tag name="Unit1::Decay"    tag="1"/>
-        <control-tag name="Unit1::Sustain"  tag="2"/>
-        <control-tag name="Unit1::Release"  tag="3"/>
+        <control-tag name="UI::SendMessage"  tag="1000"/>
+        <control-tag name="Unit1::Attack"    tag="0"/>
+        <control-tag name="Unit1::Decay"     tag="1"/>
+        <control-tag name="Unit1::Sustain"   tag="2"/>
+        <control-tag name="Unit1::Release"   tag="3"/>
+        <control-tag name="Unit1::Cutoff"    tag="4"/>
+        <control-tag name="Unit1::Resonance" tag="5"/>
     </control-tags>
     <gradients>
         <gradient name="Default TextButton Gradient">

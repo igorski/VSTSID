@@ -149,6 +149,14 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     parameters.addParameter( releaseParam );
     releaseParam->setUnitID( 1 );
 
+    GainParameter* cutoffParam = new GainParameter( ParameterInfo::kCanAutomate, kCutoffId, "Cutoff frequency", "Hz" );
+    parameters.addParameter( cutoffParam );
+    cutoffParam->setUnitID( 1 );
+
+    GainParameter* resonanceParam = new GainParameter( ParameterInfo::kCanAutomate, kResonanceId, "Resonance", "dB" );
+    parameters.addParameter( resonanceParam );
+    resonanceParam->setUnitID( 1 );
+
     //---Custom state init------------
 
     String str( "VST SID" );
@@ -186,16 +194,28 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedRelease, sizeof( float )) != kResultOk )
             return kResultFalse;
 
+        float savedCutoff = 1.f;
+        if ( state->read( &savedCutoff, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
+        float savedResonance = 1.f;
+        if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
 #if BYTEORDER == kBigEndian
     SWAP_32( savedAttack )
     SWAP_32( savedDecay )
     SWAP_32( savedSustain )
     SWAP_32( savedRelease )
+    SWAP_32( savedCutoff )
+    SWAP_32( savedResonance )
 #endif
-        setParamNormalized( kAttackId,  savedAttack );
-        setParamNormalized( kDecayId,   savedDecay );
-        setParamNormalized( kSustainId, savedSustain );
-        setParamNormalized( kReleaseId, savedRelease );
+        setParamNormalized( kAttackId,    savedAttack );
+        setParamNormalized( kDecayId,     savedDecay );
+        setParamNormalized( kSustainId,   savedSustain );
+        setParamNormalized( kReleaseId,   savedRelease );
+        setParamNormalized( kCutoffId,    savedCutoff );
+        setParamNormalized( kResonanceId, savedResonance );
 
         // jump the GainReduction
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
