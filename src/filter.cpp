@@ -21,99 +21,120 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "filter.h"
-#include <math.h>
 
 using namespace Steinberg;
 
-Filter::Filter( float aCutoffFrequency, float aResonance )
-{
-    _resonance = aResonance;
+namespace Igorski {
+namespace Filter {
 
-    // stereo probably enough...
-    int numChannels = 8;
+    float _sampleRate = 44100.f;
+    float _cutoff     = FILTER_MIN_FREQ;
+    float _resonance  = FILTER_MIN_RESONANCE;
 
-    in1  = new float[ numChannels ];
-    in2  = new float[ numChannels ];
-    out1 = new float[ numChannels ];
-    out2 = new float[ numChannels ];
+    float* _in1  = 0;
+    float* _in2  = 0;
+    float* _out1 = 0;
+    float* _out2 = 0;
 
-    for ( int i = 0; i < numChannels; ++i )
+    float _a1 = 0.f;
+    float _a2 = 0.f;
+    float _a3 = 0.f;
+    float _b1 = 0.f;
+    float _b2 = 0.f;
+    float _c  = 0.f;
+
+    void init( float aSampleRate )
     {
-        in1 [ i ] = 0.0;
-        in2 [ i ] = 0.0;
-        out1[ i ] = 0.0;
-        out2[ i ] = 0.0;
-    }
-    setCutoff( aCutoffFrequency );
-}
+        _sampleRate = aSampleRate;
 
-Filter::~Filter()
-{
-    //delete _lfo; // nope... belongs to routeable oscillator in the instrument
+        // stereo (2) probably enough...
+        int numChannels = 8;
 
-    delete[] in1;
-    delete[] in2;
-    delete[] out1;
-    delete[] out2;
-}
+        _in1  = new float[ numChannels ];
+        _in2  = new float[ numChannels ];
+        _out1 = new float[ numChannels ];
+        _out2 = new float[ numChannels ];
 
-/* public methods */
-
-void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize )
-{
-    for ( int32 c = 0; c < amountOfChannels; ++c )
-    {
-        for ( int32 i = 0; i < bufferSize; ++i )
+        for ( int i = 0; i < numChannels; ++i )
         {
-            float input = sampleBuffer[ c ][ i ];
-            output      = a1 * input + a2 * in1[ i ] + a3 * in2[ i ] - b1 * out1[ i ] - b2 * out2[ i ];
+            _in1 [ i ] = 0.f;
+            _in2 [ i ] = 0.f;
+            _out1[ i ] = 0.f;
+            _out2[ i ] = 0.f;
+        }
+        setCutoff( FILTER_MAX_FREQ / 2 );
+    }
 
-            in2 [ i ] = in1[ i ];
-            in1 [ i ] = input;
-            out2[ i ] = out1[ i ];
-            out1[ i ] = output;
+    void destroy()
+    {
+        //delete _lfo; // nope... belongs to routeable oscillator in the instrument
 
-            // commit the effect
-            sampleBuffer[ c ][ i ] = output;
+        delete[] _in1;
+        delete[] _in2;
+        delete[] _out1;
+        delete[] _out2;
+    }
+
+    /* public methods */
+
+    void process( float** sampleBuffer, int amountOfChannels, int bufferSize )
+    {
+        for ( int32 c = 0; c < amountOfChannels; ++c )
+        {
+            for ( int32 i = 0; i < bufferSize; ++i )
+            {
+                float input  = sampleBuffer[ c ][ i ];
+                float output = _a1 * input + _a2 * _in1[ c ] + _a3 * _in2[ c ] - _b1 * _out1[ c ] - _b2 * _out2[ c ];
+
+                _in2 [ c ] = _in1[ c ];
+                _in1 [ c ] = input;
+                _out2[ c ] = _out1[ c ];
+                _out1[ c ] = output;
+
+                // commit the effect
+                sampleBuffer[ c ][ i ] = output;
+            }
         }
     }
+
+    void setCutoff( float frequency )
+    {
+        _cutoff = frequency;
+
+        if ( _cutoff >= _sampleRate * .5 )
+            _cutoff = _sampleRate * .5 - 1;
+
+    //    if ( _cutoff < minFreq )
+    //        _cutoff = minFreq;
+    //
+        calculateParameters();
+    }
+
+    float getCutoff()
+    {
+        return _cutoff;
+    }
+
+    void setResonance( float resonance )
+    {
+        _resonance = resonance;
+        calculateParameters();
+    }
+
+    float getResonance()
+    {
+        return _resonance;
+    }
+
+    void calculateParameters()
+    {
+        _c  = 1.0 / tan( 3.141592653589793f * _cutoff / _sampleRate );
+        _a1 = 1.0 / ( 1.0 + _resonance * _c + _c * _c );
+        _a2 = 2 * _a1;
+        _a3 = _a1;
+        _b1 = 2.0 * ( 1.0 - _c * _c ) * _a1;
+        _b2 = ( 1.0 - _resonance * _c + _c * _c ) * _a1;
+    }
+
 }
-
-void Filter::setCutoff( float frequency )
-{
-    _cutoff = frequency;
-
-    if ( _cutoff >= sampleRate * .5 )
-        _cutoff = sampleRate * .5 - 1;
-
-//    if ( _cutoff < minFreq )
-//        _cutoff = minFreq;
-//
-    calculateParameters();
-}
-
-float Filter::getCutoff()
-{
-    return _cutoff;
-}
-
-void Filter::setResonance( float resonance )
-{
-    _resonance = resonance;
-    calculateParameters();
-}
-
-float Filter::getResonance()
-{
-    return _resonance;
-}
-
-void Filter::calculateParameters()
-{
-    c  = 1 / tan( 3.141592653589793f * _cutoff / sampleRate );
-    a1 = 1.0 / ( 1.0 + _resonance * c + c * c );
-    a2 = 2 * a1;
-    a3 = a1;
-    b1 = 2.0 * ( 1.0 - c * c ) * a1;
-    b2 = ( 1.0 - _resonance * c + c * c ) * a1;
 }

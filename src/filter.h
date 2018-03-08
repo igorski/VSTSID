@@ -24,43 +24,45 @@
 #define __FILTER_H_INCLUDED__
 
 #include "global.h"
+#include <math.h>
 
-using namespace Steinberg;
+namespace Igorski {
+namespace Filter {
 
-class Filter
-{
-    public:
-        Filter( float aCutoffFrequency, float aResonance );
-        ~Filter();
+    const float FILTER_MIN_FREQ      = 50.0f;
+    const float FILTER_MAX_FREQ      = 12000.f;
+    const float FILTER_MIN_RESONANCE = 0.1f;
+    const float FILTER_MAX_RESONANCE = sqrt( 2.f ) * .5f;
 
-        float sampleRate;
+    extern void init( float aSampleRate );
+    extern void destroy();
 
-        void setCutoff( float frequency );
-        float getCutoff();
-        void setResonance( float resonance );
-        float getResonance();
+    extern void  setCutoff( float frequency );
+    extern float getCutoff();
+    extern void  setResonance( float resonance );
+    extern float getResonance();
 
-        void calculateParameters();
-        void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
+    extern void calculateParameters();
+    extern void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
 
-    protected:
-        float _cutoff;
-        float _resonance;
+    extern float _cutoff;
+    extern float _resonance;
 
-        // used internally
+    // used internally
 
-        float a1;
-        float a2;
-        float a3;
-        float b1;
-        float b2;
-        float c;
-        float output;
+    extern float _sampleRate;
+    extern float _a1;
+    extern float _a2;
+    extern float _a3;
+    extern float _b1;
+    extern float _b2;
+    extern float _c;
 
-        float* in1;
-        float* in2;
-        float* out1;
-        float* out2;
-};
+    extern float* _in1;
+    extern float* _in2;
+    extern float* _out1;
+    extern float* _out2;
+}
+}
 
 #endif

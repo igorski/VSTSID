@@ -23,6 +23,7 @@
 #include "global.h"
 #include "vst.h"
 #include "sid.h"
+#include "filter.h"
 #include "paramids.h"
 
 #include "public.sdk/source/vst/vstaudioprocessoralgo.h"
@@ -52,8 +53,6 @@ VSTSID::VSTSID ()
 {
     // register its editor class (the same as used in entry.cpp)
     setControllerClass( VSTSIDControllerUID );
-
-    filter = new Filter( 440.0f, 1.0f );
 }
 
 //------------------------------------------------------------------------
@@ -61,7 +60,7 @@ VSTSID::~VSTSID ()
 {
     // free all allocated Notes
     Igorski::SID::reset();
-    delete filter;
+    Igorski::Filter::destroy();
 }
 
 //------------------------------------------------------------------------
@@ -216,7 +215,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     );
 
     if ( hasContent )
-        filter->process(( float** ) out, numChannels, data.numSamples );
+        Igorski::Filter::process(( float** ) out, numChannels, data.numSamples );
 
     // mark our outputs as not silent if content had been synthesized
     data.outputs[ 0 ].silenceFlags = !hasContent;
@@ -350,10 +349,9 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
-    Igorski::SID::init( newSetup.sampleRate, 120.f );
 
-    filter->sampleRate = ( float ) newSetup.sampleRate;
-    filter->calculateParameters();
+    Igorski::SID::init( newSetup.sampleRate, 120.f );
+    Igorski::Filter::init(( float ) newSetup.sampleRate );
 
     return AudioEffect::setupProcessing( newSetup );
 }
