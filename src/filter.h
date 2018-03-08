@@ -43,6 +43,11 @@ namespace Filter {
     extern float getResonance();
 
     extern void calculateParameters();
+
+    // update Filter properties, percentages in 0 - 1 range
+    extern void updateProperties( float cutoffPercentage, float resonancePercentage );
+
+    // apply filter to incoming sampleBuffer contents
     extern void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
 
     extern float _cutoff;

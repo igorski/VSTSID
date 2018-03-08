@@ -207,9 +207,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     // synthesize !
 
-    // updateADSR is a bit brute force, we're syncing the registered notes
+    // updateProperties is a bit brute force, we're syncing the module properties
     // with this model, can we do it when there is an actual CHANGE in the model?
-    Igorski::SID::updateSIDProperties( fAttack, fDecay, fSustain, fRelease );
+    Igorski::SID::updateProperties( fAttack, fDecay, fSustain, fRelease );
+    Igorski::Filter::updateProperties( fCutoff, fResonance );
+
     bool hasContent = Igorski::SID::synthesize(
         ( float** ) out, numChannels, data.numSamples, sampleFramesSize
     );
@@ -383,7 +385,7 @@ tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int3
         else
         {
             AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
-            if (bus)
+            if ( bus )
             {
                 tresult result = kResultFalse;
 

@@ -155,7 +155,7 @@ namespace SID {
 
     // internal update routines
     extern void handleNoteAmountChange();
-    extern void updateSIDProperties( float fAttack, float fDecay, float fSustain, float fRelease );
+    extern void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease );
 
     // the whole point of this exercise: synthesizing sweet, sweet PWM !
     extern bool synthesize( float** outputBuffers, int numChannels,

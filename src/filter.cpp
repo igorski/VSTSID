@@ -21,6 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "filter.h"
+#include <algorithm>
 
 using namespace Steinberg;
 
@@ -76,6 +77,17 @@ namespace Filter {
     }
 
     /* public methods */
+
+    void updateProperties( float cutoffPercentage, float resonancePercentage )
+    {
+        float co  = std::max( FILTER_MIN_FREQ,      cutoffPercentage * FILTER_MAX_FREQ );
+        float res = std::max( FILTER_MIN_RESONANCE, resonancePercentage * FILTER_MAX_RESONANCE );
+
+        if ( _cutoff != co || _resonance != res ) {
+            setCutoff( co );
+            setResonance( res );
+        }
+    }
 
     void process( float** sampleBuffer, int amountOfChannels, int bufferSize )
     {

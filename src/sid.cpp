@@ -190,7 +190,7 @@ namespace SID {
         }
     }
 
-    void updateSIDProperties( float fAttack, float fDecay, float fSustain, float fRelease )
+    void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease )
     {
         SID.attack  = fAttack;
         SID.decay   = fDecay;
