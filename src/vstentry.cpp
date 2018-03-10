@@ -67,7 +67,7 @@ BEGIN_FACTORY_DEF( "igorski.nl",
                 Vst::PlugType::kInstrumentSynth, // Subcategory for this Plug-in
                 FULL_VERSION_STR,                // Plug-in version
                 kVstVersionString,               // the VST 3 SDK version (do not change this)
-                VSTSID::createInstance)          // function pointer called when this component should be instantiated
+                VSTSID::createInstance )         // function pointer called when this component should be instantiated
 
     // its kVstComponentControllerClass component
     DEF_CLASS2( INLINE_UID_FROM_FUID( VSTSIDControllerUID ),
@@ -77,6 +77,6 @@ BEGIN_FACTORY_DEF( "igorski.nl",
                 0, "",                        // neither of these are used here
                 FULL_VERSION_STR,             // Plug-in version
                 kVstVersionString,            // the VST 3 SDK version (do not change this)
-                VSTSIDController::createInstance) // function pointer called when this component should be instantiated
+                VSTSIDController::createInstance ) // function pointer called when this component should be instantiated
 
 END_FACTORY

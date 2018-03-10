@@ -7,7 +7,7 @@
         <color name="Title Background" rgba="#39393944"/>
     </colors>
     <template
-        maxSize="350, 200" minSize="350, 200" size="350, 200" name="view" opacity="1" origin="0, 0"
+        maxSize="284, 497" minSize="284, 497" size="284, 497" name="view" opacity="1" origin="0, 0"
         background-color="~ BlackCColor" background-color-draw-style="filled and stroked" bitmap="background"
         class="CViewContainer"  mouse-enabled="true"  transparent="false">
 
@@ -20,160 +20,67 @@
             transparent="false" value-precision="2" wheel-inc-value="0.1" />
 
         <!-- attack slider -->
-        <view title="Attack:" origin="10, 50" size="80, 18" class="CTextLabel"
-            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
-            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
-            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
-            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
-            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
-            transparent="true" value-precision="2" wheel-inc-value="0.1" />
-
-        <view control-tag="Unit1::Attack" origin="90, 50" size="130, 18" class="CSlider"
+        <view control-tag="Unit1::Attack" origin="128, 123" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
             bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
-
-        <view control-tag="Unit1::Attack" origin="230, 50" size="90, 18" class="CTextEdit"
-              back-color="~ BlackCColor" background-offset="0, 0"
-              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
-              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
-              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
-              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
-              value-precision="2" wheel-inc-value="0.1" />
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- decay slider -->
-        <view title="Decay:" origin="10, 80" size="80, 18" class="CTextLabel"
-            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
-            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
-            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
-            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
-            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
-            transparent="true" value-precision="2" wheel-inc-value="0.1" />
-
-        <view control-tag="Unit1::Decay" origin="90, 80" size="130, 18" class="CSlider"
+        <view control-tag="Unit1::Decay" origin="128, 147" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
             bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
-
-        <view control-tag="Unit1::Decay" origin="230, 80" size="90, 18" class="CTextEdit"
-              back-color="~ BlackCColor" background-offset="0, 0"
-              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
-              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
-              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
-              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
-              value-precision="2" wheel-inc-value="0.1" />
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- sustain slider -->
-        <view title="Sustain:" origin="10, 110" size="80, 18" class="CTextLabel"
-            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
-            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
-            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
-            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
-            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
-            transparent="true" value-precision="2" wheel-inc-value="0.1" />
-
-        <view control-tag="Unit1::Sustain" origin="90, 110" size="130, 18" class="CSlider"
+        <view control-tag="Unit1::Sustain" origin="128, 171" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
             bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
-
-        <view control-tag="Unit1::Sustain" origin="230, 110" size="90, 18" class="CTextEdit"
-              back-color="~ BlackCColor" background-offset="0, 0"
-              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
-              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
-              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
-              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
-              value-precision="2" wheel-inc-value="0.1" />
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- release slider -->
-        <view title="Release:" origin="10, 140" size="80, 18" class="CTextLabel"
-            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
-            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
-            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
-            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
-            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
-            transparent="true" value-precision="2" wheel-inc-value="0.1" />
-
-        <view control-tag="Unit1::Release" origin="90, 140" size="130, 18" class="CSlider"
+        <view control-tag="Unit1::Release" origin="128, 195" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
             bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
-
-        <view control-tag="Unit1::Release" origin="230, 140" size="90, 18" class="CTextEdit"
-              back-color="~ BlackCColor" background-offset="0, 0"
-              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
-              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
-              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
-              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
-              value-precision="2" wheel-inc-value="0.1" />
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- cutoff slider -->
-        <view title="Cutoff:" origin="10, 140" size="80, 18" class="CTextLabel"
-            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
-            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
-            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
-            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
-            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
-            transparent="true" value-precision="2" wheel-inc-value="0.1" />
-
-        <view control-tag="Unit1::Cutoff" origin="90, 140" size="130, 18" class="CSlider"
+        <view control-tag="Unit1::Cutoff" origin="128, 286" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
             bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
-
-        <view control-tag="Unit1::Cutoff" origin="230, 140" size="90, 18" class="CTextEdit"
-              back-color="~ BlackCColor" background-offset="0, 0"
-              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
-              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
-              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
-              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
-              value-precision="2" wheel-inc-value="0.1" />
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- resonance slider -->
-        <view title="Resonance:" origin="10, 140" size="80, 18" class="CTextLabel"
-            back-color="~ BlackCColor" background-offset="0, 0"  default-value="0.5"
-            font="~ NormalFont" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ BlackCColor" frame-width="1"
-            max-value="1" min-value="0" mouse-enabled="true" opacity="1" round-rect-radius="6" shadow-color="~ BlackCColor"
-            style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false"
-            style-round-rect="false" style-shadow-text="true" text-alignment="left" text-inset="5, 0" text-rotation="0"
-            transparent="true" value-precision="2" wheel-inc-value="0.1" />
-
-        <view control-tag="Unit1::Resonance" origin="90, 140" size="130, 18" class="CSlider"
+        <view control-tag="Unit1::Resonance" origin="128, 310" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
             bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 2" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
-            transparent="false" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
-        <view control-tag="Unit1::Resonance" origin="230, 140" size="90, 18" class="CTextEdit"
-              back-color="~ BlackCColor" background-offset="0, 0"
-              default-value="0.5" font="~ NormalFontSmall" font-antialias="true" font-color="~ WhiteCColor" frame-color="~ GreyCColor"
-              frame-width="1" immediate-text-change="false" max-value="1" min-value="0" mouse-enabled="true" opacity="1"
-              round-rect-radius="6" shadow-color="~ BlackCColor" style-3D-in="false" style-3D-out="false"
-              style-doubleclick="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-              style-shadow-text="false" text-alignment="center" text-inset="5, 0" text-rotation="0" title="0.00" transparent="false"
-              value-precision="2" wheel-inc-value="0.1" />
+        <!-- LFO rate slider -->
+        <view control-tag="Unit1::LFORate" origin="128, 334" size="132, 20" class="CSlider"
+            background-offset="0, 0" bitmap="slider_background"
+            bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
+            mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
     </template>
     <variables/>
@@ -214,6 +121,7 @@
         <control-tag name="Unit1::Release"   tag="3"/>
         <control-tag name="Unit1::Cutoff"    tag="4"/>
         <control-tag name="Unit1::Resonance" tag="5"/>
+        <control-tag name="Unit1::LFORate"   tag="6"/>
     </control-tags>
     <gradients>
         <gradient name="Default TextButton Gradient">

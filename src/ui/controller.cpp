@@ -131,7 +131,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     unit = new Unit( unitInfo );
     addUnit( unit );
 
-    //---Create ADSR Parameters------------
+    // ADSR controls
 
     GainParameter* attackParam = new GainParameter( ParameterInfo::kCanAutomate, kAttackId, "AttackTime", "seconds" );
     parameters.addParameter( attackParam );
@@ -149,6 +149,8 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     parameters.addParameter( releaseParam );
     releaseParam->setUnitID( 1 );
 
+    // filter controls
+
     GainParameter* cutoffParam = new GainParameter( ParameterInfo::kCanAutomate, kCutoffId, "Cutoff frequency", "Hz" );
     parameters.addParameter( cutoffParam );
     cutoffParam->setUnitID( 1 );
@@ -157,7 +159,11 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     parameters.addParameter( resonanceParam );
     resonanceParam->setUnitID( 1 );
 
-    //---Custom state init------------
+    GainParameter* lfoRateParam = new GainParameter( ParameterInfo::kCanAutomate, kLFORateId, "LFORate", "Hz" );
+    parameters.addParameter( lfoRateParam );
+    lfoRateParam->setUnitID( 1 );
+
+    // initialization
 
     String str( "VST SID" );
     str.copyTo16( defaultMessageText, 0, 127 );
@@ -202,6 +208,10 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
             return kResultFalse;
 
+        float savedLFORate = 1.f;
+        if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
 #if BYTEORDER == kBigEndian
     SWAP_32( savedAttack )
     SWAP_32( savedDecay )
@@ -209,6 +219,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
     SWAP_32( savedRelease )
     SWAP_32( savedCutoff )
     SWAP_32( savedResonance )
+    SWAP_32( savedLFORate )
 #endif
         setParamNormalized( kAttackId,    savedAttack );
         setParamNormalized( kDecayId,     savedDecay );
@@ -216,6 +227,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         setParamNormalized( kReleaseId,   savedRelease );
         setParamNormalized( kCutoffId,    savedCutoff );
         setParamNormalized( kResonanceId, savedResonance );
+        setParamNormalized( kLFORateId,   savedLFORate );
 
         // jump the GainReduction
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );

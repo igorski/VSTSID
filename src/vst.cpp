@@ -49,6 +49,7 @@ VSTSID::VSTSID ()
 , fRelease( 0.f )
 , fCutoff( 440.f )
 , fResonance( 1.f )
+, fLFORate( 1.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
@@ -210,7 +211,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     // updateProperties is a bit brute force, we're syncing the module properties
     // with this model, can we do it when there is an actual CHANGE in the model?
     Igorski::SID::updateProperties( fAttack, fDecay, fSustain, fRelease );
-    Igorski::Filter::updateProperties( fCutoff, fResonance );
+    Igorski::Filter::updateProperties( fCutoff, fResonance, fLFORate );
 
     bool hasContent = Igorski::SID::synthesize(
         ( float** ) out, numChannels, data.numSamples, sampleFramesSize
@@ -265,6 +266,10 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
     if ( state->read( &savedResonance, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
+    float savedLFORate = 0.f;
+    if ( state->read( &savedLFORate, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
 #if BYTEORDER == kBigEndian
     SWAP_32( savedAttack )
     SWAP_32( savedDecay )
@@ -272,6 +277,7 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
     SWAP_32( savedRelease )
     SWAP_32( savedCutoff )
     SWAP_32( savedResonance )
+    SWAP_32( savedLFORate )
 #endif
 
     fAttack    = savedAttack;
@@ -280,6 +286,7 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
     fRelease   = savedRelease;
     fCutoff    = savedCutoff;
     fResonance = savedResonance;
+    fLFORate   = savedLFORate;
 
     // Example of using the IStreamAttributes interface
     FUnknownPtr<IStreamAttributes> stream (state);
@@ -324,6 +331,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     float toSaveRelease   = fRelease;
     float toSaveCutoff    = fCutoff;
     float toSaveResonance = fResonance;
+    float toSaveLFORate   = fLFORate;
 
 #if BYTEORDER == kBigEndian
     SWAP_32( toSaveAttack )
@@ -332,6 +340,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     SWAP_32( toSaveRelease )
     SWAP_32( toSaveCutoff )
     SWAP_32( toSaveResonance )
+    SWAP_32( toSaveLFORate )
 #endif
 
     state->write( &toSaveAttack,    sizeof( float ));
@@ -340,6 +349,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     state->write( &toSaveRelease,   sizeof( float ));
     state->write( &toSaveCutoff,    sizeof( float ));
     state->write( &toSaveResonance, sizeof( float ));
+    state->write( &toSaveLFORate,   sizeof( float ));
 
     return kResultOk;
 }

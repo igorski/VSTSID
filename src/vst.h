@@ -93,6 +93,7 @@ class VSTSID : public AudioEffect
 
         float fCutoff;
         float fResonance;
+        float fLFORate;
 
         int32 currentProcessMode;
 };

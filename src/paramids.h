@@ -33,7 +33,8 @@ enum
     kReleaseId,     // < ADSR release time
 
     kCutoffId,      // filter cutoff
-    kResonanceId    // filter resonance
+    kResonanceId,   // filter resonance
+    kLFORateId      // filter LFO rate
 };
 
 #endif

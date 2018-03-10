@@ -86,7 +86,7 @@ namespace Filter {
 
     /* public methods */
 
-    void updateProperties( float cutoffPercentage, float resonancePercentage )
+    void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORate )
     {
         float co  = FILTER_MIN_FREQ + ( cutoffPercentage * ( FILTER_MAX_FREQ - FILTER_MIN_FREQ ));
         float res = FILTER_MIN_RESONANCE + ( resonancePercentage * ( FILTER_MAX_RESONANCE - FILTER_MIN_RESONANCE ));
@@ -94,6 +94,14 @@ namespace Filter {
         if ( _cutoff != co || _resonance != res ) {
             setCutoff( co );
             setResonance( res );
+        }
+
+        if ( LFORate == 0.f ) {
+            setLFO( false );
+        }
+        else if ( !_hasLFO ) {
+            setLFO( true );
+            LFO::setRate( LFORate );
         }
     }
 
@@ -174,7 +182,7 @@ namespace Filter {
 
         // no LFO ? make sure the filter returns to its default parameters
 
-        if ( enabled )
+        if ( !enabled )
         {
             _tempCutoff = _cutoff;
             calculateParameters();
