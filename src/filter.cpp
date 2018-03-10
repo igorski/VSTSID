@@ -80,8 +80,8 @@ namespace Filter {
 
     void updateProperties( float cutoffPercentage, float resonancePercentage )
     {
-        float co  = std::max( FILTER_MIN_FREQ,      cutoffPercentage * FILTER_MAX_FREQ );
-        float res = std::max( FILTER_MIN_RESONANCE, resonancePercentage * FILTER_MAX_RESONANCE );
+        float co  = FILTER_MIN_FREQ + ( cutoffPercentage * ( FILTER_MAX_FREQ - FILTER_MIN_FREQ ));
+        float res = FILTER_MIN_RESONANCE + ( resonancePercentage * ( FILTER_MAX_RESONANCE - FILTER_MIN_RESONANCE ));
 
         if ( _cutoff != co || _resonance != res ) {
             setCutoff( co );
