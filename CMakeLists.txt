@@ -99,6 +99,8 @@ set(vstsid_sources
     src/global.h
     src/miditable.h
     src/paramids.h
+    src/lfo.h
+    src/lfo.cpp
     src/filter.h
     src/filter.cpp
     src/sid.h

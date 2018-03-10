@@ -21,6 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "filter.h"
+#include "lfo.h"
 #include <algorithm>
 
 using namespace Steinberg;
@@ -31,6 +32,7 @@ namespace Filter {
     float _sampleRate = 44100.f;
     float _cutoff     = FILTER_MIN_FREQ;
     float _resonance  = FILTER_MIN_RESONANCE;
+    float _tempCutoff = _cutoff; // used when applying LFO
 
     float* _in1  = 0;
     float* _in2  = 0;
@@ -44,9 +46,17 @@ namespace Filter {
     float _b2 = 0.f;
     float _c  = 0.f;
 
+    bool _hasLFO    = false;
+    float _lfoRange = 0.f;
+
     void init( float aSampleRate )
     {
         _sampleRate = aSampleRate;
+
+        LFO::init( aSampleRate );
+
+        _hasLFO   = false;
+        _lfoRange = ( FILTER_MAX_FREQ / 2 ) - FILTER_MIN_FREQ;
 
         // stereo (2) probably enough...
         int numChannels = 8;
@@ -68,8 +78,6 @@ namespace Filter {
 
     void destroy()
     {
-        //delete _lfo; // nope... belongs to routeable oscillator in the instrument
-
         delete[] _in1;
         delete[] _in2;
         delete[] _out1;
@@ -91,8 +99,19 @@ namespace Filter {
 
     void process( float** sampleBuffer, int amountOfChannels, int bufferSize )
     {
+        float initialLFOOffset = _hasLFO ? LFO::getAccumulator() : 0;
+        float orgCutoff        = _tempCutoff;
+
         for ( int32 c = 0; c < amountOfChannels; ++c )
         {
+            // when processing each new channel restore to the same LFO offset to get the same movement ;)
+            if ( _hasLFO && c > 0 )
+            {
+                LFO::setAccumulator( initialLFOOffset );
+                _tempCutoff = orgCutoff;
+                calculateParameters();
+            }
+
             for ( int32 i = 0; i < bufferSize; ++i )
             {
                 float input  = sampleBuffer[ c ][ i ];
@@ -103,6 +122,22 @@ namespace Filter {
                 _out2[ c ] = _out1[ c ];
                 _out1[ c ] = output;
 
+                // oscillator attached to Filter ? travel the cutoff values
+                // between the minimum and half way the maximum frequencies
+
+                if ( _hasLFO )
+                {
+                    _tempCutoff = _cutoff + ( _lfoRange * LFO::peek() );
+
+                    if ( _tempCutoff > FILTER_MAX_FREQ )
+                        _tempCutoff = FILTER_MAX_FREQ;
+
+                    else if ( _tempCutoff < FILTER_MIN_FREQ )
+                        _tempCutoff = FILTER_MIN_FREQ;
+
+                    calculateParameters();
+                }
+
                 // commit the effect
                 sampleBuffer[ c ][ i ] = output;
             }
@@ -111,14 +146,9 @@ namespace Filter {
 
     void setCutoff( float frequency )
     {
-        _cutoff = frequency;
+        _cutoff     = std::max( FILTER_MIN_FREQ, std::min( frequency, FILTER_MAX_FREQ ));
+        _tempCutoff = _cutoff;
 
-        if ( _cutoff >= _sampleRate * .5 )
-            _cutoff = _sampleRate * .5 - 1;
-
-    //    if ( _cutoff < minFreq )
-    //        _cutoff = minFreq;
-    //
         calculateParameters();
     }
 
@@ -129,7 +159,7 @@ namespace Filter {
 
     void setResonance( float resonance )
     {
-        _resonance = resonance;
+        _resonance = std::max( FILTER_MIN_RESONANCE, std::min( resonance, FILTER_MAX_RESONANCE ));
         calculateParameters();
     }
 
@@ -138,14 +168,27 @@ namespace Filter {
         return _resonance;
     }
 
+    void setLFO( bool enabled )
+    {
+        _hasLFO = enabled;
+
+        // no LFO ? make sure the filter returns to its default parameters
+
+        if ( enabled )
+        {
+            _tempCutoff = _cutoff;
+            calculateParameters();
+        }
+    }
+
     void calculateParameters()
     {
-        _c  = 1.0 / tan( 3.141592653589793f * _cutoff / _sampleRate );
-        _a1 = 1.0 / ( 1.0 + _resonance * _c + _c * _c );
-        _a2 = 2 * _a1;
+        _c  = 1.f / tan( 3.141592653589793f * _tempCutoff / _sampleRate );
+        _a1 = 1.f / ( 1.f + _resonance * _c + _c * _c );
+        _a2 = 2.f * _a1;
         _a3 = _a1;
-        _b1 = 2.0 * ( 1.0 - _c * _c ) * _a1;
-        _b2 = ( 1.0 - _resonance * _c + _c * _c ) * _a1;
+        _b1 = 2.f * ( 1.f - _c * _c ) * _a1;
+        _b2 = ( 1.f - _resonance * _c + _c * _c ) * _a1;
     }
 
 }

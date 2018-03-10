@@ -58,7 +58,7 @@ VSTSID::VSTSID ()
 //------------------------------------------------------------------------
 VSTSID::~VSTSID ()
 {
-    // free all allocated Notes
+    // free all allocated resources
     Igorski::SID::reset();
     Igorski::Filter::destroy();
 }
@@ -351,6 +351,8 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
+
+    Igorski::Vst::SAMPLE_RATE = newSetup.sampleRate;
 
     Igorski::SID::init( newSetup.sampleRate, 120.f );
     Igorski::Filter::init(( float ) newSetup.sampleRate );

@@ -9,6 +9,9 @@ namespace Vst {
     static const int   ID       = 0;
     static const char* NAME     = "VSTSID";
     static const char* VENDOR   = "igorski.nl";
+
+    // set upon initialization, see vst.cpp
+    static float SAMPLE_RATE = 44100.f;
 }
 }
 

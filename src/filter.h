@@ -32,7 +32,7 @@ namespace Filter {
     const float FILTER_MIN_FREQ      = 50.0f;
     const float FILTER_MAX_FREQ      = 12000.f;
     const float FILTER_MIN_RESONANCE = 0.1f;
-    const float FILTER_MAX_RESONANCE = sqrt( 2.f ) * .5f;
+    const float FILTER_MAX_RESONANCE = sqrt( 2.f ) / 2.f;
 
     extern void init( float aSampleRate );
     extern void destroy();
@@ -41,6 +41,7 @@ namespace Filter {
     extern float getCutoff();
     extern void  setResonance( float resonance );
     extern float getResonance();
+    extern void setLFO( bool enabled );
 
     extern void calculateParameters();
 
@@ -51,7 +52,10 @@ namespace Filter {
     extern void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
 
     extern float _cutoff;
+    extern float _tempCutoff;
     extern float _resonance;
+    extern float _lfoRange;
+    extern bool  _hasLFO;
 
     // used internally
 
