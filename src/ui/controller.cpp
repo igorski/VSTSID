@@ -41,66 +41,6 @@ namespace Steinberg {
 namespace Vst {
 
 //------------------------------------------------------------------------
-// UIParameter Declaration
-// example of custom parameter (overwriting to and fromString)
-//------------------------------------------------------------------------
-class UIParameter : public RangeParameter
-{
-    public:
-        UIParameter( int32 flags, int32 id, const char* title, const char* units, float minValue, float maxValue );
-
-        void toString( ParamValue normValue, String128 string ) const SMTG_OVERRIDE;
-        bool fromString( const TChar* string, ParamValue& normValue ) const SMTG_OVERRIDE;
-};
-
-//------------------------------------------------------------------------
-// UIParameter Implementation
-//------------------------------------------------------------------------
-UIParameter::UIParameter( int32 flags, int32 id, const char* title, const char* units, float minValue, float maxValue )
-{
-    Steinberg::UString( info.title, USTRINGSIZE( info.title )).assign( USTRING( title ));
-    Steinberg::UString( info.units, USTRINGSIZE( info.units )).assign( USTRING( units ));
-
-    info.flags = flags;
-    info.id = id;
-    info.stepCount = 0;
-    info.defaultNormalizedValue = maxValue / 2;
-    info.unitId = kRootUnitId;
-
-    setNormalized( maxValue );
-
-    setMin( minValue );
-    setMax( maxValue );
-}
-
-//------------------------------------------------------------------------
-void UIParameter::toString( ParamValue normValue, String128 string ) const
-{
-    char text[32];
-    sprintf( text, "%.2f", ( float ) normValue );
-    Steinberg::UString( string, 128 ).fromAscii( text );
-}
-
-//------------------------------------------------------------------------
-bool UIParameter::fromString( const TChar* string, ParamValue& normValue ) const
-{
-    String wrapper(( TChar* ) string ); // don't know buffer size here!
-    double tmp = getMin();
-    if ( wrapper.scanFloat( tmp ))
-    {
-        // allow only values between specified min and max range
-        if ( tmp < getMin() )
-            tmp = getMin();
-        else if ( tmp > getMax() )
-            tmp = getMax();
-
-        normValue = tmp;
-        return true;
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------
 // VSTSIDController Implementation
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
@@ -133,55 +73,60 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     unit = new Unit( unitInfo );
     addUnit( unit );
+    int32 unitId = 1;
 
     // ADSR controls
 
-    UIParameter* attackParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kAttackId, "AttackTime", "seconds", 0.f, 1.f
+    RangeParameter* attackParam = new RangeParameter(
+        USTRING( "Attack time" ), kAttackId, USTRING( "seconds" ),
+        0.f, 1.f, 0.f, 0,
+        ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( attackParam );
-    attackParam->setUnitID( 1 );
 
-    UIParameter* decayParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kDecayId, "DecayTime", "seconds", 0.f, 1.f
+    RangeParameter* decayParam = new RangeParameter(
+        USTRING( "Decay time" ), kDecayId, USTRING( "seconds" ),
+        0.f, 1.f, 0.f, 0,
+        ParameterInfo::kCanAutomate, unitId
      );
     parameters.addParameter( decayParam );
-    decayParam->setUnitID( 1 );
 
-    UIParameter* sustainParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kSustainId, "SustainVolume", "0 - 1", 0.f, 1.f
+    RangeParameter* sustainParam = new RangeParameter(
+        USTRING( "Sustain volume" ), kSustainId, USTRING( "0 - 1" ),
+        0.f, 1.f, 0.f, 0,
+        ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( sustainParam );
-    sustainParam->setUnitID( 1 );
 
-    UIParameter* releaseParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kReleaseId, "ReleaseTime", "seconds", 0.f, 1.f
+    RangeParameter* releaseParam = new RangeParameter(
+        USTRING( "Release time" ), kReleaseId, USTRING( "seconds" ),
+        0.f, 1.f, 0.f, 0,
+        ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( releaseParam );
-    releaseParam->setUnitID( 1 );
 
     // filter controls
 
-    UIParameter* cutoffParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kCutoffId, "Cutoff frequency", "Hz",
-        Igorski::Filter::FILTER_MIN_FREQ, Igorski::Filter::FILTER_MAX_FREQ
+    RangeParameter* cutoffParam = new RangeParameter(
+        USTRING( "Cutoff frequency" ), kCutoffId, USTRING( "Hz" ),
+        Igorski::Filter::FILTER_MIN_FREQ, Igorski::Filter::FILTER_MAX_FREQ, Igorski::Filter::FILTER_MIN_FREQ,
+        0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( cutoffParam );
-    cutoffParam->setUnitID( 1 );
 
-    UIParameter* resonanceParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kResonanceId, "Resonance", "dB",
-        Igorski::Filter::FILTER_MIN_RESONANCE, Igorski::Filter::FILTER_MAX_RESONANCE
-    );
+    RangeParameter* resonanceParam = new RangeParameter(
+        USTRING( "Resonance" ), kResonanceId, USTRING( "db" ),
+        Igorski::Filter::FILTER_MIN_RESONANCE, Igorski::Filter::FILTER_MAX_RESONANCE, Igorski::Filter::FILTER_MIN_RESONANCE,
+        0, ParameterInfo::kCanAutomate, unitId
+   );
     parameters.addParameter( resonanceParam );
-    resonanceParam->setUnitID( 1 );
 
-    UIParameter* lfoRateParam = new UIParameter(
-        ParameterInfo::kCanAutomate, kLFORateId, "LFORate", "Hz",
-        Igorski::LFO::MIN_LFO_RATE(), Igorski::LFO::MAX_LFO_RATE()
+    RangeParameter* lfoRateParam = new RangeParameter(
+        USTRING( "LFO rate" ), kLFORateId, USTRING( "Hz" ),
+        Igorski::LFO::MIN_LFO_RATE(), Igorski::LFO::MAX_LFO_RATE(), Igorski::LFO::MIN_LFO_RATE(),
+        0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( lfoRateParam );
-    lfoRateParam->setUnitID( 1 );
 
     // initialization
 
@@ -201,7 +146,6 @@ tresult PLUGIN_API VSTSIDController::terminate()
 tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
 {
     // we receive the current state of the component (processor part)
-    // we read only the ADSR envelope values
     if ( state )
     {
         float savedAttack = 1.f;
@@ -346,21 +290,30 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
 {
     switch ( tag )
     {
-        // ADSR envelopes are floating point values in 0 - 1 range
+        // ADSR envelopes are floating point values in 0 - 1 range, we can
+        // simply read the normalized value which is in the same range
 
         case kAttackId:
         case kDecayId:
         case kSustainId:
         case kReleaseId:
+        {
+            char text[32];
+            sprintf( text, "%.2f", ( float ) valueNormalized );
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
 
         // Filter settings are also floating point but in a custom range
+        // request the plain value from the normalized value
 
         case kCutoffId:
         case kResonanceId:
         case kLFORateId:
         {
             char text[32];
-            sprintf( text, "%.2f", ( float ) valueNormalized );
+            sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -375,7 +328,7 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSIDController::getParamValueByString( ParamID tag, TChar* string, ParamValue& valueNormalized )
 {
-    /* example, but better to use a custom Parameter as seen in UIParameter
+    /* example, but better to use a custom Parameter as seen in RangeParameter
     switch (tag)
     {
         case kAttackId:

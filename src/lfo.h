@@ -62,12 +62,12 @@ namespace LFO {
     inline float peek()
     {
         // the wave table offset to read from
-        int readOffset = ( _accumulator == 0 ) ? 0 : ( int ) ( _accumulator / SR_OVER_LENGTH );
+        int readOffset = ( _accumulator == 0.f ) ? 0 : ( int ) ( _accumulator / SR_OVER_LENGTH );
 
         // increment the accumulators read offset
         _accumulator += _rate;
 
-        // keep the accumulator in the bounds of the sample frequency
+        // keep the accumulator within the bounds of the sample frequency
         if ( _accumulator > Igorski::Vst::SAMPLE_RATE )
             _accumulator -= Igorski::Vst::SAMPLE_RATE;
 

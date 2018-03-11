@@ -48,8 +48,8 @@ namespace Filter {
 
     extern void calculateParameters();
 
-    // update Filter properties
-    extern void updateProperties( float cutoff, float resonance, float LFORate );
+    // update Filter properties, the values here are in normalized 0 - 1 range
+    extern void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage );
 
     // apply filter to incoming sampleBuffer contents
     extern void process( float** sampleBuffer, int amountOfChannels, int bufferSize );

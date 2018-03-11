@@ -84,7 +84,8 @@ class VSTSID : public AudioEffect
     protected:
         //==============================================================================
 
-        // our model values
+        // our model values, these are all 0 - 1 range
+        // (normalized) RangeParameter values
 
         float fAttack;
         float fDecay;

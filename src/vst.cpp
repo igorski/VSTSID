@@ -47,9 +47,9 @@ VSTSID::VSTSID ()
 , fDecay( 1.f )
 , fSustain( .5f )
 , fRelease( 0.f )
-, fCutoff( 440.f )
+, fCutoff( .5f )
 , fResonance( 1.f )
-, fLFORate( 1.f )
+, fLFORate( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)

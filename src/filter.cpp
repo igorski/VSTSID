@@ -85,25 +85,32 @@ namespace Filter {
 
     /* public methods */
 
-    void updateProperties( float cutoff, float resonance, float LFORate )
+    void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage )
     {
-        if ( _cutoff != cutoff || _resonance != resonance ) {
-            setCutoff( cutoff );
-            setResonance( resonance );
+        float co  = FILTER_MIN_FREQ + ( cutoffPercentage * ( FILTER_MAX_FREQ - FILTER_MIN_FREQ ));
+        float res = FILTER_MIN_RESONANCE + ( resonancePercentage * ( FILTER_MAX_RESONANCE - FILTER_MIN_RESONANCE ));
+
+        if ( _cutoff != co || _resonance != res ) {
+            setCutoff( co );
+            setResonance( res );
         }
 
-        if ( LFORate == 0.f ) {
+        if ( LFORatePercentage == 0.f ) {
             setLFO( false );
         }
         else if ( !_hasLFO ) {
             setLFO( true );
-            LFO::setRate( LFORate );
+            LFO::setRate(
+                Igorski::LFO::MIN_LFO_RATE() + (
+                    LFORatePercentage * ( Igorski::LFO::MAX_LFO_RATE() - Igorski::LFO::MIN_LFO_RATE() )
+                )
+            );
         }
     }
 
     void process( float** sampleBuffer, int amountOfChannels, int bufferSize )
     {
-        float initialLFOOffset = _hasLFO ? LFO::getAccumulator() : 0;
+        float initialLFOOffset = _hasLFO ? LFO::getAccumulator() : 0.f;
         float orgCutoff        = _tempCutoff;
 
         for ( int32 c = 0; c < amountOfChannels; ++c )
@@ -133,11 +140,11 @@ namespace Filter {
                 {
                     _tempCutoff = _cutoff + ( _lfoRange * LFO::peek() );
 
-                    if ( _tempCutoff > FILTER_MAX_FREQ )
-                        _tempCutoff = FILTER_MAX_FREQ;
-
-                    else if ( _tempCutoff < FILTER_MIN_FREQ )
-                        _tempCutoff = FILTER_MIN_FREQ;
+//                    if ( _tempCutoff > FILTER_MAX_FREQ )
+//                        _tempCutoff = FILTER_MAX_FREQ;
+//
+//                    else if ( _tempCutoff < FILTER_MIN_FREQ )
+//                        _tempCutoff = FILTER_MIN_FREQ;
 
                     calculateParameters();
                 }
