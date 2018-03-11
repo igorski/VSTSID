@@ -31,7 +31,7 @@
 namespace Steinberg {
 namespace Vst {
 
-template <typename T>
+template<typename T>
 class VSTSIDUIMessageController;
 
 //------------------------------------------------------------------------
@@ -45,28 +45,28 @@ class VSTSIDController : public EditControllerEx1, public IMidiMapping, public V
         // create function required for Plug-in factory,
         // it will be called to create new instances of this controller
         //--- ---------------------------------------------------------------------
-        static FUnknown* createInstance (void* /*context*/)
+        static FUnknown* createInstance( void* /*context*/ )
         {
-            return (IEditController*)new VSTSIDController;
+            return ( IEditController* ) new VSTSIDController;
         }
 
         //---from IPluginBase--------
-        tresult PLUGIN_API initialize (FUnknown* context) SMTG_OVERRIDE;
-        tresult PLUGIN_API terminate () SMTG_OVERRIDE;
+        tresult PLUGIN_API initialize( FUnknown* context ) SMTG_OVERRIDE;
+        tresult PLUGIN_API terminate() SMTG_OVERRIDE;
 
         //---from EditController-----
-        tresult PLUGIN_API setComponentState (IBStream* state) SMTG_OVERRIDE;
-        IPlugView* PLUGIN_API createView (const char* name) SMTG_OVERRIDE;
-        tresult PLUGIN_API setState (IBStream* state) SMTG_OVERRIDE;
-        tresult PLUGIN_API getState (IBStream* state) SMTG_OVERRIDE;
-        tresult PLUGIN_API setParamNormalized (ParamID tag, ParamValue value) SMTG_OVERRIDE;
-        tresult PLUGIN_API getParamStringByValue (ParamID tag, ParamValue valueNormalized,
-                                                  String128 string) SMTG_OVERRIDE;
-        tresult PLUGIN_API getParamValueByString (ParamID tag, TChar* string,
-                                                  ParamValue& valueNormalized) SMTG_OVERRIDE;
+        tresult PLUGIN_API setComponentState( IBStream* state ) SMTG_OVERRIDE;
+        IPlugView* PLUGIN_API createView( const char* name ) SMTG_OVERRIDE;
+        tresult PLUGIN_API setState( IBStream* state ) SMTG_OVERRIDE;
+        tresult PLUGIN_API getState( IBStream* state ) SMTG_OVERRIDE;
+        tresult PLUGIN_API setParamNormalized( ParamID tag, ParamValue value) SMTG_OVERRIDE;
+        tresult PLUGIN_API getParamStringByValue( ParamID tag, ParamValue valueNormalized,
+                                                  String128 string ) SMTG_OVERRIDE;
+        tresult PLUGIN_API getParamValueByString( ParamID tag, TChar* string,
+                                                  ParamValue& valueNormalized ) SMTG_OVERRIDE;
 
         //---from ComponentBase-----
-        tresult receiveText (const char* text) SMTG_OVERRIDE;
+        tresult receiveText( const char* text ) SMTG_OVERRIDE;
 
         //---from IMidiMapping-----------------
         tresult PLUGIN_API getMidiControllerAssignment (int32 busIndex, int16 channel,
@@ -74,18 +74,18 @@ class VSTSIDController : public EditControllerEx1, public IMidiMapping, public V
                                                         ParamID& tag) SMTG_OVERRIDE;
 
         //---from VST3EditorDelegate-----------
-        IController* createSubController (UTF8StringPtr name, const IUIDescription* description,
-                                          VST3Editor* editor) SMTG_OVERRIDE;
+        IController* createSubController( UTF8StringPtr name, const IUIDescription* description,
+                                          VST3Editor* editor ) SMTG_OVERRIDE;
 
-        DELEGATE_REFCOUNT (EditController)
-        tresult PLUGIN_API queryInterface (const char* iid, void** obj) SMTG_OVERRIDE;
+        DELEGATE_REFCOUNT ( EditController )
+        tresult PLUGIN_API queryInterface( const char* iid, void** obj ) SMTG_OVERRIDE;
 
         //---Internal functions-------
-        void addUIMessageController (UIMessageController* controller);
-        void removeUIMessageController (UIMessageController* controller);
+        void addUIMessageController( UIMessageController* controller );
+        void removeUIMessageController( UIMessageController* controller );
 
-        void setDefaultMessageText (String128 text);
-        TChar* getDefaultMessageText ();
+        void setDefaultMessageText( String128 text );
+        TChar* getDefaultMessageText();
 
     private:
         typedef std::vector<UIMessageController*> UIMessageControllerList;

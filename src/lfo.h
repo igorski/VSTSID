@@ -29,6 +29,7 @@ namespace Igorski {
 namespace LFO {
 
     // maximum and minimum rate of oscillation in Hz
+    // also see vstsid.xml to update the controls to match
 
     static const float MAX_LFO_RATE() { return 10.f; }
     static const float MIN_LFO_RATE() { return .1f; }

@@ -21,7 +21,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "filter.h"
-#include "lfo.h"
 #include <algorithm>
 
 using namespace Steinberg;
@@ -86,14 +85,11 @@ namespace Filter {
 
     /* public methods */
 
-    void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORate )
+    void updateProperties( float cutoff, float resonance, float LFORate )
     {
-        float co  = FILTER_MIN_FREQ + ( cutoffPercentage * ( FILTER_MAX_FREQ - FILTER_MIN_FREQ ));
-        float res = FILTER_MIN_RESONANCE + ( resonancePercentage * ( FILTER_MAX_RESONANCE - FILTER_MIN_RESONANCE ));
-
-        if ( _cutoff != co || _resonance != res ) {
-            setCutoff( co );
-            setResonance( res );
+        if ( _cutoff != cutoff || _resonance != resonance ) {
+            setCutoff( cutoff );
+            setResonance( resonance );
         }
 
         if ( LFORate == 0.f ) {

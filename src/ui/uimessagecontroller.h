@@ -42,23 +42,24 @@ class VSTSIDUIMessageController : public VSTGUI::IController, public VSTGUI::IVi
             kSendMessageTag = 1000
         };
 
-        VSTSIDUIMessageController (ControllerType* vstsidController) : vstsidController (vstsidController), textEdit (nullptr)
+        VSTSIDUIMessageController( ControllerType* vstsidController ) : vstsidController( vstsidController ), textEdit( nullptr )
         {
         }
 
         ~VSTSIDUIMessageController()
         {
-            viewWillDelete (textEdit);
+            viewWillDelete( textEdit );
             vstsidController->removeUIMessageController( this );
         }
 
         void setMessageText( String128 msgText )
         {
-            if (!textEdit)
+            if ( !textEdit )
                 return;
-            String str (msgText);
-            str.toMultiByte (kCP_Utf8);
-            textEdit->setText (str.text8 ());
+
+            String str( msgText );
+            str.toMultiByte( kCP_Utf8 );
+            textEdit->setText( str.text8() );
         }
 
     private:
@@ -68,40 +69,40 @@ class VSTSIDUIMessageController : public VSTGUI::IController, public VSTGUI::IVi
         typedef VSTGUI::UTF8String UTF8String;
 
         //--- from IControlListener ----------------------
-        void valueChanged (CControl* /*pControl*/) override {}
-        void controlBeginEdit (CControl* /*pControl*/) override {}
-        void controlEndEdit (CControl* pControl) override
+        void valueChanged( CControl* /*pControl*/ ) override {}
+        void controlBeginEdit( CControl* /*pControl*/ ) override {}
+        void controlEndEdit( CControl* pControl ) override
         {
-            if (pControl->getTag () == kSendMessageTag)
+            if ( pControl->getTag () == kSendMessageTag )
             {
-                if (pControl->getValueNormalized () > 0.5f)
+                if ( pControl->getValueNormalized () > 0.5f )
                 {
-                    vstsidController->sendTextMessage (textEdit->getText ().data ());
-                    pControl->setValue (0.f);
-                    pControl->invalid ();
+                    vstsidController->sendTextMessage( textEdit->getText ().data() );
+                    pControl->setValue( 0.f );
+                    pControl->invalid();
 
                     //---send a binary message
-                    if (IPtr<IMessage> message = owned( vstsidController->allocateMessage()))
+                    if ( IPtr<IMessage> message = owned( vstsidController->allocateMessage()))
                     {
                         message->setMessageID ("BinaryMessage");
                         uint32 size = 100;
                         char8 data[100];
-                        memset (data, 0, size * sizeof (char));
+                        memset( data, 0, size * sizeof( char ));
                         // fill my data with dummy stuff
-                        for (uint32 i = 0; i < size; i++)
-                            data[i] = i;
-                        message->getAttributes ()->setBinary ("MyData", data, size);
-                        vstsidController->sendMessage (message);
+                        for ( uint32 i = 0; i < size; i++ )
+                            data[ i ] = i;
+                        message->getAttributes ()->setBinary( "MyData", data, size );
+                        vstsidController->sendMessage( message );
                     }
                 }
             }
         }
         //--- from IControlListener ----------------------
         //--- is called when a view is created -----
-        CView* verifyView (CView* view, const UIAttributes& /*attributes*/,
-                           const IUIDescription* /*description*/) override
+        CView* verifyView ( CView* view, const UIAttributes& /*attributes*/,
+                            const IUIDescription* /*description*/ ) override
         {
-            if (CTextEdit* te = dynamic_cast<CTextEdit*> (view))
+            if ( CTextEdit* te = dynamic_cast<CTextEdit*>( view ))
             {
                 // this allows us to keep a pointer of the text edit view
                 textEdit = te;

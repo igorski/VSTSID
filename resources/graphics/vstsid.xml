@@ -4,21 +4,13 @@
     </fonts>
     <colors>
         <color name="Focus" rgba="#279bffff"/>
-        <color name="Title Background" rgba="#39393944"/>
     </colors>
     <template
         maxSize="284, 497" minSize="284, 497" size="284, 497" name="view" opacity="1" origin="0, 0"
         background-color="~ BlackCColor" background-color-draw-style="filled and stroked" bitmap="background"
         class="CViewContainer"  mouse-enabled="true"  transparent="false">
 
-        <view back-color="Title Background" title="VSTSID" background-offset="0, 0" class="CTextLabel" default-value="0.5"
-            font="~ NormalFontVeryBig" font-antialias="true" font-color="~ WhiteCColor" frame-color="Title Background"
-            frame-width="1" max-value="1" min-value="0" mouse-enabled="true" opacity="1" origin="10, 10"
-            round-rect-radius="10" shadow-color="~ RedCColor" size="310, 28" style-3D-in="false" style-3D-out="false"
-            style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="true"
-            style-shadow-text="false" text-alignment="center" text-inset="0, 0" text-rotation="0"
-            transparent="false" value-precision="2" wheel-inc-value="0.1" />
-
+        <!-- ADSR module -->
         <!-- attack slider -->
         <view control-tag="Unit1::Attack" origin="128, 123" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
@@ -55,30 +47,31 @@
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
             transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
+        <!-- filter module -->
         <!-- cutoff slider -->
         <view control-tag="Unit1::Cutoff" origin="128, 286" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
-            bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            bitmap-offset="0, 0" default-value="440" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="12000" min-value="50"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
             transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- resonance slider -->
         <view control-tag="Unit1::Resonance" origin="128, 310" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
-            bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            bitmap-offset="0, 0" default-value="0.1" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="0.7071067811865476" min-value="0.1"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
             transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
         <!-- LFO rate slider -->
         <view control-tag="Unit1::LFORate" origin="128, 334" size="132, 20" class="CSlider"
             background-offset="0, 0" bitmap="slider_background"
-            bitmap-offset="0, 0" default-value="0.5" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            bitmap-offset="0, 0" default-value="0" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
             draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
-            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="10" min-value="0"
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
             transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 

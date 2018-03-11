@@ -24,6 +24,7 @@
 #include "controller.h"
 #include "uimessagecontroller.h"
 #include "../paramids.h"
+#include "../filter.h"
 
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/base/ustring.h"
@@ -40,22 +41,22 @@ namespace Steinberg {
 namespace Vst {
 
 //------------------------------------------------------------------------
-// GainParameter Declaration
+// UIParameter Declaration
 // example of custom parameter (overwriting to and fromString)
 //------------------------------------------------------------------------
-class GainParameter : public Parameter
+class UIParameter : public RangeParameter
 {
     public:
-        GainParameter( int32 flags, int32 id, const char* title, const char* units );
+        UIParameter( int32 flags, int32 id, const char* title, const char* units, float minValue, float maxValue );
 
         void toString( ParamValue normValue, String128 string ) const SMTG_OVERRIDE;
         bool fromString( const TChar* string, ParamValue& normValue ) const SMTG_OVERRIDE;
 };
 
 //------------------------------------------------------------------------
-// GainParameter Implementation
+// UIParameter Implementation
 //------------------------------------------------------------------------
-GainParameter::GainParameter( int32 flags, int32 id, const char* title, const char* units )
+UIParameter::UIParameter( int32 flags, int32 id, const char* title, const char* units, float minValue, float maxValue )
 {
     Steinberg::UString( info.title, USTRINGSIZE( info.title )).assign( USTRING( title ));
     Steinberg::UString( info.units, USTRINGSIZE( info.units )).assign( USTRING( units ));
@@ -63,14 +64,17 @@ GainParameter::GainParameter( int32 flags, int32 id, const char* title, const ch
     info.flags = flags;
     info.id = id;
     info.stepCount = 0;
-    info.defaultNormalizedValue = 0.5f;
+    info.defaultNormalizedValue = maxValue / 2;
     info.unitId = kRootUnitId;
 
-    setNormalized (1.f);
+    setNormalized( maxValue );
+
+    setMin( minValue );
+    setMax( maxValue );
 }
 
 //------------------------------------------------------------------------
-void GainParameter::toString( ParamValue normValue, String128 string ) const
+void UIParameter::toString( ParamValue normValue, String128 string ) const
 {
     char text[32];
     sprintf( text, "%.2f", ( float ) normValue );
@@ -78,17 +82,17 @@ void GainParameter::toString( ParamValue normValue, String128 string ) const
 }
 
 //------------------------------------------------------------------------
-bool GainParameter::fromString (const TChar* string, ParamValue& normValue) const
+bool UIParameter::fromString( const TChar* string, ParamValue& normValue ) const
 {
     String wrapper(( TChar* ) string ); // don't know buffer size here!
-    double tmp = 0.0;
+    double tmp = getMin();
     if ( wrapper.scanFloat( tmp ))
     {
-        // allow only values between 0 and 1
-        if ( tmp < 0.0 )
-            tmp = 0.0;
-        else if ( tmp > 1.0 )
-            tmp = 1.0;
+        // allow only values between specified min and max range
+        if ( tmp < getMin() )
+            tmp = getMin();
+        else if ( tmp > getMax() )
+            tmp = getMax();
 
         normValue = tmp;
         return true;
@@ -102,10 +106,9 @@ bool GainParameter::fromString (const TChar* string, ParamValue& normValue) cons
 tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 {
     tresult result = EditControllerEx1::initialize( context );
-    if (result != kResultOk)
-    {
+
+    if ( result != kResultOk )
         return result;
-    }
 
     //--- Create Units-------------
     UnitInfo unitInfo;
@@ -120,7 +123,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     unit = new Unit (unitInfo);
     addUnitInfo (unit);*/
 
-    // create a unit1 for the ADSR
+    // create a unit1
     unitInfo.id = 1;
     unitInfo.parentUnitId = kRootUnitId;    // attached to the root unit
 
@@ -133,33 +136,50 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     // ADSR controls
 
-    GainParameter* attackParam = new GainParameter( ParameterInfo::kCanAutomate, kAttackId, "AttackTime", "seconds" );
+    UIParameter* attackParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kAttackId, "AttackTime", "seconds", 0.f, 1.f
+    );
     parameters.addParameter( attackParam );
     attackParam->setUnitID( 1 );
 
-    GainParameter* decayParam = new GainParameter( ParameterInfo::kCanAutomate, kDecayId, "DecayTime", "seconds" );
+    UIParameter* decayParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kDecayId, "DecayTime", "seconds", 0.f, 1.f
+     );
     parameters.addParameter( decayParam );
     decayParam->setUnitID( 1 );
 
-    GainParameter* sustainParam = new GainParameter( ParameterInfo::kCanAutomate, kSustainId, "SustainVolume", "0 - 1" );
+    UIParameter* sustainParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kSustainId, "SustainVolume", "0 - 1", 0.f, 1.f
+    );
     parameters.addParameter( sustainParam );
     sustainParam->setUnitID( 1 );
 
-    GainParameter* releaseParam = new GainParameter( ParameterInfo::kCanAutomate, kReleaseId, "ReleaseTime", "seconds" );
+    UIParameter* releaseParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kReleaseId, "ReleaseTime", "seconds", 0.f, 1.f
+    );
     parameters.addParameter( releaseParam );
     releaseParam->setUnitID( 1 );
 
     // filter controls
 
-    GainParameter* cutoffParam = new GainParameter( ParameterInfo::kCanAutomate, kCutoffId, "Cutoff frequency", "Hz" );
+    UIParameter* cutoffParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kCutoffId, "Cutoff frequency", "Hz",
+        Igorski::Filter::FILTER_MIN_FREQ, Igorski::Filter::FILTER_MAX_FREQ
+    );
     parameters.addParameter( cutoffParam );
     cutoffParam->setUnitID( 1 );
 
-    GainParameter* resonanceParam = new GainParameter( ParameterInfo::kCanAutomate, kResonanceId, "Resonance", "dB" );
+    UIParameter* resonanceParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kResonanceId, "Resonance", "dB",
+        Igorski::Filter::FILTER_MIN_RESONANCE, Igorski::Filter::FILTER_MAX_RESONANCE
+    );
     parameters.addParameter( resonanceParam );
     resonanceParam->setUnitID( 1 );
 
-    GainParameter* lfoRateParam = new GainParameter( ParameterInfo::kCanAutomate, kLFORateId, "LFORate", "Hz" );
+    UIParameter* lfoRateParam = new UIParameter(
+        ParameterInfo::kCanAutomate, kLFORateId, "LFORate", "Hz",
+        Igorski::LFO::MIN_LFO_RATE(), Igorski::LFO::MAX_LFO_RATE()
+    );
     parameters.addParameter( lfoRateParam );
     lfoRateParam->setUnitID( 1 );
 
@@ -172,7 +192,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::terminate  ()
+tresult PLUGIN_API VSTSIDController::terminate()
 {
     return EditControllerEx1::terminate ();
 }
@@ -200,15 +220,15 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedRelease, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedCutoff = 1.f;
+        float savedCutoff = Igorski::Filter::FILTER_MAX_FREQ;
         if ( state->read( &savedCutoff, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedResonance = 1.f;
+        float savedResonance = Igorski::Filter::FILTER_MAX_RESONANCE;
         if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedLFORate = 1.f;
+        float savedLFORate = Igorski::LFO::MIN_LFO_RATE();
         if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
             return kResultFalse;
 
@@ -229,7 +249,6 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         setParamNormalized( kResonanceId, savedResonance );
         setParamNormalized( kLFORateId,   savedLFORate );
 
-        // jump the GainReduction
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
     }
     return kResultOk;
@@ -248,9 +267,9 @@ IPlugView* PLUGIN_API VSTSIDController::createView( const char* name )
 }
 
 //------------------------------------------------------------------------
-IController* VSTSIDController::createSubController (UTF8StringPtr name,
-                                                   const IUIDescription* /*description*/,
-                                                   VST3Editor* /*editor*/)
+IController* VSTSIDController::createSubController( UTF8StringPtr name,
+                                                    const IUIDescription* /*description*/,
+                                                    VST3Editor* /*editor*/ )
 {
     if ( UTF8StringView( name ) == "MessageController" )
     {
@@ -262,7 +281,7 @@ IController* VSTSIDController::createSubController (UTF8StringPtr name,
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::setState (IBStream* state)
+tresult PLUGIN_API VSTSIDController::setState( IBStream* state )
 {
     tresult result = kResultFalse;
 
@@ -276,7 +295,7 @@ tresult PLUGIN_API VSTSIDController::setState (IBStream* state)
     // if the byteorder doesn't match, byte swap the text array ...
     if ( byteOrder != BYTEORDER )
     {
-        for (int32 i = 0; i < 128; i++)
+        for ( int32 i = 0; i < 128; i++ )
             SWAP_16( defaultMessageText[ i ])
     }
 
@@ -288,7 +307,7 @@ tresult PLUGIN_API VSTSIDController::setState (IBStream* state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::getState (IBStream* state)
+tresult PLUGIN_API VSTSIDController::getState( IBStream* state )
 {
     // here we can save UI settings for example
 
@@ -305,11 +324,11 @@ tresult PLUGIN_API VSTSIDController::getState (IBStream* state)
 tresult VSTSIDController::receiveText( const char* text )
 {
     // received from Component
-    if (text)
+    if ( text )
     {
-        fprintf (stderr, "[VSTSIDController] received: ");
-        fprintf (stderr, "%s", text);
-        fprintf (stderr, "\n");
+        fprintf( stderr, "[VSTSIDController] received: " );
+        fprintf( stderr, "%s", text );
+        fprintf( stderr, "\n" );
     }
     return kResultOk;
 }
@@ -333,6 +352,12 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
         case kDecayId:
         case kSustainId:
         case kReleaseId:
+
+        // Filter settings are also floating point but in a custom range
+
+        case kCutoffId:
+        case kResonanceId:
+        case kLFORateId:
         {
             char text[32];
             sprintf( text, "%.2f", ( float ) valueNormalized );
@@ -350,7 +375,7 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSIDController::getParamValueByString( ParamID tag, TChar* string, ParamValue& valueNormalized )
 {
-    /* example, but better to use a custom Parameter as seen in GainParameter
+    /* example, but better to use a custom Parameter as seen in UIParameter
     switch (tag)
     {
         case kAttackId:
@@ -406,7 +431,7 @@ tresult PLUGIN_API VSTSIDController::queryInterface( const char* iid, void** obj
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex, int16 /*midiChannel*/,
-    CtrlNumber midiControllerNumber, ParamID& tag)
+    CtrlNumber midiControllerNumber, ParamID& tag )
 {
     // we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)
     if ( busIndex == 0 && midiControllerNumber == kCtrlVolume )

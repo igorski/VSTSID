@@ -24,10 +24,13 @@
 #define __FILTER_H_INCLUDED__
 
 #include "global.h"
+#include "lfo.h"
 #include <math.h>
 
 namespace Igorski {
 namespace Filter {
+
+    // also see vstsid.xml to update the controls to match
 
     const float FILTER_MIN_FREQ      = 50.0f;
     const float FILTER_MAX_FREQ      = 12000.f;
@@ -45,8 +48,8 @@ namespace Filter {
 
     extern void calculateParameters();
 
-    // update Filter properties, percentages in 0 - 1 range
-    extern void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORate );
+    // update Filter properties
+    extern void updateProperties( float cutoff, float resonance, float LFORate );
 
     // apply filter to incoming sampleBuffer contents
     extern void process( float** sampleBuffer, int amountOfChannels, int bufferSize );

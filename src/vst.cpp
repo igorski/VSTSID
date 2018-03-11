@@ -65,10 +65,10 @@ VSTSID::~VSTSID ()
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::initialize (FUnknown* context)
+tresult PLUGIN_API VSTSID::initialize( FUnknown* context )
 {
     //---always initialize the parent-------
-    tresult result = AudioEffect::initialize (context);
+    tresult result = AudioEffect::initialize( context );
     // if everything Ok, continue
     if ( result != kResultOk )
         return result;
@@ -100,7 +100,7 @@ tresult PLUGIN_API VSTSID::setActive (TBool state)
         sendTextMessage( "VSTSID::setActive (false)" );
 
     // call our parent setActive
-    return AudioEffect::setActive (state);
+    return AudioEffect::setActive( state );
 }
 
 //------------------------------------------------------------------------
@@ -149,6 +149,21 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     case kReleaseId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
                             fRelease = ( float ) value;
+                        break;
+
+                    case kCutoffId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fCutoff = ( float ) value;
+                        break;
+
+                    case kResonanceId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fResonance = ( float ) value;
+                        break;
+
+                    case kLFORateId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fLFORate = ( float ) value;
                         break;
                 }
             }
@@ -238,7 +253,7 @@ tresult VSTSID::receiveText( const char* text )
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSID::setState (IBStream* state)
+tresult PLUGIN_API VSTSID::setState( IBStream* state )
 {
     // called when we load a preset, the model has to be reloaded
 
@@ -290,19 +305,19 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
 
     // Example of using the IStreamAttributes interface
     FUnknownPtr<IStreamAttributes> stream (state);
-    if (stream)
+    if ( stream )
     {
         IAttributeList* list = stream->getAttributes ();
-        if (list)
+        if ( list )
         {
             // get the current type (project/Default..) of this state
             String128 string = {0};
-            if (list->getString (PresetAttributes::kStateType, string, 128 * sizeof (TChar)) == kResultTrue)
+            if ( list->getString( PresetAttributes::kStateType, string, 128 * sizeof( TChar )) == kResultTrue )
             {
-                UString128 tmp (string);
+                UString128 tmp( string );
                 char ascii[128];
-                tmp.toAscii (ascii, 128);
-                if (!strncmp (ascii, StateType::kProject, strlen (StateType::kProject)))
+                tmp.toAscii( ascii, 128 );
+                if ( !strncmp( ascii, StateType::kProject, strlen( StateType::kProject )))
                 {
                     // we are in project loading context...
                 }
@@ -310,8 +325,9 @@ tresult PLUGIN_API VSTSID::setState (IBStream* state)
 
             // get the full file path of this state
             TChar fullPath[1024];
-            memset (fullPath, 0, 1024 * sizeof (TChar));
-            if (list->getString( PresetAttributes::kFilePathStringType, fullPath, 1024 * sizeof (TChar)) == kResultTrue )
+            memset( fullPath, 0, 1024 * sizeof( TChar ));
+            if ( list->getString( PresetAttributes::kFilePathStringType,
+                 fullPath, 1024 * sizeof( TChar )) == kResultTrue )
             {
                 // here we have the full path ...
             }
@@ -444,7 +460,7 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
     if ( !message )
         return kInvalidArgument;
 
-    if ( !strcmp (message->getMessageID (), "BinaryMessage" ))
+    if ( !strcmp( message->getMessageID(), "BinaryMessage" ))
     {
         const void* data;
         uint32 size;
@@ -452,15 +468,15 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
         {
             // we are in UI thread
             // size should be 100
-            if (size == 100 && ((char*)data)[1] == 1) // yeah...
+            if ( size == 100 && ((char*)data)[1] == 1 ) // yeah...
             {
-                fprintf (stderr, "[VSTSID] received the binary message!\n");
+                fprintf( stderr, "[VSTSID] received the binary message!\n" );
             }
             return kResultOk;
         }
     }
 
-    return AudioEffect::notify (message);
+    return AudioEffect::notify( message );
 }
 
 //------------------------------------------------------------------------

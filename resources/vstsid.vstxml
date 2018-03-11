@@ -13,6 +13,7 @@
         <Param name="Release"   id="3" />
         <Param name="Cutoff"    id="4" />
         <Param name="Resonance" id="5" />
+        <Param name="LFORate"   id="6" />
 
     </VSTParametersStructure>
 </VSTPluginProperties>
