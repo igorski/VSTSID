@@ -5,13 +5,22 @@
 #include "pluginterfaces/base/funknown.h"
 
 namespace Igorski {
-namespace Vst {
+namespace SID {
+
     static const int   ID       = 0;
     static const char* NAME     = "VSTSID";
     static const char* VENDOR   = "igorski.nl";
 
     // set upon initialization, see vst.cpp
     static float SAMPLE_RATE = 44100.f;
+
+    // also see vstsid.xml to update the controls to match
+
+    static const float FILTER_MIN_FREQ      = 50.0f;
+    static const float FILTER_MAX_FREQ      = 12000.f;
+    static const float FILTER_MIN_RESONANCE = 0.1f;
+    static const float FILTER_MAX_RESONANCE = 0.7071067811865476f; //sqrt( 2.f ) / 2.f;
+
 }
 }
 

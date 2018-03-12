@@ -62,7 +62,7 @@ BEGIN_FACTORY_DEF( "igorski.nl",
     DEF_CLASS2( INLINE_UID_FROM_FUID( VSTSIDProcessorUID ),
                 PClassInfo::kManyInstances,      // cardinality
                 kVstAudioEffectClass,            // the component category (do not change this)
-                Igorski::Vst::NAME,              // plug-in name
+                Igorski::SID::NAME,              // plug-in name
                 Vst::kDistributable,             // means that component and controller could be distributed on different computers
                 Vst::PlugType::kInstrumentSynth, // Subcategory for this Plug-in
                 FULL_VERSION_STR,                // Plug-in version

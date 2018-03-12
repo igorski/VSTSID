@@ -25,6 +25,8 @@
 
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "global.h"
+#include "synth.h"
+#include "filter.h"
 
 namespace Steinberg {
 namespace Vst {
@@ -97,6 +99,9 @@ class VSTSID : public AudioEffect
         float fLFORate;
 
         int32 currentProcessMode;
+
+        Igorski::Synthesizer* synth;
+        Igorski::Filter*      filter;
 };
 
 //------------------------------------------------------------------------

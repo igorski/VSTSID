@@ -21,182 +21,171 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "filter.h"
+#include "global.h"
 #include <algorithm>
 
 using namespace Steinberg;
 
 namespace Igorski {
-namespace Filter {
 
-    float _sampleRate = 44100.f;
-    float _cutoff     = FILTER_MIN_FREQ;
-    float _resonance  = FILTER_MIN_RESONANCE;
-    float _tempCutoff = _cutoff; // used when applying LFO
+Filter::Filter( float sampleRate ) {
 
-    float* _in1  = 0;
-    float* _in2  = 0;
-    float* _out1 = 0;
-    float* _out2 = 0;
+    _sampleRate = sampleRate;
+    _cutoff     = SID::FILTER_MIN_FREQ;
+    _resonance  = SID::FILTER_MIN_RESONANCE;
+    _tempCutoff = _cutoff; // used when applying LFO
+    
+    _a1 = 0.f;
+    _a2 = 0.f;
+    _a3 = 0.f;
+    _b1 = 0.f;
+    _b2 = 0.f;
+    _c  = 0.f;
 
-    float _a1 = 0.f;
-    float _a2 = 0.f;
-    float _a3 = 0.f;
-    float _b1 = 0.f;
-    float _b2 = 0.f;
-    float _c  = 0.f;
+    LFO::init( sampleRate );
 
-    bool _hasLFO = false;
+    _hasLFO = false;
 
-    void init( float aSampleRate )
+    // stereo (2) probably enough...
+    int numChannels = 8;
+
+    _in1  = new float[ numChannels ];
+    _in2  = new float[ numChannels ];
+    _out1 = new float[ numChannels ];
+    _out2 = new float[ numChannels ];
+
+    for ( int i = 0; i < numChannels; ++i )
     {
-        _sampleRate = aSampleRate;
+        _in1 [ i ] = 0.f;
+        _in2 [ i ] = 0.f;
+        _out1[ i ] = 0.f;
+        _out2[ i ] = 0.f;
+    }
+    setCutoff( SID::FILTER_MAX_FREQ / 2 );
+}
 
-        LFO::init( aSampleRate );
+Filter::~Filter() {
+    delete[] _in1;
+    delete[] _in2;
+    delete[] _out1;
+    delete[] _out2;
+}
 
-        _hasLFO = false;
+/* public methods */
 
-        // stereo (2) probably enough...
-        int numChannels = 8;
+void Filter::updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage )
+{
+    float co  = SID::FILTER_MIN_FREQ + ( cutoffPercentage * ( SID::FILTER_MAX_FREQ - SID::FILTER_MIN_FREQ ));
+    float res = SID::FILTER_MIN_RESONANCE + ( resonancePercentage * ( SID::FILTER_MAX_RESONANCE - SID::FILTER_MIN_RESONANCE ));
 
-        _in1  = new float[ numChannels ];
-        _in2  = new float[ numChannels ];
-        _out1 = new float[ numChannels ];
-        _out2 = new float[ numChannels ];
+    if ( _cutoff != co || _resonance != res ) {
+        setCutoff( co );
+        setResonance( res );
+    }
 
-        for ( int i = 0; i < numChannels; ++i )
+    if ( LFORatePercentage == 0.f ) {
+        setLFO( false );
+    }
+    else if ( !_hasLFO ) {
+        setLFO( true );
+        LFO::setRate(
+            Igorski::LFO::MIN_LFO_RATE() + (
+                LFORatePercentage * ( Igorski::LFO::MAX_LFO_RATE() - Igorski::LFO::MIN_LFO_RATE() )
+            )
+        );
+    }
+}
+
+void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize )
+{
+    float initialLFOOffset = _hasLFO ? LFO::getAccumulator() : 0.f;
+    float orgCutoff        = _tempCutoff;
+
+    for ( int32 c = 0; c < amountOfChannels; ++c )
+    {
+        // when processing each new channel restore to the same LFO offset to get the same movement ;)
+        if ( _hasLFO && c > 0 )
         {
-            _in1 [ i ] = 0.f;
-            _in2 [ i ] = 0.f;
-            _out1[ i ] = 0.f;
-            _out2[ i ] = 0.f;
-        }
-        setCutoff( FILTER_MAX_FREQ / 2 );
-    }
-
-    void destroy()
-    {
-        delete[] _in1;
-        delete[] _in2;
-        delete[] _out1;
-        delete[] _out2;
-    }
-
-    /* public methods */
-
-    void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage )
-    {
-        float co  = FILTER_MIN_FREQ + ( cutoffPercentage * ( FILTER_MAX_FREQ - FILTER_MIN_FREQ ));
-        float res = FILTER_MIN_RESONANCE + ( resonancePercentage * ( FILTER_MAX_RESONANCE - FILTER_MIN_RESONANCE ));
-
-        if ( _cutoff != co || _resonance != res ) {
-            setCutoff( co );
-            setResonance( res );
+            LFO::setAccumulator( initialLFOOffset );
+            _tempCutoff = orgCutoff;
+            calculateParameters();
         }
 
-        if ( LFORatePercentage == 0.f ) {
-            setLFO( false );
-        }
-        else if ( !_hasLFO ) {
-            setLFO( true );
-            LFO::setRate(
-                Igorski::LFO::MIN_LFO_RATE() + (
-                    LFORatePercentage * ( Igorski::LFO::MAX_LFO_RATE() - Igorski::LFO::MIN_LFO_RATE() )
-                )
-            );
-        }
-    }
-
-    void process( float** sampleBuffer, int amountOfChannels, int bufferSize )
-    {
-        float initialLFOOffset = _hasLFO ? LFO::getAccumulator() : 0.f;
-        float orgCutoff        = _tempCutoff;
-
-        for ( int32 c = 0; c < amountOfChannels; ++c )
+        for ( int32 i = 0; i < bufferSize; ++i )
         {
-            // when processing each new channel restore to the same LFO offset to get the same movement ;)
-            if ( _hasLFO && c > 0 )
+            float input  = sampleBuffer[ c ][ i ];
+            float output = _a1 * input + _a2 * _in1[ c ] + _a3 * _in2[ c ] - _b1 * _out1[ c ] - _b2 * _out2[ c ];
+
+            _in2 [ c ] = _in1[ c ];
+            _in1 [ c ] = input;
+            _out2[ c ] = _out1[ c ];
+            _out1[ c ] = output;
+
+            // oscillator attached to Filter ? travel the cutoff values
+            // between the minimum and maximum frequencies
+
+            if ( _hasLFO )
             {
-                LFO::setAccumulator( initialLFOOffset );
-                _tempCutoff = orgCutoff;
+                _tempCutoff = _cutoff - std::abs(( _cutoff - SID::FILTER_MIN_FREQ ) * LFO::peek() );
                 calculateParameters();
             }
 
-            for ( int32 i = 0; i < bufferSize; ++i )
-            {
-                float input  = sampleBuffer[ c ][ i ];
-                float output = _a1 * input + _a2 * _in1[ c ] + _a3 * _in2[ c ] - _b1 * _out1[ c ] - _b2 * _out2[ c ];
-
-                _in2 [ c ] = _in1[ c ];
-                _in1 [ c ] = input;
-                _out2[ c ] = _out1[ c ];
-                _out1[ c ] = output;
-
-                // oscillator attached to Filter ? travel the cutoff values
-                // between the minimum and maximum frequencies
-
-                if ( _hasLFO )
-                {
-                    _tempCutoff = _cutoff - std::abs(( _cutoff - FILTER_MIN_FREQ ) * LFO::peek() );
-                    calculateParameters();
-                }
-
-                // commit the effect
-                sampleBuffer[ c ][ i ] = output;
-            }
+            // commit the effect
+            sampleBuffer[ c ][ i ] = output;
         }
     }
-
-    void setCutoff( float frequency )
-    {
-        // in case LFO is moving, set the current temp cutoff (last LFO value)
-        // to the relative value for the new cutoff frequency)
-
-        float tempRatio = _tempCutoff / _cutoff;
-
-        _cutoff     = std::max( FILTER_MIN_FREQ, std::min( frequency, FILTER_MAX_FREQ ));
-        _tempCutoff = _cutoff * tempRatio;
-
-        calculateParameters();
-    }
-
-    float getCutoff()
-    {
-        return _cutoff;
-    }
-
-    void setResonance( float resonance )
-    {
-        _resonance = std::max( FILTER_MIN_RESONANCE, std::min( resonance, FILTER_MAX_RESONANCE ));
-        calculateParameters();
-    }
-
-    float getResonance()
-    {
-        return _resonance;
-    }
-
-    void setLFO( bool enabled )
-    {
-        _hasLFO = enabled;
-
-        // no LFO ? make sure the filter returns to its default parameters
-
-        if ( !enabled )
-        {
-            _tempCutoff = _cutoff;
-            calculateParameters();
-        }
-    }
-
-    void calculateParameters()
-    {
-        _c  = 1.f / tan( 3.141592653589793f * _tempCutoff / _sampleRate );
-        _a1 = 1.f / ( 1.f + _resonance * _c + _c * _c );
-        _a2 = 2.f * _a1;
-        _a3 = _a1;
-        _b1 = 2.f * ( 1.f - _c * _c ) * _a1;
-        _b2 = ( 1.f - _resonance * _c + _c * _c ) * _a1;
-    }
-
 }
+
+void Filter::setCutoff( float frequency )
+{
+    // in case LFO is moving, set the current temp cutoff (last LFO value)
+    // to the relative value for the new cutoff frequency)
+
+    float tempRatio = _tempCutoff / _cutoff;
+
+    _cutoff     = std::max( SID::FILTER_MIN_FREQ, std::min( frequency, SID::FILTER_MAX_FREQ ));
+    _tempCutoff = _cutoff * tempRatio;
+
+    calculateParameters();
+}
+
+float Filter::getCutoff()
+{
+    return _cutoff;
+}
+
+void Filter::setResonance( float resonance )
+{
+    _resonance = std::max( SID::FILTER_MIN_RESONANCE, std::min( resonance, SID::FILTER_MAX_RESONANCE ));
+    calculateParameters();
+}
+
+float Filter::getResonance()
+{
+    return _resonance;
+}
+
+void Filter::setLFO( bool enabled )
+{
+    _hasLFO = enabled;
+
+    // no LFO ? make sure the filter returns to its default parameters
+
+    if ( !enabled )
+    {
+        _tempCutoff = _cutoff;
+        calculateParameters();
+    }
+}
+
+void Filter::calculateParameters()
+{
+    _c  = 1.f / tan( 3.141592653589793f * _tempCutoff / _sampleRate );
+    _a1 = 1.f / ( 1.f + _resonance * _c + _c * _c );
+    _a2 = 2.f * _a1;
+    _a3 = _a1;
+    _b1 = 2.f * ( 1.f - _c * _c ) * _a1;
+    _b2 = ( 1.f - _resonance * _c + _c * _c ) * _a1;
+}
+
 }

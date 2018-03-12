@@ -103,8 +103,8 @@ set(vstsid_sources
     src/lfo.cpp
     src/filter.h
     src/filter.cpp
-    src/sid.h
-    src/sid.cpp
+    src/synth.h
+    src/synth.cpp
     src/vst.h
     src/vst.cpp
     src/vstentry.cpp

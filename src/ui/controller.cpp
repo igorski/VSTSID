@@ -109,14 +109,14 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     RangeParameter* cutoffParam = new RangeParameter(
         USTRING( "Cutoff frequency" ), kCutoffId, USTRING( "Hz" ),
-        Igorski::Filter::FILTER_MIN_FREQ, Igorski::Filter::FILTER_MAX_FREQ, Igorski::Filter::FILTER_MIN_FREQ,
+        Igorski::SID::FILTER_MIN_FREQ, Igorski::SID::FILTER_MAX_FREQ, Igorski::SID::FILTER_MIN_FREQ,
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( cutoffParam );
 
     RangeParameter* resonanceParam = new RangeParameter(
         USTRING( "Resonance" ), kResonanceId, USTRING( "db" ),
-        Igorski::Filter::FILTER_MIN_RESONANCE, Igorski::Filter::FILTER_MAX_RESONANCE, Igorski::Filter::FILTER_MIN_RESONANCE,
+        Igorski::SID::FILTER_MIN_RESONANCE, Igorski::SID::FILTER_MAX_RESONANCE, Igorski::SID::FILTER_MIN_RESONANCE,
         0, ParameterInfo::kCanAutomate, unitId
    );
     parameters.addParameter( resonanceParam );
@@ -164,11 +164,11 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedRelease, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedCutoff = Igorski::Filter::FILTER_MAX_FREQ;
+        float savedCutoff = Igorski::SID::FILTER_MAX_FREQ;
         if ( state->read( &savedCutoff, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedResonance = Igorski::Filter::FILTER_MAX_RESONANCE;
+        float savedResonance = Igorski::SID::FILTER_MAX_RESONANCE;
         if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
             return kResultFalse;
 

@@ -22,7 +22,7 @@
  */
 #include "global.h"
 #include "vst.h"
-#include "sid.h"
+#include "synth.h"
 #include "filter.h"
 #include "paramids.h"
 
@@ -60,8 +60,8 @@ VSTSID::VSTSID ()
 VSTSID::~VSTSID ()
 {
     // free all allocated resources
-    Igorski::SID::reset();
-    Igorski::Filter::destroy();
+    delete synth;
+    delete filter;
 }
 
 //------------------------------------------------------------------------
@@ -171,8 +171,8 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     // according to docs: processing context (optional, but most welcome)
 
-    if ( data.processContext != nullptr && Igorski::SID::TEMPO != data.processContext->tempo ) {
-        Igorski::SID::init(( int ) data.processContext->sampleRate, data.processContext->tempo );
+    if ( data.processContext != nullptr && synth->TEMPO != data.processContext->tempo ) {
+        synth->init(( int ) data.processContext->sampleRate, data.processContext->tempo );
     }
 
     //---2) Read input events-------------
@@ -190,13 +190,13 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     //----------------------
                     case Event::kNoteOnEvent:
                         // event has properties: channel, pitch, velocity, length, tuning, noteId
-                        Igorski::SID::noteOn( event.noteOn.pitch );
+                        synth->noteOn( event.noteOn.pitch );
                         break;
 
                     //----------------------
                     case Event::kNoteOffEvent:
                         // noteOff reset the reduction
-                        Igorski::SID::noteOff( event.noteOff.pitch );
+                        synth->noteOff( event.noteOff.pitch );
                         break;
                 }
             }
@@ -224,15 +224,15 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     // updateProperties is a bit brute force, we're syncing the module properties
     // with this model, can we do it when there is an actual CHANGE in the model?
-    Igorski::SID::updateProperties( fAttack, fDecay, fSustain, fRelease );
-    Igorski::Filter::updateProperties( fCutoff, fResonance, fLFORate );
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease );
+    filter->updateProperties( fCutoff, fResonance, fLFORate );
 
-    bool hasContent = Igorski::SID::synthesize(
+    bool hasContent = synth->synthesize(
         ( float** ) out, numChannels, data.numSamples, sampleFramesSize
     );
 
     if ( hasContent )
-        Igorski::Filter::process(( float** ) out, numChannels, data.numSamples );
+        filter->process(( float** ) out, numChannels, data.numSamples );
 
     // mark our outputs as not silent if content had been synthesized
     data.outputs[ 0 ].silenceFlags = !hasContent;
@@ -377,10 +377,12 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
 
-    Igorski::Vst::SAMPLE_RATE = newSetup.sampleRate;
+    Igorski::SID::SAMPLE_RATE = newSetup.sampleRate;
 
-    Igorski::SID::init( newSetup.sampleRate, 120.f );
-    Igorski::Filter::init(( float ) newSetup.sampleRate );
+    synth = new Igorski::Synthesizer();
+    synth->init( newSetup.sampleRate, 120.f );
+
+    filter = new Igorski::Filter(( float ) newSetup.sampleRate );
 
     return AudioEffect::setupProcessing( newSetup );
 }

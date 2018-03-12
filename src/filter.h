@@ -28,52 +28,48 @@
 #include <math.h>
 
 namespace Igorski {
-namespace Filter {
 
-    // also see vstsid.xml to update the controls to match
+    class Filter {
 
-    const float FILTER_MIN_FREQ      = 50.0f;
-    const float FILTER_MAX_FREQ      = 12000.f;
-    const float FILTER_MIN_RESONANCE = 0.1f;
-    const float FILTER_MAX_RESONANCE = sqrt( 2.f ) / 2.f;
+        public:
+            Filter( float sampleRate );
+            ~Filter();
 
-    extern void init( float aSampleRate );
-    extern void destroy();
+            void  setCutoff( float frequency );
+            float getCutoff();
+            void  setResonance( float resonance );
+            float getResonance();
+            void setLFO( bool enabled );
 
-    extern void  setCutoff( float frequency );
-    extern float getCutoff();
-    extern void  setResonance( float resonance );
-    extern float getResonance();
-    extern void setLFO( bool enabled );
+            void calculateParameters();
+    
+            // update Filter properties, the values here are in normalized 0 - 1 range
+            void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage );
 
-    extern void calculateParameters();
+            // apply filter to incoming sampleBuffer contents
+            void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
+    
+        private:
+            float _cutoff;
+            float _tempCutoff;
+            float _resonance;
+            bool  _hasLFO;
 
-    // update Filter properties, the values here are in normalized 0 - 1 range
-    extern void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage );
+            // used internally
 
-    // apply filter to incoming sampleBuffer contents
-    extern void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
+            float _sampleRate;
+            float _a1;
+            float _a2;
+            float _a3;
+            float _b1;
+            float _b2;
+            float _c;
 
-    extern float _cutoff;
-    extern float _tempCutoff;
-    extern float _resonance;
-    extern bool  _hasLFO;
-
-    // used internally
-
-    extern float _sampleRate;
-    extern float _a1;
-    extern float _a2;
-    extern float _a3;
-    extern float _b1;
-    extern float _b2;
-    extern float _c;
-
-    extern float* _in1;
-    extern float* _in2;
-    extern float* _out1;
-    extern float* _out2;
-}
+            float* _in1;
+            float* _in2;
+            float* _out1;
+            float* _out2;
+    };
 }
 
 #endif

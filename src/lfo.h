@@ -68,8 +68,8 @@ namespace LFO {
         _accumulator += _rate;
 
         // keep the accumulator within the bounds of the sample frequency
-        if ( _accumulator > Igorski::Vst::SAMPLE_RATE )
-            _accumulator -= Igorski::Vst::SAMPLE_RATE;
+        if ( _accumulator > Igorski::SID::SAMPLE_RATE )
+            _accumulator -= Igorski::SID::SAMPLE_RATE;
 
         // return the sample present at the calculated offset within the table
         return TABLE[ readOffset ];

@@ -29,42 +29,9 @@
 using namespace Steinberg;
 
 namespace Igorski {
-namespace SID {
-
-    // synthesis related properties
-
-    const float PI     = 3.141592653589793f;
-    const float TWO_PI = 2.0f * PI;
-    const float PWR    = PI / 1.05f;
-    const float PW_AMP = 0.075f;
-    extern float TWO_PI_OVER_SR;
-
-    extern double TEMPO;        // in BPM, taken from host
-    extern int SAMPLE_RATE,     // in Hz, taken from host
-               BUFFER_SIZE,
-               MAX_ENVELOPE_SAMPLES,
-               ARPEGGIO_DURATION;
-
-    extern bool doArpeggiate;
-
-    // the amount of simultaneous notes at which arpeggiation begins
-
-    const int ARPEGGIATOR_THRESHOLD = 3;
-    const int ARPEGGIATOR_SPEED     = 16;   // is a subdivision of a full measure, e.g. "16" is 16th note
-
-    // SID model (e.g. synthesizer properties)
-
-    struct SIDProperties {
-        float attack;
-        float decay;
-        float sustain;
-        float release;
-    };
-    extern SIDProperties SID;
-
-    // event model (e.g. all currently playing notes)
 
     // data type for a single Note
+
     struct Note {
         int16 pitch;
         bool released;
@@ -130,39 +97,82 @@ namespace SID {
         ADSR adsr;
     };
 
-    // collection of Notes registered for playback
+    class Synthesizer {
 
-    extern std::vector<Note*> notes;
+        public:
+            Synthesizer();
+            ~Synthesizer();
 
-    // methods
+            double TEMPO; // in BPM, taken from host
 
-    extern void init( int sampleRate, double tempo );
+            // methods
 
-    // create a new Note for a MIDI noteOn/noteOff Event
-    extern void noteOn ( int16 pitch );
-    extern void noteOff( int16 pitch );
+            void init( int sampleRate, double tempo );
 
-    // retrieves an existing Note for given arguments, if none
-    // could be found, nullptr is returned
-    extern Note* getExistingNote( int16 pitch );
+            // create a new Note for a MIDI noteOn/noteOff Event
+            void noteOn ( int16 pitch );
+            void noteOff( int16 pitch );
 
-    // removes a Note from the list (used internally when
-    // release phase has completed after "noteOff")
-    extern bool removeNote( Note* note );
+            void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease );
 
-    // removes all currently playing notes
-    extern void reset();
+            // the whole point of this exercise: synthesizing sweet, sweet PWM !
 
-    // internal update routines
-    extern void handleNoteAmountChange();
-    extern void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease );
+            bool synthesize(
+                float** outputBuffers, int numChannels,
+                int bufferSize, Steinberg::uint32 sampleFramesSize
+            );
 
-    // the whole point of this exercise: synthesizing sweet, sweet PWM !
-    extern bool synthesize( float** outputBuffers, int numChannels,
-        int bufferSize, Steinberg::uint32 sampleFramesSize );
+            // the amount of simultaneous notes at which arpeggiation begins
 
-    extern float getArpeggiatorFrequency( int index );
-}
+            const int ARPEGGIATOR_THRESHOLD = 3;
+            const int ARPEGGIATOR_SPEED     = 16;   // is a subdivision of a full measure, e.g. "16" is 16th note
+
+            // SID model (e.g. synthesizer properties)
+
+            struct SIDProperties {
+                float attack;
+                float decay;
+                float sustain;
+                float release;
+            };
+            SIDProperties props;
+
+        private:
+
+            // collection of Notes registered for playback
+
+            std::vector<Note*> notes;
+
+            // synthesis related properties
+
+            const float PI     = 3.141592653589793f;
+            const float TWO_PI = 2.0f * PI;
+            const float PWR    = PI / 1.05f;
+            const float PW_AMP = 0.075f;
+
+            float TWO_PI_OVER_SR;
+            int SAMPLE_RATE,     // in Hz, taken from host
+                BUFFER_SIZE,
+                MAX_ENVELOPE_SAMPLES,
+                ARPEGGIO_DURATION;
+
+            bool doArpeggiate;
+
+            // retrieves an existing Note for given arguments, if none
+            // could be found, nullptr is returned
+            Note* getExistingNote( int16 pitch );
+
+            // removes a Note from the list (used internally when
+            // release phase has completed after "noteOff")
+            bool removeNote( Note* note );
+
+            // removes all currently playing notes
+            void reset();
+
+            // internal update routines
+            void handleNoteAmountChange();
+            float getArpeggiatorFrequency( int index );
+    };
 }
 
 #endif
