@@ -74,8 +74,7 @@ tresult PLUGIN_API VSTSID::initialize( FUnknown* context )
         return result;
 
     //---create Audio In/Out buses------
-    // we want a stereo Input and a Stereo Output
-    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
+    //addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
     addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
 
     //---create Event In/Out buses (1 bus with only 1 channel)------
