@@ -45,8 +45,7 @@ namespace Filter {
     float _b2 = 0.f;
     float _c  = 0.f;
 
-    bool _hasLFO    = false;
-    float _lfoRange = 0.f;
+    bool _hasLFO = false;
 
     void init( float aSampleRate )
     {
@@ -54,8 +53,7 @@ namespace Filter {
 
         LFO::init( aSampleRate );
 
-        _hasLFO   = false;
-        _lfoRange = ( FILTER_MAX_FREQ / 2 ) - FILTER_MIN_FREQ;
+        _hasLFO = false;
 
         // stereo (2) probably enough...
         int numChannels = 8;
@@ -134,18 +132,11 @@ namespace Filter {
                 _out1[ c ] = output;
 
                 // oscillator attached to Filter ? travel the cutoff values
-                // between the minimum and half way the maximum frequencies
+                // between the minimum and maximum frequencies
 
                 if ( _hasLFO )
                 {
-                    _tempCutoff = _cutoff + ( _lfoRange * LFO::peek() );
-
-//                    if ( _tempCutoff > FILTER_MAX_FREQ )
-//                        _tempCutoff = FILTER_MAX_FREQ;
-//
-//                    else if ( _tempCutoff < FILTER_MIN_FREQ )
-//                        _tempCutoff = FILTER_MIN_FREQ;
-
+                    _tempCutoff = _cutoff - std::abs(( _cutoff - FILTER_MIN_FREQ ) * LFO::peek() );
                     calculateParameters();
                 }
 
@@ -157,8 +148,13 @@ namespace Filter {
 
     void setCutoff( float frequency )
     {
+        // in case LFO is moving, set the current temp cutoff (last LFO value)
+        // to the relative value for the new cutoff frequency)
+
+        float tempRatio = _tempCutoff / _cutoff;
+
         _cutoff     = std::max( FILTER_MIN_FREQ, std::min( frequency, FILTER_MAX_FREQ ));
-        _tempCutoff = _cutoff;
+        _tempCutoff = _cutoff * tempRatio;
 
         calculateParameters();
     }

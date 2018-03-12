@@ -57,7 +57,6 @@ namespace Filter {
     extern float _cutoff;
     extern float _tempCutoff;
     extern float _resonance;
-    extern float _lfoRange;
     extern bool  _hasLFO;
 
     // used internally
