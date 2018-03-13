@@ -23,37 +23,37 @@
 #include "lfo.h"
 
 namespace Igorski {
-namespace LFO {
 
-    float _rate          = MIN_LFO_RATE();
-    float _accumulator   = 0.f;
-    float SR_OVER_LENGTH = 44100.f / TABLE_SIZE;
+LFO::LFO( float sampleRate ) {
+    _rate          = SID::MIN_LFO_RATE();
+    _accumulator   = 0.f;
+    SR_OVER_LENGTH = sampleRate / ( float ) TABLE_SIZE;
+}
 
-    /* public methods */
-
-    void init( float sampleRate ) {
-        SR_OVER_LENGTH = sampleRate / ( float ) TABLE_SIZE;
-    }
-
-    float getRate()
-    {
-        return _rate;
-    }
-
-    void setRate( float value )
-    {
-        _rate = value;
-    }
-
-    void setAccumulator( float value )
-    {
-        _accumulator = value;
-    }
-
-    float getAccumulator()
-    {
-        return _accumulator;
-    }
+LFO::~LFO() {
 
 }
+
+/* public methods */
+
+float LFO::getRate()
+{
+    return _rate;
+}
+
+void LFO::setRate( float value )
+{
+    _rate = value;
+}
+
+void LFO::setAccumulator( float value )
+{
+    _accumulator = value;
+}
+
+float LFO::getAccumulator()
+{
+    return _accumulator;
+}
+
 }

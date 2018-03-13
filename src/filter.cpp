@@ -42,7 +42,7 @@ Filter::Filter( float sampleRate ) {
     _b2 = 0.f;
     _c  = 0.f;
 
-    LFO::init( sampleRate );
+    _lfo = new Igorski::LFO( sampleRate );
 
     _hasLFO = false;
 
@@ -65,6 +65,7 @@ Filter::Filter( float sampleRate ) {
 }
 
 Filter::~Filter() {
+    delete _lfo;
     delete[] _in1;
     delete[] _in2;
     delete[] _out1;
@@ -83,14 +84,15 @@ void Filter::updateProperties( float cutoffPercentage, float resonancePercentage
         setResonance( res );
     }
 
-    if ( LFORatePercentage == 0.f ) {
+    bool doLFO = LFORatePercentage != 0.f;
+    if ( !doLFO && _hasLFO ) {
         setLFO( false );
     }
-    else if ( !_hasLFO ) {
+    else if ( doLFO ) {
         setLFO( true );
-        LFO::setRate(
-            Igorski::LFO::MIN_LFO_RATE() + (
-                LFORatePercentage * ( Igorski::LFO::MAX_LFO_RATE() - Igorski::LFO::MIN_LFO_RATE() )
+        _lfo->setRate(
+            SID::MIN_LFO_RATE() + (
+                LFORatePercentage * ( SID::MAX_LFO_RATE() - SID::MIN_LFO_RATE() )
             )
         );
     }
@@ -98,7 +100,7 @@ void Filter::updateProperties( float cutoffPercentage, float resonancePercentage
 
 void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize )
 {
-    float initialLFOOffset = _hasLFO ? LFO::getAccumulator() : 0.f;
+    float initialLFOOffset = _hasLFO ? _lfo->getAccumulator() : 0.f;
     float orgCutoff        = _tempCutoff;
 
     for ( int32 c = 0; c < amountOfChannels; ++c )
@@ -106,7 +108,7 @@ void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize
         // when processing each new channel restore to the same LFO offset to get the same movement ;)
         if ( _hasLFO && c > 0 )
         {
-            LFO::setAccumulator( initialLFOOffset );
+            _lfo->setAccumulator( initialLFOOffset );
             _tempCutoff = orgCutoff;
             calculateParameters();
         }
@@ -126,7 +128,7 @@ void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize
 
             if ( _hasLFO )
             {
-                _tempCutoff = _cutoff - std::abs(( _cutoff - SID::FILTER_MIN_FREQ ) * LFO::peek() );
+                _tempCutoff = _cutoff - std::abs(( _cutoff - SID::FILTER_MIN_FREQ ) * _lfo->peek() );
                 calculateParameters();
             }
 

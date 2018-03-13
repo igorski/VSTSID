@@ -123,7 +123,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     RangeParameter* lfoRateParam = new RangeParameter(
         USTRING( "LFO rate" ), kLFORateId, USTRING( "Hz" ),
-        Igorski::LFO::MIN_LFO_RATE(), Igorski::LFO::MAX_LFO_RATE(), Igorski::LFO::MIN_LFO_RATE(),
+        Igorski::SID::MIN_LFO_RATE(), Igorski::SID::MAX_LFO_RATE(), Igorski::SID::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( lfoRateParam );
@@ -172,7 +172,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedLFORate = Igorski::LFO::MIN_LFO_RATE();
+        float savedLFORate = Igorski::SID::MIN_LFO_RATE();
         if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
             return kResultFalse;
 

@@ -54,6 +54,7 @@ namespace Igorski {
             float _tempCutoff;
             float _resonance;
             bool  _hasLFO;
+            LFO*  _lfo;
 
             // used internally
 
