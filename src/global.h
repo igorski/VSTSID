@@ -14,10 +14,11 @@ namespace SID {
     // set upon initialization, see vst.cpp
     static float SAMPLE_RATE = 44100.f;
 
+    // filter ranges, also see https://www.waitingforfriday.com/?p=661
     // also see vstsid.xml to update the controls to match
 
-    static const float FILTER_MIN_FREQ      = 50.0f;
-    static const float FILTER_MAX_FREQ      = 12000.f;
+    static const float FILTER_MIN_FREQ      = 30.0f;
+    static const float FILTER_MAX_FREQ      = 10000.f;
     static const float FILTER_MIN_RESONANCE = 0.1f;
     static const float FILTER_MAX_RESONANCE = 0.7071067811865476f; //sqrt( 2.f ) / 2.f;
 
