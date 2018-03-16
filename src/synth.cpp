@@ -80,7 +80,7 @@ void Synthesizer::noteOn( int16 pitch )
 
     if ( doArpeggiate ) {
         int fullMeasure   = round((( float ) SAMPLE_RATE * 60.f ) / TEMPO );
-        ARPEGGIO_DURATION = fullMeasure / ARPEGGIATOR_SPEED;
+        ARPEGGIO_DURATION = fullMeasure / getArpeggiatorSpeedByTempo( TEMPO );
     }
 
     // set Note ADSR properties from current model
@@ -350,4 +350,31 @@ float Synthesizer::getArpeggiatorFrequency( int index )
     }
     return notes.at( 0 )->baseFrequency;
 }
+
+int Synthesizer::getArpeggiatorSpeedByTempo( float tempo )
+{
+    // at what note subdivision should the arpeggios move ?
+    // e.g. 16th notes, 32nd notes, 64th notes, etc.
+    // we keep the arpeggio in sync with the hosts tempo (see ARPEGGIO_DURATION)
+    // but don't want a very slow (or too fast!) moving pulse
+
+    if ( tempo >= 400.f )
+        return 4;
+
+    if ( tempo >= 200.f )
+        return 8;
+
+    else if ( tempo >= 120.f )
+        return 16;
+
+    else if ( tempo >= 50.f )
+        return 32;
+
+    else if ( tempo >= 40.f )
+        return 64;
+
+    // what kind of ominous slow chiptune music are you creating??
+    return 128;
+}
+
 }

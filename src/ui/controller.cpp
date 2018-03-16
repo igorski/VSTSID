@@ -313,7 +313,10 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
         case kLFORateId:
         {
             char text[32];
-            sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
+            if ( tag == kLFORateId && valueNormalized == 0 )
+                sprintf( text, "%s", "Off" );
+            else
+                sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;

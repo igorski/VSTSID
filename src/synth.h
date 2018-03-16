@@ -125,7 +125,6 @@ namespace Igorski {
             // the amount of simultaneous notes at which arpeggiation begins
 
             const int ARPEGGIATOR_THRESHOLD = 3;
-            const int ARPEGGIATOR_SPEED     = 16;   // is a subdivision of a full measure, e.g. "16" is 16th note
 
             // SID model (e.g. synthesizer properties)
 
@@ -172,6 +171,9 @@ namespace Igorski {
             // internal update routines
             void handleNoteAmountChange();
             float getArpeggiatorFrequency( int index );
+
+            // get the appropriate arpeggiator speed for given tempo
+            int getArpeggiatorSpeedByTempo( float tempo );
     };
 }
 
