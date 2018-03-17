@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __VERSION_HEADER__
+#define __VERSION_HEADER__
 
 #include "pluginterfaces/base/fplatform.h"
 
@@ -27,5 +28,7 @@
 #define stringFileDescription   "VSTSID VST3-SDK"
 #endif
 #define stringCompanyName       "igorski.nl\0"
-#define stringLegalCopyright    "© 2018 igorski.nl"
+#define stringLegalCopyright    "ï¿½ 2018 igorski.nl"
 #define stringLegalTrademarks   "VST is a trademark of Steinberg Media Technologies GmbH"
+
+#endif

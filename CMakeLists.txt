@@ -8,7 +8,7 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
 
 # path to Steinberg VST3 SDK
-set(VSTSDK_PATH "C:/Users/IEUser/Desktop/VST_SDK/VST3_SDK" CACHE PATH "Path to VST3 SDK")
+set(VSTSDK_PATH "/Library/VST_SDK/VST3_SDK" CACHE PATH "Path to VST3 SDK")
 
 # compiler flags
 add_definitions(-DNDEBUG)
@@ -113,6 +113,7 @@ set(vstsid_sources
     src/vst.h
     src/vst.cpp
     src/vstentry.cpp
+    src/version.cpp
     src/ui/controller.h
     src/ui/controller.cpp
     src/ui/uimessagecontroller.h
@@ -225,7 +226,7 @@ elseif(WIN32)
   )
 elseif(WIN)
   install(TARGETS vstsid
-	DESTINATION "C:/Program Files/Common Files/VST3/"
+    DESTINATION "C:/Program Files/Common Files/VST3/"
   )
 elseif(UNIX AND NOT APPLE) #Linux
   install(TARGETS vstsid
