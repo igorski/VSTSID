@@ -38,10 +38,15 @@ Synthesizer::Synthesizer() {
     BUFFER_SIZE          = 256;
     MAX_ENVELOPE_SAMPLES = 44100;
     ARPEGGIO_DURATION    = 16;
+
+    ringModulator = new Steinberg::Vst::mda::RingModulator();
 }
 
 Synthesizer::~Synthesizer() {
     reset();
+
+    delete ringModulator;
+    ringModulator = nullptr;
 }
 
 void Synthesizer::init( int sampleRate, double tempo )
@@ -192,12 +197,14 @@ void Synthesizer::handleNoteAmountChange()
     }
 }
 
-void Synthesizer::updateProperties( float fAttack, float fDecay, float fSustain, float fRelease )
+void Synthesizer::updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate )
 {
     props.attack  = fAttack;
     props.decay   = fDecay;
     props.sustain = fSustain;
     props.release = fRelease;
+
+    ringModulator->setRate( fRingModRate );
 }
 
 bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int bufferSize, uint32 sampleFramesSize )
@@ -209,12 +216,16 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     if ( notes.size() < 0 )
         return false; // nothing to do
 
-    float pmv, dpw, amp, phase, envelope;
+    float pmv, dpw, amp, phase, envelope, tmp;
 
     int voiceAmount = notes.size();
     int arpIndex    = -1;
 
     int32 j = notes.size();
+
+    // in case ring modulator is active, synthesize as a triangle
+
+    int waveform = ( ringModulator->getRate() == 0.f ) ? Waveforms::PWM : Waveforms::TRIANGLE;
 
     while ( j-- )
     {
@@ -249,21 +260,49 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                 event->frequency = getArpeggiatorFrequency( arpIndex );
                 event->arpOffset = ARPEGGIO_DURATION;
 
-                // WebSynthesizer had a maximum, not sure why we'd want that actually =)
+                // WebSID had a maximum voice count, not sure why we'd want that actually =)
 //                    if ( voiceAmount > 4 )
 //                        break;
             }
 
             // synthesize waveform
 
-            pmv   = i + ( ++event->pwm );
-            dpw   = sinf( pmv / ( float ) 0x4800 ) * PWR;
-            amp   = phase < PI - dpw ? PW_AMP : -PW_AMP;
-            phase = phase + ( TWO_PI_OVER_SR * event->frequency );
-            phase = phase > TWO_PI ? phase - TWO_PI : phase;
-            //am    = sinf( pmv / ( float ) 0x1000 );
+            switch ( waveform )
+            {
+                case Waveforms::TRIANGLE:
+                    // 0 == triangle
+                    if ( phase < .5f )
+                    {
+                        tmp = ( phase * 4.f - 1.f );
+                        amp = ( 1.f - tmp * tmp );
+                    }
+                    else {
+                        tmp = ( phase * 4.f - 3.f );
+                        amp = ( tmp * tmp - 1.f );
+                    }
+                    // the actual triangulation function
+                    amp = amp < 0 ? -amp : amp;
 
-            amp *= 4.f; // make louder !
+                    phase += ( event->frequency / ( float ) SAMPLE_RATE );
+
+                    // keep phase within range
+                    if ( phase > 1.f )
+                        phase -= 1.f;
+
+                    break;
+
+                case Waveforms::PWM:
+                    // 1 == PWM
+                    pmv   = i + ( ++event->pwm );
+                    dpw   = sinf( pmv / ( float ) 0x4800 ) * PWR;
+                    amp   = phase < PI - dpw ? PW_AMP : -PW_AMP;
+                    phase = phase + ( TWO_PI_OVER_SR * event->frequency );
+                    phase = phase > TWO_PI ? phase - TWO_PI : phase;
+                    //am    = sinf( pmv / ( float ) 0x1000 );
+
+                    amp *= 4.f; // make louder !
+                    break;
+            }
 
             if ( event->arpOffset > 0 )
                 --event->arpOffset;
@@ -332,6 +371,11 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                 event->arpIndex = arpIndex;
         }
     }
+
+    // ring modulation
+
+    ringModulator->apply( outputBuffers, numChannels, bufferSize, sampleFramesSize );
+
     return true;
 }
 

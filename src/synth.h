@@ -24,6 +24,7 @@
 #define __SYNTHESIZER_HEADER__
 
 #include "global.h"
+#include "ringmod.h"
 #include <vector>
 
 using namespace Steinberg;
@@ -97,6 +98,12 @@ namespace Igorski {
         ADSR adsr;
     };
 
+    enum Waveforms
+    {
+        TRIANGLE,
+        PWM
+    };
+
     class Synthesizer {
 
         public:
@@ -113,7 +120,7 @@ namespace Igorski {
             void noteOn ( int16 pitch );
             void noteOff( int16 pitch );
 
-            void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease );
+            void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate );
 
             // the whole point of this exercise: synthesizing sweet, sweet PWM !
 
@@ -137,6 +144,8 @@ namespace Igorski {
             SIDProperties props;
 
         private:
+
+            Steinberg::Vst::mda::RingModulator* ringModulator;
 
             // collection of Notes registered for playback
 

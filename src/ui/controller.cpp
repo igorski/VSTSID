@@ -128,6 +128,15 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     );
     parameters.addParameter( lfoRateParam );
 
+    // ring modulator
+
+    RangeParameter* ringModRateParam = new RangeParameter(
+        USTRING( "Ring modulator rate" ), kRingModRateId, USTRING( "Hz" ),
+        Igorski::SID::MIN_LFO_RATE(), Igorski::SID::MIN_RING_MOD_RATE(), Igorski::SID::MAX_RING_MOD_RATE(),
+        0, ParameterInfo::kCanAutomate, unitId
+    );
+    parameters.addParameter( ringModRateParam );
+
     // initialization
 
     String str( "VST SID" );
@@ -176,6 +185,10 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
             return kResultFalse;
 
+        float savedRingModRate = Igorski::SID::MIN_RING_MOD_RATE();
+        if ( state->read( &savedRingModRate, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
 #if BYTEORDER == kBigEndian
     SWAP_32( savedAttack )
     SWAP_32( savedDecay )
@@ -184,14 +197,16 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
     SWAP_32( savedCutoff )
     SWAP_32( savedResonance )
     SWAP_32( savedLFORate )
+    SWAP_32( savedRingModRate )
 #endif
-        setParamNormalized( kAttackId,    savedAttack );
-        setParamNormalized( kDecayId,     savedDecay );
-        setParamNormalized( kSustainId,   savedSustain );
-        setParamNormalized( kReleaseId,   savedRelease );
-        setParamNormalized( kCutoffId,    savedCutoff );
-        setParamNormalized( kResonanceId, savedResonance );
-        setParamNormalized( kLFORateId,   savedLFORate );
+        setParamNormalized( kAttackId,      savedAttack );
+        setParamNormalized( kDecayId,       savedDecay );
+        setParamNormalized( kSustainId,     savedSustain );
+        setParamNormalized( kReleaseId,     savedRelease );
+        setParamNormalized( kCutoffId,      savedCutoff );
+        setParamNormalized( kResonanceId,   savedResonance );
+        setParamNormalized( kLFORateId,     savedLFORate );
+        setParamNormalized( kRingModRateId, savedRingModRate );
 
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
     }
@@ -311,9 +326,10 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
         case kCutoffId:
         case kResonanceId:
         case kLFORateId:
+        case kRingModRateId:
         {
             char text[32];
-            if ( tag == kLFORateId && valueNormalized == 0 )
+            if (( tag == kLFORateId || tag == kRingModRateId ) && valueNormalized == 0 )
                 sprintf( text, "%s", "Off" );
             else
                 sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
