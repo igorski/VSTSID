@@ -44,7 +44,7 @@ class VSTSID : public AudioEffect
         // create function required for Plug-in factory,
         // it will be called to create new instances of this Plug-in
         //--- ---------------------------------------------------------------------
-        static FUnknown* createInstance (void* /*context*/) { return ( IAudioProcessor* ) new VSTSID; }
+        static FUnknown* createInstance( void* /*context*/ ) { return ( IAudioProcessor* ) new VSTSID; }
 
         //--- ---------------------------------------------------------------------
         // AudioEffect overrides:
@@ -97,6 +97,8 @@ class VSTSID : public AudioEffect
         float fCutoff;
         float fResonance;
         float fLFORate;
+
+        float fRingModRate;
 
         int32 currentProcessMode;
 

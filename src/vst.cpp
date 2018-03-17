@@ -50,6 +50,7 @@ VSTSID::VSTSID ()
 , fCutoff( .5f )
 , fResonance( 1.f )
 , fLFORate( 0.f )
+, fRingModRate( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
@@ -164,6 +165,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
                             fLFORate = ( float ) value;
                         break;
+
+                    case kRingModRateId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fRingModRate = ( float ) value;
+                        break;
                 }
             }
         }
@@ -224,7 +230,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 
     // updateProperties is a bit brute force, we're syncing the module properties
     // with this model, can we do it when there is an actual CHANGE in the model?
-    synth->updateProperties( fAttack, fDecay, fSustain, fRelease );
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate );
     filter->updateProperties( fCutoff, fResonance, fLFORate );
 
     bool hasContent = synth->synthesize(
@@ -284,6 +290,10 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     if ( state->read( &savedLFORate, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
+    float savedRingModRate = 0.f;
+    if ( state->read( &savedRingModRate, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
 #if BYTEORDER == kBigEndian
     SWAP_32( savedAttack )
     SWAP_32( savedDecay )
@@ -292,15 +302,17 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     SWAP_32( savedCutoff )
     SWAP_32( savedResonance )
     SWAP_32( savedLFORate )
+    SWAP_32( savedRingModRate )
 #endif
 
-    fAttack    = savedAttack;
-    fDecay     = savedDecay;
-    fSustain   = savedSustain;
-    fRelease   = savedRelease;
-    fCutoff    = savedCutoff;
-    fResonance = savedResonance;
-    fLFORate   = savedLFORate;
+    fAttack      = savedAttack;
+    fDecay       = savedDecay;
+    fSustain     = savedSustain;
+    fRelease     = savedRelease;
+    fCutoff      = savedCutoff;
+    fResonance   = savedResonance;
+    fLFORate     = savedLFORate;
+    fRingModRate = savedRingModRate;
 
     // Example of using the IStreamAttributes interface
     FUnknownPtr<IStreamAttributes> stream (state);
@@ -340,13 +352,14 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
 {
     // here we need to save the model
 
-    float toSaveAttack    = fAttack;
-    float toSaveDecay     = fDecay;
-    float toSaveSustain   = fSustain;
-    float toSaveRelease   = fRelease;
-    float toSaveCutoff    = fCutoff;
-    float toSaveResonance = fResonance;
-    float toSaveLFORate   = fLFORate;
+    float toSaveAttack      = fAttack;
+    float toSaveDecay       = fDecay;
+    float toSaveSustain     = fSustain;
+    float toSaveRelease     = fRelease;
+    float toSaveCutoff      = fCutoff;
+    float toSaveResonance   = fResonance;
+    float toSaveLFORate     = fLFORate;
+    float toSaveRingModRate = fRingModRate;
 
 #if BYTEORDER == kBigEndian
     SWAP_32( toSaveAttack )
@@ -356,15 +369,17 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     SWAP_32( toSaveCutoff )
     SWAP_32( toSaveResonance )
     SWAP_32( toSaveLFORate )
+    SWAP_32( toSaveRingModRate )
 #endif
 
-    state->write( &toSaveAttack,    sizeof( float ));
-    state->write( &toSaveDecay,     sizeof( float ));
-    state->write( &toSaveSustain,   sizeof( float ));
-    state->write( &toSaveRelease,   sizeof( float ));
-    state->write( &toSaveCutoff,    sizeof( float ));
-    state->write( &toSaveResonance, sizeof( float ));
-    state->write( &toSaveLFORate,   sizeof( float ));
+    state->write( &toSaveAttack,      sizeof( float ));
+    state->write( &toSaveDecay,       sizeof( float ));
+    state->write( &toSaveSustain,     sizeof( float ));
+    state->write( &toSaveRelease,     sizeof( float ));
+    state->write( &toSaveCutoff,      sizeof( float ));
+    state->write( &toSaveResonance,   sizeof( float ));
+    state->write( &toSaveLFORate,     sizeof( float ));
+    state->write( &toSaveRingModRate, sizeof( float ));
 
     return kResultOk;
 }

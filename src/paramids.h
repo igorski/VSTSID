@@ -34,7 +34,9 @@ enum
 
     kCutoffId,      // filter cutoff
     kResonanceId,   // filter resonance
-    kLFORateId      // filter LFO rate
+    kLFORateId,     // filter LFO rate
+
+    kRingModRateId  // ring modulator rate
 };
 
 #endif

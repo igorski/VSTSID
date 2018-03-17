@@ -106,6 +106,8 @@ set(vstsid_sources
     src/lfo.cpp
     src/filter.h
     src/filter.cpp
+    src/ringmod.h
+    src/ringmod.cpp
     src/synth.h
     src/synth.cpp
     src/vst.h
