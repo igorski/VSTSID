@@ -1,9 +1,9 @@
 #include <windows.h>
-#include "../source/version.h"
+#include "../../src/version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 
-vstsid.xml              DATA "vstsid.xml"
+vstsid.uidesc           DATA "vstsid.uidesc"
 slider_handle.png		PNG  "slider_handle.png"
 slider_handle_2.0x.png	PNG  "slider_handle_2.0x.png"
 slider_background.png	PNG  "slider_background.png"

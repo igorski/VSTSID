@@ -15,7 +15,7 @@ namespace SID {
     static float SAMPLE_RATE = 44100.f;
 
     // filter ranges, also see https://www.waitingforfriday.com/?p=661
-    // also see vstsid.xml to update the controls to match
+    // also see vstsid.uidesc to update the controls to match
 
     static const float FILTER_MIN_FREQ      = 30.0f;
     static const float FILTER_MAX_FREQ      = 10000.f;
@@ -23,7 +23,7 @@ namespace SID {
     static const float FILTER_MAX_RESONANCE = 0.7071067811865476f; //sqrt( 2.f ) / 2.f;
 
     // maximum and minimum rate of oscillation in Hz
-    // also see vstsid.xml to update the controls to match
+    // also see vstsid.uidesc to update the controls to match
 
     static const float MAX_LFO_RATE() { return 10.f; }
     static const float MIN_LFO_RATE() { return .1f; }
@@ -47,33 +47,5 @@ namespace Vst {
 //------------------------------------------------------------------------
 } // namespace Vst
 } // namespace Steinberg
-
-#define MAJOR_VERSION_STR "1"
-#define MAJOR_VERSION_INT 1
-
-#define SUB_VERSION_STR "3"
-#define SUB_VERSION_INT 3
-
-#define RELEASE_NUMBER_STR "0"
-#define RELEASE_NUMBER_INT 0
-
-#define BUILD_NUMBER_STR "1" // Build number to be sure that each result could identified.
-#define BUILD_NUMBER_INT 1
-
-// Version with build number (example "1.0.3.342")
-#define FULL_VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR "." BUILD_NUMBER_STR
-
-// Version without build number (example "1.0.3")
-#define VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR
-
-#define stringOriginalFilename  "vstsid.vst3"
-#if PLATFORM_64
-#define stringFileDescription   "VSTSID VST3-SDK (64Bit)"
-#else
-#define stringFileDescription   "VSTSID VST3-SDK"
-#endif
-#define stringCompanyName       "igorski.nl\0"
-#define stringLegalCopyright    "© 2018 igorski.nl"
-#define stringLegalTrademarks   "VST is a trademark of Steinberg Media Technologies GmbH"
 
 #endif

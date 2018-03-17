@@ -23,6 +23,7 @@
 #include "vst.h"
 #include "ui/controller.h"
 #include "global.h"
+#include "version.h"
 
 #include "public.sdk/source/main/pluginfactoryvst3.h"
 

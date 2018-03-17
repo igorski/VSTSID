@@ -68,8 +68,6 @@ void Synthesizer::noteOn( int16 pitch )
 
     Note* note = new Note();
 
-    bool hadNotes = notes.size() > 0;
-
     note->pitch          = pitch;
     note->released       = false;
     note->muted          = false;
@@ -236,7 +234,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
         if ( event->muted )
             continue;
 
-        float phase = event->phase;
+        phase = event->phase;
 
         if ( arpIndex == -1 && doArpeggiate )
             arpIndex = event->arpIndex;
