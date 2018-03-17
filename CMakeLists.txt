@@ -1,6 +1,6 @@
-﻿###########################################
-# CMake Project Template for VST Plug-ins #
-###########################################
+﻿###################################
+# CMake Project for VSTSID Plugin #
+###################################
 
 project(VSTSID)
 cmake_minimum_required(VERSION 3.0.0)
