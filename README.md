@@ -16,17 +16,21 @@ Note: at the moment of writing there is an issue in SDK 3.6.9 where the VST2 plu
 
     _VSTPluginMain
 
-## Compiling for both 32-bit and 64-bit architectures on macOS:
+## Compiling for both 32-bit and 64-bit architectures:
 
 Depending on your host software having 32-bit or 64-bit support, you can best compile for a
 wider range of architectures, to do so replace all invocations of _cmake_ in this README with the following:
 
 macOS:
-    cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
+```
+cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
+```
 
 Windows:
-    cmake.exe -G"Visual Studio 15 2017 Win64" ..
-    cmake.exe -G"Visual Studio 15 2017 Win32" ..
+```
+cmake.exe -G"Visual Studio 15 2017 Win64" ..
+cmake.exe -G"Visual Studio 15 2017 Win32" ..
+```
 
 ## Build instructions
 
