@@ -219,7 +219,7 @@ IPlugView* PLUGIN_API VSTSIDController::createView( const char* name )
     // create the visual editor
     if ( name && strcmp( name, "editor" ) == 0 )
     {
-        VST3Editor* view = new VST3Editor( this, "view", "vstsid.xml" );
+        VST3Editor* view = new VST3Editor( this, "view", "vstsid.uidesc" );
         return view;
     }
     return 0;

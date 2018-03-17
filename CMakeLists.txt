@@ -113,7 +113,7 @@ set(vstsid_sources
     src/vst.h
     src/vst.cpp
     src/vstentry.cpp
-    src/version.cpp
+    src/version.h
     src/ui/controller.h
     src/ui/controller.cpp
     src/ui/uimessagecontroller.h
@@ -198,7 +198,7 @@ set_target_properties(vstsid PROPERTIES
 if(MAC)
     smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist" PREPROCESS)
 elseif(WIN)
-    target_sources(${target} PRIVATE resources/vstsid.rc)
+    target_sources(${target} PRIVATE resources/graphics/vstsid.rc)
 endif()
 
 if (SMTG_CREATE_VST2_VERSION)
