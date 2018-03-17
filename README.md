@@ -52,9 +52,9 @@ Steinbergs guidelines, the target is a _/build_-subfolder of the _/VST3_SDK_-fol
     mkdir build
     cd build
     cmake ..
-    make
+    cmake --build .
 
-The result being that in _{VSTSDK_PATH}/VST3_SDK/build/lib_ all Steinberg VST libraries are prebuilt.
+The result being that in _{VSTSDK_PATH}/VST3_SDK/build/lib_ all Steinberg VST libraries are prebuilt. Windows users need to append _--config Release_ to the last cmake (build) call.
 
 ### Building the VSTSID plugin
 

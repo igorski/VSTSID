@@ -116,8 +116,6 @@ set(vstsid_sources
     src/ui/controller.h
     src/ui/controller.cpp
     src/ui/uimessagecontroller.h
-    #resources/vstsid.rc
-    #resources/vstplug.def
     ${VSTSDK_PLUGIN_SOURCE}
 )
 
@@ -144,22 +142,11 @@ if (UNIX)
 	target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui.a)
 endif()
 if (WIN)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Debug/base.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Debug/sdk.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Debug/vstgui_support.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Debug/vstgui_uidescription.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Debug/vstgui.lib)
-endif()
-
-if (SMTG_CREATE_VST2_VERSION)
-    message(STATUS "SMTG_CREATE_VST2_VERSION is set. A VST 2 version of the plug-in will be created (just rename the generated file from .vst3 to .vst).")
-    if(XCODE)
-        # fix missing VSTPluginMain symbol when also building VST 2 version
-        set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_EXPORTED_SYMBOLS_FILE "")
-    endif()
-    if (WIN)
-        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    endif()
+    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/base.lib)
+    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/sdk.lib)
+    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/vstgui_support.lib)
+    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/vstgui_uidescription.lib)
+    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/vstgui.lib)
 endif()
 
 ###############################
@@ -185,13 +172,11 @@ ENDIF (APPLE)
 # Resources #
 #############
 
-smtg_add_vst3_resource(${target} "resources/graphics/vstsid.xml")
+smtg_add_vst3_resource(${target} "resources/graphics/vstsid.uidesc")
 smtg_add_vst3_resource(${target} "resources/graphics/background.png")
 smtg_add_vst3_resource(${target} "resources/graphics/slider_background.png")
 smtg_add_vst3_resource(${target} "resources/graphics/slider_handle.png")
 smtg_add_vst3_resource(${target} "resources/graphics/slider_handle_2.0x.png")
-smtg_add_vst3_resource(${target} "resources/graphics/vu_on.png")
-smtg_add_vst3_resource(${target} "resources/graphics/vu_off.png")
 
 #########################
 # Set bundle properties #
@@ -212,7 +197,18 @@ set_target_properties(vstsid PROPERTIES
 if(MAC)
     smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist" PREPROCESS)
 elseif(WIN)
-    target_sources(${target} PRIVATE resource/vstsid.rc)
+    target_sources(${target} PRIVATE resources/vstsid.rc)
+endif()
+
+if (SMTG_CREATE_VST2_VERSION)
+    message(STATUS "SMTG_CREATE_VST2_VERSION is set. A VST 2 version of the plug-in will be created (just rename the generated file from .vst3 to .vst).")
+    if(XCODE)
+        # fix missing VSTPluginMain symbol when also building VST 2 version
+        set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_EXPORTED_SYMBOLS_FILE "")
+    endif()
+    if (WIN)
+        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    endif()
 endif()
 
 ####################
@@ -225,7 +221,11 @@ if(APPLE)
   )
 elseif(WIN32)
   install(TARGETS vstsid
-    DESTINATION "/Program Files (x86)/Common Files/VST3/"
+    DESTINATION "C:/Program Files (x86)/Common Files/VST3/"
+  )
+elseif(WIN)
+  install(TARGETS vstsid
+	DESTINATION "C:/Program Files/Common Files/VST3/"
   )
 elseif(UNIX AND NOT APPLE) #Linux
   install(TARGETS vstsid
