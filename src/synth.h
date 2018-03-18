@@ -34,6 +34,7 @@ namespace Igorski {
     // data type for a single Note
 
     struct Note {
+        int32 id;
         int16 pitch;
         bool released;
         bool muted;
@@ -150,6 +151,7 @@ namespace Igorski {
             // collection of Notes registered for playback
 
             std::vector<Note*> notes;
+            std::vector<int>   arpeggiatedNotes;
 
             // synthesis related properties
 
@@ -177,9 +179,14 @@ namespace Igorski {
             // removes all currently playing notes
             void reset();
 
-            // internal update routines
+            // internal update routines used to determine whether the
+            // currently playing notes should play back in polyphony
+            // or as an arpeggiated sequence
+
             void handleNoteAmountChange();
             float getArpeggiatorFrequency( int index );
+            bool isArpeggiatedNote( Note* note );
+            int note_ids;
 
             // get the appropriate arpeggiator speed for given tempo
             int getArpeggiatorSpeedByTempo( float tempo );
