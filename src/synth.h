@@ -171,6 +171,7 @@ namespace Igorski {
             // retrieves an existing Note for given arguments, if none
             // could be found, nullptr is returned
             Note* getExistingNote( int16 pitch );
+            Note* getNoteById( int32 id );
 
             // removes a Note from the list (used internally when
             // release phase has completed after "noteOff")

@@ -25,6 +25,7 @@
 
 #include <fstream>
 #include <string>
+#include <time.h>
 
 namespace Igorski {
 namespace Util {
@@ -40,10 +41,23 @@ namespace Util {
     {
         std::ofstream out;
 
+        char buff[20];
+        struct tm *sTm;
+
+        time_t now = time( 0 );
+        sTm        = gmtime( &now );
+
+        strftime( buff, sizeof( buff ), "%Y-%m-%d %H:%M:%S", sTm );
+
         out.open( filename, std::ios_base::app );
-        out << message << "\n";
+        out << buff << " " << message << "\n";
 
         out.close();
+    }
+
+    void log( std::string message, const char* filename )
+    {
+        log( message.c_str(), filename );
     }
 
 }

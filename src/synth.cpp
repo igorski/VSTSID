@@ -129,14 +129,15 @@ void Synthesizer::noteOff( int16 pitch )
         note->adsr.releaseIncrement = note->adsr.sustain / std::max( 1.f, note->adsr.releaseDuration );
 
         note->released = true;
+
+        // if the SID was arpeggiating, update the note amount
+        // accordingly to toggle the proper arpeggiation state
+
+        if ( doArpeggiate ) {
+            arpeggiatedNotes.erase( std::find( arpeggiatedNotes.begin(), arpeggiatedNotes.end(), note->id ));
+            handleNoteAmountChange();
+        }
     }
-
-    // reset arpeggiator of associated keyboard (event is never removed for
-    // arpeggiated sequences as they weren't added in this queue list!)
-
-    //if ( doArpeggiate  ) {
-    //    removePitchFromArpeggiatorSequence( note->baseFrequency );
-    //}
 }
 
 Note* Synthesizer::getExistingNote( int16 pitch )
@@ -148,14 +149,24 @@ Note* Synthesizer::getExistingNote( int16 pitch )
     return nullptr;
 }
 
+Note* Synthesizer::getNoteById( int32 id )
+{
+    for ( int32 i = 0; i < notes.size(); ++i ) {
+        if ( notes.at( i )->id == id )
+            return notes.at( i );
+    }
+    return nullptr;
+}
+
 bool Synthesizer::removeNote( Note* note )
 {
     bool removed = false;
 
     // first remove from arpeggiated notes vector
 
-    if ( std::find( arpeggiatedNotes.begin(), arpeggiatedNotes.end(), note->id ) != arpeggiatedNotes.end())
-        arpeggiatedNotes.erase( std::find( arpeggiatedNotes.begin(), arpeggiatedNotes.end(), note->id ));
+    if ( isArpeggiatedNote( note )) {
+       arpeggiatedNotes.erase( std::find( arpeggiatedNotes.begin(), arpeggiatedNotes.end(), note->id ));
+    }
 
     // and lastly, remove from notes vector and free memory
 
@@ -204,18 +215,29 @@ void Synthesizer::handleNoteAmountChange()
         // when arpeggiated, we impose a limit on audible notes as we will use
         // a pitch cycle in the render function to play the muted notes frequency
         // once the arpeggiator step shifts to the next step
-        // we do not operate on released notes
 
-        if ( !note->released ) {
+        bool audible = !doArpeggiate;
+        note->muted  = !audible;
 
-            bool audible = ( i == 0 ) || !doArpeggiate;
-            note->muted  = !audible;
+        // when arpeggiating, add note to arpeggiated notes vector
 
-            // when arpeggiating, add note to arpeggiated notes vector
+        if ( doArpeggiate && !isArpeggiatedNote( note )) {
+            arpeggiatedNotes.push_back( note->id );
+        }
+    }
 
-            if ( doArpeggiate && !isArpeggiatedNote( note )) {
-                arpeggiatedNotes.push_back( note->id );
-            }
+    if ( !doArpeggiate )
+        return;
+
+    for ( i = 0; i < amountOfNotes; ++i ) {
+
+        // when arpeggiating we'd like the first
+        // unreleased note to be unmuted as it will
+        // be the note to cycle through all frequencies
+
+        if ( !notes.at( i )->released ) {
+            notes.at( i )->muted = false;
+            break;
         }
     }
 }
@@ -244,31 +266,40 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     int voiceAmount = notes.size();
     int arpIndex    = -1;
 
-    int32 j = notes.size();
-
     // in case ring modulator is active, synthesize as a triangle
 
     int waveform = ( ringModulator->getRate() == 0.f ) ? Waveforms::PWM : Waveforms::TRIANGLE;
 
+    // reverse loop as we might splice notes during render
+    int32 j = notes.size();
     while ( j-- )
     {
         Note* event = notes.at( j );
 
+        bool doAttack  = event->adsr.attack  > 0.f;
+        bool doDecay   = event->adsr.decay   > 0.f && event->adsr.sustain != 1.f;
+        bool doRelease = event->adsr.release > 0.f && event->released;
+
         // is event muted (e.g. is the amount of notes above the arpeggio threshold) ?
 
-        if ( event->muted )
+        if ( event->muted ) {
+            if ( doRelease ) {
+                // if event is released, increments it release value, if the resulting
+                // envelope is silent, remove the event
+                event->adsr.releaseValue += ( event->adsr.releaseIncrement * bufferSize );
+                if ( event->adsr.sustain - event->adsr.releaseValue < 0.f ) {
+                    removeNote( event );
+                }
+            }
             continue;
+        }
 
-        bool arpeggiate = isArpeggiatedNote( event );
+        bool arpeggiate = doArpeggiate && isArpeggiatedNote( event );
 
         if ( arpIndex == -1 && arpeggiate )
             arpIndex = event->arpIndex;
 
         bool disposeEvent = false;
-
-        bool doAttack  = event->adsr.attack  > 0.f;
-        bool doDecay   = event->adsr.decay   > 0.f && event->adsr.sustain != 1.f;
-        bool doRelease = event->adsr.release > 0.f && event->released;
 
         phase = event->phase;
 
@@ -406,18 +437,18 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
 float Synthesizer::getArpeggiatorFrequency( int index )
 {
-    if ( notes.size() == 0 )
+    if ( arpeggiatedNotes.size() == 0 )
         return 0.f;
 
-    index = std::min( index, ( int ) ( notes.size() - 1 ));
+    index = std::min( index, ( int ) ( arpeggiatedNotes.size() - 1 ));
 
-    for ( int32 i = index; i < notes.size(); ++i ) {
-        // only arpeggiate notes that haven't been released
-        if ( !notes.at( i )->released && isArpeggiatedNote( notes.at( i ))) {
-            return notes.at( i )->baseFrequency;
+    for ( int32 i = index; i < arpeggiatedNotes.size(); ++i ) {
+        Note* note = getNoteById( arpeggiatedNotes.at( i ));
+        if ( note != nullptr ) {
+            return note->baseFrequency;
         }
     }
-    return notes.at( 0 )->baseFrequency;
+    return getNoteById( arpeggiatedNotes.at( 0 ))->baseFrequency;
 }
 
 int Synthesizer::getArpeggiatorSpeedByTempo( float tempo )

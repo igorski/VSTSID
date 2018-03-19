@@ -115,16 +115,16 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     IParameterChanges* paramChanges = data.inputParameterChanges;
     if ( paramChanges )
     {
-        int32 numParamsChanged = paramChanges->getParameterCount ();
+        int32 numParamsChanged = paramChanges->getParameterCount();
         // for each parameter which are some changes in this audio block:
         for ( int32 i = 0; i < numParamsChanged; i++ )
         {
-            IParamValueQueue* paramQueue = paramChanges->getParameterData (i);
+            IParamValueQueue* paramQueue = paramChanges->getParameterData( i );
             if ( paramQueue )
             {
                 ParamValue value;
                 int32 sampleOffset;
-                int32 numPoints = paramQueue->getPointCount ();
+                int32 numPoints = paramQueue->getPointCount();
                 switch ( paramQueue->getParameterId())
                 {
                     // we use in this example only the last point of the queue.
@@ -185,7 +185,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     IEventList* eventList = data.inputEvents;
     if ( eventList )
     {
-        int32 numEvent = eventList->getEventCount ();
+        int32 numEvent = eventList->getEventCount();
         for ( int32 i = 0; i < numEvent; i++ )
         {
             Event event;
