@@ -36,7 +36,9 @@ enum
     kResonanceId,   // filter resonance
     kLFORateId,     // filter LFO rate
 
-    kRingModRateId  // ring modulator rate
+    kRingModRateId, // ring modulator rate
+
+    kLFODepthId,    // filter LFO depth (added in v1.0.1.1)
 };
 
 #endif

@@ -79,29 +79,29 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     RangeParameter* attackParam = new RangeParameter(
         USTRING( "Attack time" ), kAttackId, USTRING( "seconds" ),
-        0.f, 1.f, 0.f, 0,
-        ParameterInfo::kCanAutomate, unitId
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( attackParam );
 
     RangeParameter* decayParam = new RangeParameter(
         USTRING( "Decay time" ), kDecayId, USTRING( "seconds" ),
-        0.f, 1.f, 0.f, 0,
-        ParameterInfo::kCanAutomate, unitId
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
      );
     parameters.addParameter( decayParam );
 
     RangeParameter* sustainParam = new RangeParameter(
         USTRING( "Sustain volume" ), kSustainId, USTRING( "0 - 1" ),
-        0.f, 1.f, 0.f, 0,
-        ParameterInfo::kCanAutomate, unitId
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( sustainParam );
 
     RangeParameter* releaseParam = new RangeParameter(
         USTRING( "Release time" ), kReleaseId, USTRING( "seconds" ),
-        0.f, 1.f, 0.f, 0,
-        ParameterInfo::kCanAutomate, unitId
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( releaseParam );
 
@@ -127,6 +127,13 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( lfoRateParam );
+
+    RangeParameter* lfoDepthParam = new RangeParameter(
+        USTRING( "LFO depth" ), kLFODepthId, USTRING( "%" ),
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    );
+    parameters.addParameter( lfoDepthParam );
 
     // ring modulator
 
@@ -185,6 +192,10 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
             return kResultFalse;
 
+        float savedLFODepth = 1.f;
+        if ( state->read( &savedLFODepth, sizeof( float )) != kResultOk )
+            return kResultFalse;
+
         float savedRingModRate = Igorski::SID::MIN_RING_MOD_RATE();
         if ( state->read( &savedRingModRate, sizeof( float )) != kResultOk )
             return kResultFalse;
@@ -197,6 +208,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
     SWAP_32( savedCutoff )
     SWAP_32( savedResonance )
     SWAP_32( savedLFORate )
+    SWAP_32( savedLFODepth )
     SWAP_32( savedRingModRate )
 #endif
         setParamNormalized( kAttackId,      savedAttack );
@@ -206,6 +218,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         setParamNormalized( kCutoffId,      savedCutoff );
         setParamNormalized( kResonanceId,   savedResonance );
         setParamNormalized( kLFORateId,     savedLFORate );
+        setParamNormalized( kLFODepthId,    savedLFODepth );
         setParamNormalized( kRingModRateId, savedRingModRate );
 
         state->seek( sizeof ( float ), IBStream::kIBSeekCur );
@@ -305,13 +318,14 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
 {
     switch ( tag )
     {
-        // ADSR envelopes are floating point values in 0 - 1 range, we can
+        // ADSR envelopes and LFO depth are floating point values in 0 - 1 range, we can
         // simply read the normalized value which is in the same range
 
         case kAttackId:
         case kDecayId:
         case kSustainId:
         case kReleaseId:
+        case kLFODepthId:
         {
             char text[32];
             sprintf( text, "%.2f", ( float ) valueNormalized );

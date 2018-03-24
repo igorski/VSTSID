@@ -39,12 +39,14 @@ namespace Igorski {
             float getCutoff();
             void  setResonance( float resonance );
             float getResonance();
+            void setDepth( float depth );
+            float getDepth();
             void setLFO( bool enabled );
 
             void calculateParameters();
     
             // update Filter properties, the values here are in normalized 0 - 1 range
-            void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage );
+            void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage, float fLFODepth );
 
             // apply filter to incoming sampleBuffer contents
             void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
@@ -53,6 +55,10 @@ namespace Igorski {
             float _cutoff;
             float _tempCutoff;
             float _resonance;
+            float _depth;
+            float _lfoMin;
+            float _lfoMax;
+            float _lfoRange;
             bool  _hasLFO;
             LFO*  _lfo;
 
@@ -70,6 +76,8 @@ namespace Igorski {
             float* _in2;
             float* _out1;
             float* _out2;
+
+            void cacheLFOProperties();
     };
 }
 

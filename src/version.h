@@ -10,7 +10,7 @@
 #define SUB_VERSION_INT 3
 
 #define RELEASE_NUMBER_STR "0"
-#define RELEASE_NUMBER_INT 0
+#define RELEASE_NUMBER_INT 1
 
 #define BUILD_NUMBER_STR "1" // Build number to be sure that each result could identified.
 #define BUILD_NUMBER_INT 1

@@ -97,6 +97,7 @@ class VSTSID : public AudioEffect
         float fCutoff;
         float fResonance;
         float fLFORate;
+        float fLFODepth;
 
         float fRingModRate;
 
