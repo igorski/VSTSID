@@ -33,6 +33,10 @@ Filter::Filter( float sampleRate ) {
     _sampleRate = sampleRate;
     _cutoff     = SID::FILTER_MIN_FREQ;
     _resonance  = SID::FILTER_MIN_RESONANCE;
+    _depth      = 1.f;
+    _lfoMin     = SID::FILTER_MIN_FREQ;
+    _lfoMax     = SID::FILTER_MAX_FREQ;
+    _lfoRange   = _cutoff * _depth;
     _tempCutoff = _cutoff; // used when applying LFO
     
     _a1 = 0.f;
@@ -74,7 +78,7 @@ Filter::~Filter() {
 
 /* public methods */
 
-void Filter::updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage )
+void Filter::updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage, float LFODepth )
 {
     float co  = SID::FILTER_MIN_FREQ + ( cutoffPercentage * ( SID::FILTER_MAX_FREQ - SID::FILTER_MIN_FREQ ));
     float res = SID::FILTER_MIN_RESONANCE + ( resonancePercentage * ( SID::FILTER_MAX_RESONANCE - SID::FILTER_MIN_RESONANCE ));
@@ -83,6 +87,7 @@ void Filter::updateProperties( float cutoffPercentage, float resonancePercentage
         setCutoff( co );
         setResonance( res );
     }
+    _depth = LFODepth;
 
     bool doLFO = LFORatePercentage != 0.f;
     if ( !doLFO && _hasLFO ) {
@@ -90,6 +95,7 @@ void Filter::updateProperties( float cutoffPercentage, float resonancePercentage
     }
     else if ( doLFO ) {
         setLFO( true );
+        cacheLFOProperties();
         _lfo->setRate(
             SID::MIN_LFO_RATE() + (
                 LFORatePercentage * ( SID::MAX_LFO_RATE() - SID::MIN_LFO_RATE() )
@@ -128,7 +134,10 @@ void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize
 
             if ( _hasLFO )
             {
-                _tempCutoff = _cutoff - std::abs(( _cutoff - SID::FILTER_MIN_FREQ ) * _lfo->peek() );
+                // multiply by .5 and add .5 to make bipolar waveform unipolar
+                float lfoValue = _lfo->peek() * .5f  + .5f;
+                _tempCutoff = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue );
+
                 calculateParameters();
             }
 
@@ -176,6 +185,7 @@ void Filter::setLFO( bool enabled )
     if ( !enabled )
     {
         _tempCutoff = _cutoff;
+        cacheLFOProperties();
         calculateParameters();
     }
 }
@@ -188,6 +198,13 @@ void Filter::calculateParameters()
     _a3 = _a1;
     _b1 = 2.f * ( 1.f - _c * _c ) * _a1;
     _b2 = ( 1.f - _resonance * _c + _c * _c ) * _a1;
+}
+
+void Filter::cacheLFOProperties()
+{
+    _lfoRange = _cutoff * _depth;
+    _lfoMax   = std::min( SID::FILTER_MAX_FREQ, _cutoff + _lfoRange / 2.f );
+    _lfoMin   = std::max( SID::FILTER_MIN_FREQ, _cutoff - _lfoRange / 2.f );
 }
 
 }

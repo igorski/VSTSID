@@ -50,6 +50,7 @@ VSTSID::VSTSID ()
 , fCutoff( .5f )
 , fResonance( 1.f )
 , fLFORate( 0.f )
+, fLFODepth( 1.f )
 , fRingModRate( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
@@ -166,6 +167,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                             fLFORate = ( float ) value;
                         break;
 
+                    case kLFODepthId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            fLFODepth = ( float ) value;
+                        break;
+
                     case kRingModRateId:
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
                             fRingModRate = ( float ) value;
@@ -231,7 +237,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     // updateProperties is a bit brute force, we're syncing the module properties
     // with this model, can we do it when there is an actual CHANGE in the model?
     synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate );
-    filter->updateProperties( fCutoff, fResonance, fLFORate );
+    filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
 
     bool hasContent = synth->synthesize(
         ( float** ) out, numChannels, data.numSamples, sampleFramesSize
@@ -290,6 +296,10 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     if ( state->read( &savedLFORate, sizeof ( float )) != kResultOk )
         return kResultFalse;
 
+    float savedLFODepth = 1.f;
+    if ( state->read( &savedLFODepth, sizeof ( float )) != kResultOk )
+        return kResultFalse;
+
     float savedRingModRate = 0.f;
     if ( state->read( &savedRingModRate, sizeof ( float )) != kResultOk )
         return kResultFalse;
@@ -302,6 +312,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     SWAP_32( savedCutoff )
     SWAP_32( savedResonance )
     SWAP_32( savedLFORate )
+    SWAP_32( savedLFODepth )
     SWAP_32( savedRingModRate )
 #endif
 
@@ -312,6 +323,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     fCutoff      = savedCutoff;
     fResonance   = savedResonance;
     fLFORate     = savedLFORate;
+    fLFODepth    = savedLFODepth;
     fRingModRate = savedRingModRate;
 
     // Example of using the IStreamAttributes interface
@@ -359,6 +371,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     float toSaveCutoff      = fCutoff;
     float toSaveResonance   = fResonance;
     float toSaveLFORate     = fLFORate;
+    float toSaveLFODepth    = fLFODepth;
     float toSaveRingModRate = fRingModRate;
 
 #if BYTEORDER == kBigEndian
@@ -369,6 +382,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     SWAP_32( toSaveCutoff )
     SWAP_32( toSaveResonance )
     SWAP_32( toSaveLFORate )
+    SWAP_32( toSaveLFODepth )
     SWAP_32( toSaveRingModRate )
 #endif
 
@@ -379,6 +393,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     state->write( &toSaveCutoff,      sizeof( float ));
     state->write( &toSaveResonance,   sizeof( float ));
     state->write( &toSaveLFORate,     sizeof( float ));
+    state->write( &toSaveLFODepth,    sizeof( float ));
     state->write( &toSaveRingModRate, sizeof( float ));
 
     return kResultOk;
