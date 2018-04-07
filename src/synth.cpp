@@ -258,7 +258,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     for ( int32 i = 0; i < numChannels; i++ )
         memset( outputBuffers[ i ], 0, sampleFramesSize );
 
-    if ( notes.size() < 0 )
+    if ( notes.size() == 0 )
         return false; // nothing to do
 
     float pmv, dpw, amp, phase, envelope, tmp;
