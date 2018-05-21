@@ -420,11 +420,13 @@ tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex
     CtrlNumber midiControllerNumber, ParamID& tag )
 {
     // we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)
+/*
     if ( busIndex == 0 && midiControllerNumber == kCtrlVolume )
     {
         tag = kAttackId;
         return kResultTrue;
     }
+*/
     return kResultFalse;
 }
 
