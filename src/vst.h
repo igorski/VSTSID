@@ -105,6 +105,10 @@ class VSTSID : public AudioEffect
 
         Igorski::Synthesizer* synth;
         Igorski::Filter*      filter;
+
+        // synchronize the processors model after UI led changes
+
+        void syncModel();
 };
 
 //------------------------------------------------------------------------

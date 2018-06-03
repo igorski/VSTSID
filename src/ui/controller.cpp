@@ -139,7 +139,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     RangeParameter* ringModRateParam = new RangeParameter(
         USTRING( "Ring modulator rate" ), kRingModRateId, USTRING( "Hz" ),
-        Igorski::SID::MIN_LFO_RATE(), Igorski::SID::MIN_RING_MOD_RATE(), Igorski::SID::MAX_RING_MOD_RATE(),
+        Igorski::SID::MIN_RING_MOD_RATE(), Igorski::SID::MAX_RING_MOD_RATE(), Igorski::SID::MIN_RING_MOD_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( ringModRateParam );
@@ -334,7 +334,7 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
             return kResultTrue;
         }
 
-        // Filter settings are also floating point but in a custom range
+        // Filter and ring modulator settings are also floating point but in a custom range
         // request the plain value from the normalized value
 
         case kCutoffId:

@@ -177,6 +177,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                             fRingModRate = ( float ) value;
                         break;
                 }
+                syncModel();
             }
         }
     }
@@ -233,11 +234,6 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     void** out = getChannelBuffersPointer( processSetup, data.outputs[ 0 ] );
 
     // synthesize !
-
-    // updateProperties is a bit brute force, we're syncing the module properties
-    // with this model, can we do it when there is an actual CHANGE in the model?
-    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate );
-    filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
 
     bool hasContent = synth->synthesize(
         ( float** ) out, numChannels, data.numSamples, sampleFramesSize
@@ -414,6 +410,8 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 
     filter = new Igorski::Filter(( float ) newSetup.sampleRate );
 
+    syncModel();
+
     return AudioEffect::setupProcessing( newSetup );
 }
 
@@ -508,6 +506,12 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
     }
 
     return AudioEffect::notify( message );
+}
+
+void VSTSID::syncModel()
+{
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate );
+    filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
 }
 
 //------------------------------------------------------------------------
