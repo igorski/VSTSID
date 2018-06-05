@@ -322,6 +322,8 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     fLFODepth    = savedLFODepth;
     fRingModRate = savedRingModRate;
 
+    syncModel();
+
     // Example of using the IStreamAttributes interface
     FUnknownPtr<IStreamAttributes> stream (state);
     if ( stream )

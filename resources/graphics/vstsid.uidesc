@@ -122,6 +122,9 @@
         <bitmap name="slider_handle" path="slider_handle.png"/>
         <bitmap name="slider_handle#2x" path="slider_handle_2.0x.png" scale-factor="2"/>
     </bitmaps>
+
+    <!-- map the controllers listed above to their paramids by tag index -->
+
     <control-tags>
         <control-tag name="UI::SendMessage"    tag="1000"/>
         <control-tag name="Unit1::Attack"      tag="0"/>
