@@ -39,10 +39,9 @@ namespace SID {
 
 namespace Steinberg {
 namespace Vst {
-
-    static const FUID VSTSIDProcessorUID( 0x84E8DE5F, 0x92554F53, 0x96FAE413, 0x3C935A18 );
-    static const FUID VSTSIDWithSideChainProcessorUID( 0x41347FD6, 0xFED64094, 0xAFBB12B7, 0xDBA1D441);
-    static const FUID VSTSIDControllerUID( 0xD39D5B65, 0xD7AF42FA, 0x843F4AC8, 0x41EB04F0 );
+    static const FUID VSTSIDProcessorUID( 0x6EEE9708, 0xD3784BB6, 0x9C19F7CB, 0x61D14593 );
+    static const FUID VSTSIDWithSideChainProcessorUID( 0x8E5DEA13, 0x646447AE, 0xAC650303, 0xEC59E35B );
+    static const FUID VSTSIDControllerUID( 0xB6E29CFB, 0xD6694CB0, 0xA3743B49, 0xE6113472 );
 
 //------------------------------------------------------------------------
 } // namespace Vst
