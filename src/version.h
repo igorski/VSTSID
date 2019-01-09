@@ -23,9 +23,9 @@
 
 #define stringOriginalFilename  "vstsid.vst3"
 #if PLATFORM_64
-#define stringFileDescription   "VSTSID VST3-SDK (64Bit)"
+#define stringFileDescription   "VSTSID (64Bit)"
 #else
-#define stringFileDescription   "VSTSID VST3-SDK"
+#define stringFileDescription   "VSTSID"
 #endif
 #define stringCompanyName       "igorski.nl\0"
 #define stringLegalCopyright    "� 2018 igorski.nl"

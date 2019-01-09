@@ -52,10 +52,16 @@ VSTSID::VSTSID ()
 , fLFORate( 0.f )
 , fLFODepth( 1.f )
 , fRingModRate( 0.f )
+, synth( nullptr )
+, filter( nullptr )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
     setControllerClass( VSTSIDControllerUID );
+
+    // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
+    synth  = new Synthesizer();
+    filter = new Filter(( float ) Igorski::SID::SAMPLE_RATE );
 }
 
 //------------------------------------------------------------------------
@@ -406,6 +412,14 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
     currentProcessMode = newSetup.processMode;
 
     Igorski::SID::SAMPLE_RATE = newSetup.sampleRate;
+
+    // this can fire multiple times during plugin lifetime
+
+    if ( synth != nullptr )
+        delete synth;
+
+    if ( filter != nullptr )
+        delete filter;
 
     synth = new Igorski::Synthesizer();
     synth->init( newSetup.sampleRate, 120.f );
