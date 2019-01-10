@@ -60,8 +60,8 @@ VSTSID::VSTSID ()
     setControllerClass( VSTSIDControllerUID );
 
     // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
-    synth  = new Synthesizer();
-    filter = new Filter(( float ) Igorski::SID::SAMPLE_RATE );
+    synth  = new Igorski::Synthesizer();
+    filter = new Igorski::Filter(( float ) Igorski::SID::SAMPLE_RATE );
 }
 
 //------------------------------------------------------------------------

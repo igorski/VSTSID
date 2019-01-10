@@ -1,8 +1,6 @@
 #ifndef __VERSION_HEADER__
 #define __VERSION_HEADER__
 
-#include "pluginterfaces/base/fplatform.h"
-
 #define MAJOR_VERSION_STR "1"
 #define MAJOR_VERSION_INT 1
 

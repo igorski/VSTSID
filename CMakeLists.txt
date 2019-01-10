@@ -209,6 +209,17 @@ IF (APPLE)
         find_library(EXPAT Expat)
         target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${ACCELERATE_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} ${CARBON_FRAMEWORK} ${EXPAT})
     endif()
+    set_target_properties(vstsid PROPERTIES
+        BUNDLE true
+        BUNDLE_EXTENSION "vst3"
+        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist"
+        MACOSX_BUNDLE_BUNDLE_NAME "VSTSID"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.VSTSID"
+        MACOSX_BUNDLE_ICON_FILE ""
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+        MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2018"
+    )
 ENDIF (APPLE)
 
 # Resources
@@ -218,22 +229,6 @@ smtg_add_vst3_resource(${target} "resource/background.png")
 smtg_add_vst3_resource(${target} "resource/slider_background.png")
 smtg_add_vst3_resource(${target} "resource/slider_handle.png")
 smtg_add_vst3_resource(${target} "resource/slider_handle_2.0x.png")
-
-#########################
-# Set bundle properties #
-#########################
-
-set_target_properties(vstsid PROPERTIES
-  BUNDLE true
-  BUNDLE_EXTENSION "vst3"
-  XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
-  MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist"
-  MACOSX_BUNDLE_BUNDLE_NAME "VSTSID"
-  MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.VSTSID"
-  MACOSX_BUNDLE_ICON_FILE ""
-  MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
-  MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2018"
-)
 
 if(MAC)
     smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist" PREPROCESS)
