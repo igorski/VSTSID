@@ -28,6 +28,7 @@
 #include "public.sdk/source/main/pluginfactoryvst3.h"
 
 using namespace Steinberg::Vst;
+using namespace Igorski;
 
 //------------------------------------------------------------------------
 //  Module init/exit

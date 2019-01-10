@@ -36,8 +36,7 @@
 
 #include <stdio.h>
 
-namespace Steinberg {
-namespace Vst {
+namespace Igorski {
 
 //------------------------------------------------------------------------
 // VSTSID Implementation
@@ -530,6 +529,4 @@ void VSTSID::syncModel()
     filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
 }
 
-//------------------------------------------------------------------------
-} // namespace Vst
-} // namespace Steinberg
+} // namespace Igorski

@@ -63,19 +63,7 @@
 			<key>Outputs</key>
 			<string>2</string>
 			<key>Inputs</key>
-			<string>2</string>
-		</dict>
-		<dict>
-			<key>Outputs</key>
 			<string>0</string>
-			<key>Inputs</key>
-			<string>1</string>
-		</dict>
-		<dict>
-			<key>Outputs</key>
-			<string>1</string>
-			<key>Inputs</key>
-			<string>1</string>
 		</dict>
 	</array>
 

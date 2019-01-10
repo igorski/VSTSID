@@ -28,8 +28,9 @@
 #include "synth.h"
 #include "filter.h"
 
-namespace Steinberg {
-namespace Vst {
+using namespace Steinberg::Vst;
+
+namespace Igorski {
 
 //------------------------------------------------------------------------
 // VSTSID: directly derived from the helper class AudioEffect
@@ -111,8 +112,6 @@ class VSTSID : public AudioEffect
         void syncModel();
 };
 
-//------------------------------------------------------------------------
-} // namespace Vst
-} // namespace Steinberg
+} // namespace Igorksi
 
 #endif
