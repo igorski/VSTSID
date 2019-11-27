@@ -7,7 +7,7 @@
 namespace Igorski {
 namespace SID {
 
-    static const int   ID       = 0;
+    static const int   ID       = 97151819;
     static const char* NAME     = "VSTSID";
     static const char* VENDOR   = "igorski.nl";
 

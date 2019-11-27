@@ -26,5 +26,5 @@
 //------------------------------------------------------------------------
 ::AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 {
-    return Steinberg::Vst::Vst2Wrapper::create( GetPluginFactory (), Steinberg::Vst::VSTSIDProcessorUID, 'GnV2', audioMaster );
+    return Steinberg::Vst::Vst2Wrapper::create( GetPluginFactory (), Steinberg::Vst::VSTSIDProcessorUID, Igorski::SID::ID, audioMaster );
 }
