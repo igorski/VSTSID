@@ -109,21 +109,21 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     RangeParameter* cutoffParam = new RangeParameter(
         USTRING( "Cutoff frequency" ), kCutoffId, USTRING( "Hz" ),
-        Igorski::SID::FILTER_MIN_FREQ, Igorski::SID::FILTER_MAX_FREQ, Igorski::SID::FILTER_MIN_FREQ,
+        Igorski::VST::FILTER_MIN_FREQ, Igorski::VST::FILTER_MAX_FREQ, Igorski::VST::FILTER_MIN_FREQ,
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( cutoffParam );
 
     RangeParameter* resonanceParam = new RangeParameter(
         USTRING( "Resonance" ), kResonanceId, USTRING( "db" ),
-        Igorski::SID::FILTER_MIN_RESONANCE, Igorski::SID::FILTER_MAX_RESONANCE, Igorski::SID::FILTER_MIN_RESONANCE,
+        Igorski::VST::FILTER_MIN_RESONANCE, Igorski::VST::FILTER_MAX_RESONANCE, Igorski::VST::FILTER_MIN_RESONANCE,
         0, ParameterInfo::kCanAutomate, unitId
    );
     parameters.addParameter( resonanceParam );
 
     RangeParameter* lfoRateParam = new RangeParameter(
         USTRING( "LFO rate" ), kLFORateId, USTRING( "Hz" ),
-        Igorski::SID::MIN_LFO_RATE(), Igorski::SID::MAX_LFO_RATE(), Igorski::SID::MIN_LFO_RATE(),
+        Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( lfoRateParam );
@@ -139,7 +139,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     RangeParameter* ringModRateParam = new RangeParameter(
         USTRING( "Ring modulator rate" ), kRingModRateId, USTRING( "Hz" ),
-        Igorski::SID::MIN_RING_MOD_RATE(), Igorski::SID::MAX_RING_MOD_RATE(), Igorski::SID::MIN_RING_MOD_RATE(),
+        Igorski::VST::MIN_RING_MOD_RATE(), Igorski::VST::MAX_RING_MOD_RATE(), Igorski::VST::MIN_RING_MOD_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
     );
     parameters.addParameter( ringModRateParam );
@@ -180,15 +180,15 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedRelease, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedCutoff = Igorski::SID::FILTER_MAX_FREQ;
+        float savedCutoff = Igorski::VST::FILTER_MAX_FREQ;
         if ( state->read( &savedCutoff, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedResonance = Igorski::SID::FILTER_MAX_RESONANCE;
+        float savedResonance = Igorski::VST::FILTER_MAX_RESONANCE;
         if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedLFORate = Igorski::SID::MIN_LFO_RATE();
+        float savedLFORate = Igorski::VST::MIN_LFO_RATE();
         if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
             return kResultFalse;
 
@@ -196,7 +196,7 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         if ( state->read( &savedLFODepth, sizeof( float )) != kResultOk )
             return kResultFalse;
 
-        float savedRingModRate = Igorski::SID::MIN_RING_MOD_RATE();
+        float savedRingModRate = Igorski::VST::MIN_RING_MOD_RATE();
         if ( state->read( &savedRingModRate, sizeof( float )) != kResultOk )
             return kResultFalse;
 

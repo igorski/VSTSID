@@ -54,7 +54,7 @@ RingModulator::~RingModulator()
 
 void RingModulator::setRate( float ratePercentage )
 {
-    float rate = SID::MIN_RING_MOD_RATE() + ( ratePercentage * ( SID::MAX_RING_MOD_RATE() - SID::MIN_RING_MOD_RATE() ));
+    float rate = VST::MIN_RING_MOD_RATE() + ( ratePercentage * ( VST::MAX_RING_MOD_RATE() - VST::MIN_RING_MOD_RATE() ));
 
     // 0.0625 is 1 kHz, divide 1000 to get the per-Hz value
     _rate = ( 0.0625f / 1000.f ) * rate;
@@ -127,7 +127,7 @@ void RingModulator::apply( float** outputBuffers, int numChannels,
 //-----------------------------------------------------------------------------
 void RingModulator::recalculate ()
 {
-    fdPhi = ( float ) ( twoPi * 100.f * ( _fine + ( 160.f * _rate )) / SID::SAMPLE_RATE );
+    fdPhi = ( float ) ( twoPi * 100.f * ( _fine + ( 160.f * _rate )) / VST::SAMPLE_RATE );
     ffb   = 0.95f * _feedback;
 }
 

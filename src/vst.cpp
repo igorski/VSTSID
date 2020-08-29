@@ -55,7 +55,7 @@ VSTSID::VSTSID ()
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
-    setControllerClass( VSTSIDControllerUID );
+    setControllerClass( Igorski::VST::ControllerUID );
 }
 
 //------------------------------------------------------------------------
@@ -405,7 +405,7 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
     // here we keep a trace of the processing mode (offline,...) for example.
     currentProcessMode = newSetup.processMode;
 
-    Igorski::SID::SAMPLE_RATE = newSetup.sampleRate;
+    Igorski::VST::SAMPLE_RATE = newSetup.sampleRate;
 
     synth = new Igorski::Synthesizer();
     synth->init( newSetup.sampleRate, 120.f );

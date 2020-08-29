@@ -4,12 +4,17 @@
 #include "pluginterfaces/base/fplatform.h"
 #include "pluginterfaces/base/funknown.h"
 
+using namespace Steinberg;
+
 namespace Igorski {
-namespace SID {
+namespace VST {
 
     static const int   ID       = 97151819;
     static const char* NAME     = "VSTSID";
     static const char* VENDOR   = "igorski.nl";
+
+    static const FUID ProcessorUID( 0x6EEE9708, 0xD3784BB6, 0x9C19F7CB, 0x61D14593 );
+    static const FUID ControllerUID( 0xB6E29CFB, 0xD6694CB0, 0xA3743B49, 0xE6113472 );
 
     // set upon initialization, see vst.cpp
     static float SAMPLE_RATE = 44100.f;
@@ -36,15 +41,5 @@ namespace SID {
 
 }
 }
-
-namespace Steinberg {
-namespace Vst {
-    static const FUID VSTSIDProcessorUID( 0x6EEE9708, 0xD3784BB6, 0x9C19F7CB, 0x61D14593 );
-    static const FUID VSTSIDWithSideChainProcessorUID( 0x8E5DEA13, 0x646447AE, 0xAC650303, 0xEC59E35B );
-    static const FUID VSTSIDControllerUID( 0xB6E29CFB, 0xD6694CB0, 0xA3743B49, 0xE6113472 );
-
-//------------------------------------------------------------------------
-} // namespace Vst
-} // namespace Steinberg
 
 #endif

@@ -31,11 +31,11 @@ namespace Igorski {
 Filter::Filter( float sampleRate ) {
 
     _sampleRate = sampleRate;
-    _cutoff     = SID::FILTER_MIN_FREQ;
-    _resonance  = SID::FILTER_MIN_RESONANCE;
+    _cutoff     = VST::FILTER_MIN_FREQ;
+    _resonance  = VST::FILTER_MIN_RESONANCE;
     _depth      = 1.f;
-    _lfoMin     = SID::FILTER_MIN_FREQ;
-    _lfoMax     = SID::FILTER_MAX_FREQ;
+    _lfoMin     = VST::FILTER_MIN_FREQ;
+    _lfoMax     = VST::FILTER_MAX_FREQ;
     _lfoRange   = _cutoff * _depth;
     _tempCutoff = _cutoff; // used when applying LFO
     
@@ -65,7 +65,7 @@ Filter::Filter( float sampleRate ) {
         _out1[ i ] = 0.f;
         _out2[ i ] = 0.f;
     }
-    setCutoff( SID::FILTER_MAX_FREQ / 2 );
+    setCutoff( VST::FILTER_MAX_FREQ / 2 );
 }
 
 Filter::~Filter() {
@@ -80,8 +80,8 @@ Filter::~Filter() {
 
 void Filter::updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage, float LFODepth )
 {
-    float co  = SID::FILTER_MIN_FREQ + ( cutoffPercentage * ( SID::FILTER_MAX_FREQ - SID::FILTER_MIN_FREQ ));
-    float res = SID::FILTER_MIN_RESONANCE + ( resonancePercentage * ( SID::FILTER_MAX_RESONANCE - SID::FILTER_MIN_RESONANCE ));
+    float co  = VST::FILTER_MIN_FREQ + ( cutoffPercentage * ( VST::FILTER_MAX_FREQ - VST::FILTER_MIN_FREQ ));
+    float res = VST::FILTER_MIN_RESONANCE + ( resonancePercentage * ( VST::FILTER_MAX_RESONANCE - VST::FILTER_MIN_RESONANCE ));
 
     if ( _cutoff != co || _resonance != res ) {
         setCutoff( co );
@@ -97,8 +97,8 @@ void Filter::updateProperties( float cutoffPercentage, float resonancePercentage
         setLFO( true );
         cacheLFOProperties();
         _lfo->setRate(
-            SID::MIN_LFO_RATE() + (
-                LFORatePercentage * ( SID::MAX_LFO_RATE() - SID::MIN_LFO_RATE() )
+            VST::MIN_LFO_RATE() + (
+                LFORatePercentage * ( VST::MAX_LFO_RATE() - VST::MIN_LFO_RATE() )
             )
         );
     }
@@ -154,7 +154,7 @@ void Filter::setCutoff( float frequency )
 
     float tempRatio = _tempCutoff / _cutoff;
 
-    _cutoff     = std::max( SID::FILTER_MIN_FREQ, std::min( frequency, SID::FILTER_MAX_FREQ ));
+    _cutoff     = std::max( VST::FILTER_MIN_FREQ, std::min( frequency, VST::FILTER_MAX_FREQ ));
     _tempCutoff = _cutoff * tempRatio;
 
     calculateParameters();
@@ -167,7 +167,7 @@ float Filter::getCutoff()
 
 void Filter::setResonance( float resonance )
 {
-    _resonance = std::max( SID::FILTER_MIN_RESONANCE, std::min( resonance, SID::FILTER_MAX_RESONANCE ));
+    _resonance = std::max( VST::FILTER_MIN_RESONANCE, std::min( resonance, VST::FILTER_MAX_RESONANCE ));
     calculateParameters();
 }
 
@@ -203,8 +203,8 @@ void Filter::calculateParameters()
 void Filter::cacheLFOProperties()
 {
     _lfoRange = _cutoff * _depth;
-    _lfoMax   = std::min( SID::FILTER_MAX_FREQ, _cutoff + _lfoRange / 2.f );
-    _lfoMin   = std::max( SID::FILTER_MIN_FREQ, _cutoff - _lfoRange / 2.f );
+    _lfoMax   = std::min( VST::FILTER_MAX_FREQ, _cutoff + _lfoRange / 2.f );
+    _lfoMin   = std::max( VST::FILTER_MIN_FREQ, _cutoff - _lfoRange / 2.f );
 }
 
 }

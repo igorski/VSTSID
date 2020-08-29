@@ -68,10 +68,10 @@ BEGIN_FACTORY_DEF( "igorski.nl",
 
     //---First Plug-in included in this factory-------
     // its kVstAudioEffectClass component
-    DEF_CLASS2( INLINE_UID_FROM_FUID( VSTSIDProcessorUID ),
+    DEF_CLASS2( INLINE_UID_FROM_FUID( Igorski::VST::ProcessorUID ),
                 PClassInfo::kManyInstances,      // cardinality
                 kVstAudioEffectClass,            // the component category (do not change this)
-                Igorski::SID::NAME,              // plug-in name
+                Igorski::VST::NAME,              // plug-in name
                 Vst::kDistributable,             // means that component and controller could be distributed on different computers
                 Vst::PlugType::kInstrumentSynth, // Subcategory for this Plug-in
                 FULL_VERSION_STR,                // Plug-in version
@@ -79,7 +79,7 @@ BEGIN_FACTORY_DEF( "igorski.nl",
                 VSTSID::createInstance )         // function pointer called when this component should be instantiated
 
     // its kVstComponentControllerClass component
-    DEF_CLASS2( INLINE_UID_FROM_FUID( VSTSIDControllerUID ),
+    DEF_CLASS2( INLINE_UID_FROM_FUID( Igorski::VST::ControllerUID ),
                 PClassInfo::kManyInstances,   // cardinality
                 kVstComponentControllerClass, // the Controller category (do not change this)
                 "IgorskiVSTController",       // controller name (could be the same as component name)

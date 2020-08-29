@@ -54,16 +54,16 @@ class LFO {
             _accumulator += _rate;
 
             // keep the accumulator within the bounds of the sample frequency
-            if ( _accumulator > SID::SAMPLE_RATE )
-                _accumulator -= SID::SAMPLE_RATE;
+            if ( _accumulator > VST::SAMPLE_RATE )
+                _accumulator -= VST::SAMPLE_RATE;
 
             // return the sample present at the calculated offset within the table
-            return SID::TABLE[ readOffset ];
+            return VST::TABLE[ readOffset ];
         }
 
     private:
 
-        // see Igorski::SID::LFO_TABLE;
+        // see Igorski::VST::LFO_TABLE;
         static const int TABLE_SIZE = 128;
 
         // used internally

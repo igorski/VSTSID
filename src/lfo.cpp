@@ -25,7 +25,7 @@
 namespace Igorski {
 
 LFO::LFO( float sampleRate ) {
-    _rate          = SID::MIN_LFO_RATE();
+    _rate          = VST::MIN_LFO_RATE();
     _accumulator   = 0.f;
     SR_OVER_LENGTH = sampleRate / ( float ) TABLE_SIZE;
 }
