@@ -15,7 +15,7 @@ namespace SID {
     static float SAMPLE_RATE = 44100.f;
 
     // filter ranges, also see https://www.waitingforfriday.com/?p=661
-    // also see vstsid.uidesc to update the controls to match
+    // also see plugin.uidesc to update the controls to match
 
     static const float FILTER_MIN_FREQ      = 30.0f;
     static const float FILTER_MAX_FREQ      = 10000.f;
@@ -23,7 +23,7 @@ namespace SID {
     static const float FILTER_MAX_RESONANCE = 0.7071067811865476f; //sqrt( 2.f ) / 2.f;
 
     // maximum and minimum rate of oscillation in Hz
-    // also see vstsid.uidesc to update the controls to match
+    // also see plugin.uidesc to update the controls to match
 
     static const float MAX_LFO_RATE() { return 10.f; }
     static const float MIN_LFO_RATE() { return .1f; }

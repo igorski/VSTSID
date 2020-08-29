@@ -26,6 +26,8 @@
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
+using namespace VSTGUI;
+
 #include <vector>
 
 namespace Steinberg {

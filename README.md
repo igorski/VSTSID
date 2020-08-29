@@ -1,93 +1,105 @@
 # VSTSID
 
-This is a VST3.0 plug-in version of the [WebSID](https://www.igorski.nl/experiment/websid) Commodore 64 synthesizer.
+A VST plug-in version of the [WebSID](https://www.igorski.nl/experiment/websid) Commodore 64 synthesizer.
+
+If you want to hear what it sounds like, you can [view the example videos](https://www.igorski.nl/download/vstsid--sid-synthesizer-instrument).
 
 ## On compatibility
 
 ### Build as VST 2.4
 
-VST3.0 is great and all, but support across DAW's is poor (shout out to Bitwig Studio for being awesome). You can however build this plugin as a VST2.4 plugin and enjoy it on a wider range of host platforms. Simply uncomment the following line in _CMakeLists.txt_:
+VST3 is great and all, but support across DAW's is poor (looking at a certain popular German product). You can however build as a VST2.4 plugin and enjoy it on a wider range of host platforms.
 
-    set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
+However: as of SDK 3.6.11, Steinberg no longer packages the required _./pluginterfaces/vst2.x_-folder inside the VST3_SDK folder.
+If you wish to build a VST2 plugin, copying the folder from an older SDK version _could_ work (verified 3.6.9. _vst2.x_ folders to work with SDK 3.7.0), though be aware
+that you _need a license to target VST2_. You can view [Steinbergs rationale on this decision here](https://www.steinberg.net/en/newsandevents/news/newsdetail/article/vst-2-coming-to-an-end-4727.html).
 
-And rename the plugin extension from _.vst3_ to _.vst_.
+Once your SDK is "setup" for VST2, simply uncomment the following line in _CMakeLists.txt_:
 
-Note: at the moment of writing there is an issue in SDK 3.6.9 where the VST2 plugin wrapper isn't working correctly on macOS. To correct this, add the following line to _"VST3_SDK/public.sdk/source/main/macexport.exp"_ :
-
-    _VSTPluginMain
-
-## Compiling for both 32-bit and 64-bit architectures:
-
-Depending on your host software having 32-bit or 64-bit support, you can best compile for a
-wider range of architectures, to do so replace all invocations of _cmake_ in this README with the following:
-
-macOS:
 ```
-cmake "-DCMAKE_OSX_ARCHITECTURES=x86_64;i386" ..
+set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 ```
 
-Windows:
-```
-cmake.exe -G"Visual Studio 15 2017 Win64" ..
-cmake.exe -G"Visual Studio 15 2017 Win32" ..
-```
+And rename the generated plugin extension from _.vst3_ to _.vst_ (or _.dll_ on Windows).
 
 ## Build instructions
 
+The project has been built and tested on macOS, Windows 10 and Linux (Ubuntu) and should build completely via CLI without requiring either a full IDE such as Xcode or Visual Studio (for aforementioned IDE's their
+command line/build tools suffice). The project uses [CMake](https://cmake.org) to generate the Makefiles.
+
 ### Environment setup
 
-The project uses [CMake](https://cmake.org) to generate the build system
-after which you can use _make_ to build the application.
+Apart from requiring _CMake_ and a C(++) compiler such as _Clang_ or _MSVC_, the only other dependency is the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.html) (the project has been developed against VST3 SDK version 3.7.0).
 
-Apart from requiring _CMake_ and a _g++_ compiler, the only other dependency is
-the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.html).
-Update _CMakeLists.txt_ to point to the root of the Steinberg SDK installation
-location (update _"VSTSDK_PATH"_).
+Be aware that prior to building the plugin, the Steinberg VST needs to be built from source as well. Following Steinbergs guidelines, the build target should be a _/build_-subfolder of the _/VST3_SDK_-folder.
+To generate a release build, execute the following commands from the Steinberg VST SDK root (run the _.bat_ verions instead of the _.sh_ versions on Windows):
 
-## Generating the Makefiles
+```
+./copy_vst2_to_vst3_sdk.sh
+cd VST3_SDK
+./tools/setup_linux_packages_for_vst3sdk.sh # <- this step is Linux only
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build .
+```
 
-The project has been developed against the VST 3.6.9 Audio Plug-Ins SDK on macOS and Windows 10 and should work completely via CLI without requiring either XCode or Visual Studio (for both command line/build tools suffice). Linux build system is provided, but is as yet untested.
+The result being that _{VST3_SDK_ROOT}/VST3_SDK/build/lib/Release/_ will contain the Steinberg VST libraries required to build the plugin.
 
-Additionally, the Steinberg VST sources need to be built as well. Following
-Steinbergs guidelines, the target is a _/build_-subfolder of the _/VST3_SDK_-folder, execute the following commands from the Steinberg VST SDK root:
+NOTE: Windows users need to append _--config Release_ to the last cmake (build) call as the build type must be defined during this step.
 
-    ./copy_vst2_to_vst3_sdk.sh
-    cd VST3_SDK
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
+### Building the plugin
 
-The result being that in _{VSTSDK_PATH}/VST3_SDK/build/lib_ all Steinberg VST libraries are prebuilt. Windows users need to append _--config Release_ to the last cmake (build) call.
+Run CMake to generate the Makefile for your environment, after which you can compile the plugin using make. The build output will be stored in _./build/VST3/vstsid.vst3_ as well as symbolically linked to your systems VST-plugin folder (on Unix).
 
-### Building the VSTSID plugin
+You must provide the path to your custom SDK download location by providing _VST3_SDK_ROOT_ to CMake like so:
 
-Run CMake to generate VSTSID's Makefile for your environment, after which you can compile the plugin using make. The build output will be stored in _./build/VST3/vstsid.vst_
-as well as copied to your systems VST-plugin folder.
+```
+cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
+```
 
-#### Compling on Unix systems:
+#### Compiling on Unix systems:
 
-    mkdir build
-    cd build
-    cmake ..
-    make .
+```
+mkdir build
+cd build
+cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
+make .
+```
 
 #### Compiling on Windows:
 
 Assuming the Visual Studio Build Tools have been installed:
 
-    mkdir build
-    cd build
-    cmake.exe -G"Visual Studio 15 2017 Win64" ..
-    cmake.exe --build .
+```
+mkdir build
+cd build
+cmake.exe -G"Visual Studio 16 2019" -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
+cmake.exe --build .
+```
 
-## Running the plugin
+### Running the plugin
 
-You can copy the build output into your system VST(3) folder and run it directly in a
-VST host / DAW of your choice.
+You can copy the build output into your system VST(3) folder and run it directly in a VST host / DAW of your choice.
 
-When debugging, you can also choose to run the plugin against Steinbergs validator
-and editor host utilities:
+When debugging, you can also choose to run the plugin against Steinbergs validator and editor host utilities:
 
-    {VSTSDK_PATH}/build/bin/validator  build/VST3/vstsid.vst3
-    {VSTSDK_PATH}/build/bin/editorhost build/VST3/vstsid.vst3
+    {VST3_SDK_ROOT}/build/bin/validator  build/VST3/vstsid.vst3
+    {VST3_SDK_ROOT}/build/bin/editorhost build/VST3/vstsid.vst3
+
+### Build as Audio Unit (macOS only)
+
+Is aided by the excellent [Jamba framework](https://github.com/pongasoft/jamba) by Pongasoft, which provides a toolchain around Steinbergs SDK. Execute the following instructions to build VSTSID as an Audio Unit:
+
+* Build the AUWrapper Project in the Steinberg SDK folder
+* Create a Release build of the Xcode project generated in step 1, this creates _VST3_SDK/public.sdk/source/vst/auwrapper/build/lib/Release/libauwrapper.a_
+* Run _sh build_au.sh_ from the repository root, providing the path to _VST3_SDK_ROOT_ as before:
+
+```
+VST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK sh build_au.sh
+```
+
+The subsequent Audio Unit component will be located in _./build/VST3/vstsid.component_ as well as linked
+in _~/Library/Audio/Plug-Ins/Components/_
+
+You can validate the Audio Unit using Apple's _auval_ utility, by running _auval -v aufx dely IGOR_ on the command line. Note that there is the curious behaviour that you might need to reboot before the plugin shows up, though you can force a flush of the Audio Unit cache at runtime by running _killall -9 AudioComponentRegistrar_.

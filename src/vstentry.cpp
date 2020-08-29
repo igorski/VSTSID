@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2020 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,12 @@
 #include "global.h"
 #include "version.h"
 
-#include "public.sdk/source/main/pluginfactoryvst3.h"
+#include "public.sdk/source/main/pluginfactory.h"
+
+#if TARGET_OS_IPHONE
+#include "public.sdk/source/vst/vstguieditor.h"
+extern void* moduleHandle;
+#endif
 
 using namespace Steinberg::Vst;
 
@@ -37,6 +42,9 @@ using namespace Steinberg::Vst;
 // called after library was loaded
 bool InitModule ()
 {
+#if TARGET_OS_IPHONE
+    Steinberg::Vst::VSTGUIEditor::setBundleRef( moduleHandle );
+#endif
     return true;
 }
 

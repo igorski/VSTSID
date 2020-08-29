@@ -2,24 +2,28 @@
 # CMake Project for VSTSID Plugin #
 ###################################
 
+# uncomment to build as VST2.4 instead of VST3.0 (provides wider DAW compatibility), not supported on Linux
+#set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
+
+#######################
+# DO NOT CHANGE BELOW #
+#######################
+
 project(VSTSID)
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.12)
+set(target vstsid)
 set(CMAKE_COLOR_MAKEFILE ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
-# path to Steinberg VST3 SDK
-set(VSTSDK_PATH "/Library/VST_SDK/VST3_SDK" CACHE PATH "Path to VST3 SDK")
+#####################
+# Compiler settings #
+#####################
 
-# compiler flags
 add_definitions(-DNDEBUG)
 
 if(MSVC)
     add_definitions(/D _CRT_SECURE_NO_WARNINGS)
 endif()
-
-###############
-# Unix builds #
-###############
 
 if(UNIX)
     if(XCODE)
@@ -33,19 +37,23 @@ if(UNIX)
        set(CMAKE_OSX_SYSROOT macosx10.10)
        set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10")
     else()
+        set(LINUX true)
         add_definitions( -D__cdecl= )
         set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-multichar")
         link_libraries(stdc++fs pthread dl)
     endif()
+else()
+    ## spotted to not be set by default on VS CLI. Here we assume any non-Unix
+    ## OS MUST be Windows. Then again that's the only other intended target for this project...
+    set(WIN true)
 endif()
 
+############
+# Includes #
+############
 
-#-------------------------------------------------------------------------------
-# Includes
-#-------------------------------------------------------------------------------
-
-list(APPEND CMAKE_MODULE_PATH "${VSTSDK_PATH}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${VST3_SDK_ROOT}/cmake/modules")
 
 include(Global)
 include(AddVST3Library)
@@ -60,45 +68,32 @@ include(VstGuiSupport)
 include(UniversalBinary)
 include(AddVST3Options)
 
-###############
-# VST sources #
-###############
+#########################
+# Steinberg VST sources #
+#########################
 
-# uncomment to build as VST2.4 instead of VST3.0 (provides wider DAW compatibility)
-#set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
-
-set(VSTSDK_INCLUDE_DIR ${VSTSDK_PATH})
+set(VSTSDK_INCLUDE_DIR ${VST3_SDK_ROOT})
 set(VSTSDK_PLUGIN_SOURCE
-  ${VSTSDK_PATH}/public.sdk/source/vst/vstaudioeffect.cpp
-  ${VSTSDK_PATH}/public.sdk/source/vst/vstaudioprocessoralgo.h
-  ${VSTSDK_PATH}/public.sdk/source/vst/vsteditcontroller.h
-  ${VSTSDK_PATH}/pluginterfaces/base/ibstream.h
-  ${VSTSDK_PATH}/pluginterfaces/base/ustring.h
-  ${VSTSDK_PATH}/pluginterfaces/vst/ivstevents.h
-  ${VSTSDK_PATH}/pluginterfaces/vst/ivstparameterchanges.h
-  ${VSTSDK_PATH}/pluginterfaces/vst/vstpresetkeys.h
+    ${VST3_SDK_ROOT}/public.sdk/source/vst/vstaudioeffect.cpp
+    ${VST3_SDK_ROOT}/public.sdk/source/vst/vstaudioprocessoralgo.h
+    ${VST3_SDK_ROOT}/public.sdk/source/vst/vsteditcontroller.h
+    ${VST3_SDK_ROOT}/pluginterfaces/base/ibstream.h
+    ${VST3_SDK_ROOT}/pluginterfaces/base/ustring.h
+    ${VST3_SDK_ROOT}/pluginterfaces/vst/ivstevents.h
+    ${VST3_SDK_ROOT}/pluginterfaces/vst/ivstparameterchanges.h
+    ${VST3_SDK_ROOT}/pluginterfaces/vst/vstpresetkeys.h
 )
 
-#if (SMTG_CREATE_VST2_VERSION)
-    set(vstsid_vst2_sources
-        ${VSTSDK_PATH}/public.sdk/source/common/memorystream.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst/hosting/eventlist.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst/hosting/hostclasses.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst/hosting/parameterchanges.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst/hosting/processdata.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst/vst2wrapper/vst2wrapper.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst/vst2wrapper/vst2wrapper.h
-        ${VSTSDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp
-        ${VSTSDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp
-        src/vstentry_vst2.cpp
-    )
-#endif()
+set(vst2_sources
+    ${VST3_SDK_ROOT}/public.sdk/source/vst/vst2wrapper/vst2wrapper.sdk.cpp
+    src/vstentry_vst2.cpp
+)
 
-###################
-# Project sources #
-###################
+##########################
+# Plugin project sources #
+##########################
 
-set(vstsid_sources
+set(vst_sources
     src/global.h
     src/miditable.h
     src/paramids.h
@@ -120,43 +115,123 @@ set(vstsid_sources
     ${VSTSDK_PLUGIN_SOURCE}
 )
 
-# VST2 is only defined for macOS and Windows
-if(MAC OR WIN)
-    set(vstsid_sources ${vstsid_sources} ${vstsid_vst2_sources})
+# add the VST2 source files when compiling a VST2 (not supported on Linux)
+if(SMTG_CREATE_VST2_VERSION)
+    if(APPLE OR WIN)
+        set(vst_sources ${vst_sources} ${vst2_sources})
+    endif()
 endif()
 
-set(target vstsid)
-smtg_add_vst3plugin(${target} ${VSTSDK_PATH} ${vstsid_sources})
+set(vst_resources
+    "resource/background.png"
+    "resource/slider_background.png"
+    "resource/slider_handle.png"
+    "resource/slider_handle_2.0x.png"
+)
+set(vst_ui_descr "resource/plugin.uidesc")
 
-###########################
-# STEINBERG VST LIBRARIES #
-###########################
+##############
+# Audio Unit #
+##############
 
+if (JAMBA_ENABLE_AUDIO_UNIT)
+    set(JAMBA_TEST_CASES_DIR "${JAMBA_ROOT}/test/cpp")
+    set(JAMBA_TEST_CASES_SOURCES
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/Collection/test-CircularBuffer.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/Concurrent/test-concurrent.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/Concurrent/test-concurrent_lockfree.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/test-Lerp.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/test-StringUtils.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Params/test-GUIParameters.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Params/test-ParamAware.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Views/test-CustomViewCreator.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Views/test-SelfContainedViewListener.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-AudioBuffers.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-AudioUtils.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-ParamConverters.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-SampleRateBasedClock.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/Utils/test-Utils.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/Utils/test-FastWriteMemoryStream.cpp
+        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/Utils/test-ReadOnlyMemoryStream.cpp
+    )
+
+    include(jamba.cmake)
+    set(CPP_SOURCES src)
+
+    configure_file(${CPP_SOURCES}/version.h ${CMAKE_BINARY_DIR}/generated/version.h)
+    include_directories(${CMAKE_BINARY_DIR}/generated/)
+
+    jamba_add_vst_plugin(
+        TARGET              "${target}"
+        RELEASE_FILENAME    "${target}.component"
+        TARGETS_PREFIX      "jmb_"
+        VST_SOURCES         "${vst_sources}"
+        UIDESC              "${vst_ui_descr}"
+        RESOURCES           "${vst_resources}"
+        TEST_CASE_SOURCES   "${JAMBA_TEST_CASES_SOURCES}"
+        TEST_LINK_LIBRARIES "jamba"
+    )
+
+else()
+
+#######
+# VST #
+#######
+
+smtg_add_vst3plugin(${target} ${vst_sources})
+
+## include Steinberg libraries
+
+set(steinberg_libs "base" "pluginterfaces" "sdk" "vstgui_support" "vstgui_uidescription" "vstgui")
 include_directories(${VSTSDK_INCLUDE_DIR})
-target_link_libraries(${target} ${VSTSDK_LIBRARIES})
-target_include_directories(${target} PUBLIC ${VSTSDK_PATH}/vstgui4)
-if (UNIX)
-	target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libbase.a)
-	target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libsdk.a)
-	target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_support.a)
-	target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui_uidescription.a)
-	target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/libvstgui.a)
-endif()
-if (WIN)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/base.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/sdk.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/vstgui_support.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/vstgui_uidescription.lib)
-    target_link_libraries(${target} PRIVATE ${VSTSDK_PATH}/build/lib/Release/vstgui.lib)
-endif()
+foreach(lib IN ITEMS ${steinberg_libs})
+    if(UNIX)
+        target_link_libraries(${target} PRIVATE ${VST3_SDK_ROOT}/build/lib/Release/lib${lib}.a)
+    elseif(WIN)
+        target_link_libraries(${target} PRIVATE ${VST3_SDK_ROOT}/build/lib/Release/${lib}.lib)
+    endif()
+endforeach(lib)
 
-###############################
-# PLATFORM SPECIFIC LIBRARIES #
-###############################
+## Include Steinberg VSTGUI
+
+target_include_directories(${target} PUBLIC ${VST3_SDK_ROOT}/vstgui4)
+target_sources(${target} PRIVATE
+    ${VST3_SDK_ROOT}/vstgui4/vstgui/vstgui_uidescription.cpp
+    ${VST3_SDK_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.cpp
+    ${VST3_SDK_ROOT}/public.sdk/source/vst/vstguieditor.cpp
+)
+
+## include macOS specific libraries
 
 IF (APPLE)
+    target_sources (${target} PRIVATE
+        ${VST3_SDK_ROOT}/public.sdk/source/main/macmain.cpp
+        ${VST3_SDK_ROOT}/vstgui4/vstgui/vstgui_mac.mm
+    )
     if(XCODE)
-        target_link_libraries(${target} PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework Accelerate" "-framework QuartzCore" "-framework Carbon")
+        if(SMTG_IOS_DEVELOPMENT_TEAM)
+            ## iOS plugin
+            set(target ${target}_ios)
+            smtg_add_ios_vst3plugin("${SMTG_CODE_SIGN_IDENTITY_IOS}" ${target} "${target}" "${vst_sources}")
+            set_target_properties(${target} PROPERTIES ${SDK_IDE_PLUGIN_EXAMPLES_FOLDER})
+            target_link_libraries(${target} PRIVATE
+                base_ios
+                sdk_ios
+                "-framework UIKit"
+                "-framework CoreGraphics"
+                "-framework QuartzCore"
+                "-framework CoreText"
+                "-framework Accelerate"
+                "-framework ImageIO"
+                "-framework MobileCoreServices"
+            )
+            target_sources(${target} PRIVATE
+                ${VST3_SDK_ROOT}/vstgui4/vstgui/vstgui_ios.mm
+            )
+        else()
+            ## macOS plugin
+            target_link_libraries(${target} PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework Accelerate" "-framework QuartzCore" "-framework Carbon")
+        endif()
     else()
         find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
         find_library(COCOA_FRAMEWORK Cocoa)
@@ -167,38 +242,75 @@ IF (APPLE)
         find_library(EXPAT Expat)
         target_link_libraries(${target} PRIVATE ${COREFOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${ACCELERATE_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} ${CARBON_FRAMEWORK} ${EXPAT})
     endif()
-ENDIF (APPLE)
+    set_target_properties(${target} PROPERTIES
+        BUNDLE true
+        BUNDLE_EXTENSION "vst3"
+        XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist"
+        MACOSX_BUNDLE_BUNDLE_NAME "${project}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.${target}"
+        MACOSX_BUNDLE_ICON_FILE ""
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.2"
+        MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2018"
+    )
+endif()
 
-#############
-# Resources #
-#############
+## include Linux specific libraries
 
-smtg_add_vst3_resource(${target} "resources/graphics/vstsid.uidesc")
-smtg_add_vst3_resource(${target} "resources/graphics/background.png")
-smtg_add_vst3_resource(${target} "resources/graphics/slider_background.png")
-smtg_add_vst3_resource(${target} "resources/graphics/slider_handle.png")
-smtg_add_vst3_resource(${target} "resources/graphics/slider_handle_2.0x.png")
+if (LINUX)
+    target_sources (${target} PRIVATE
+        ${VST3_SDK_ROOT}/public.sdk/source/main/linuxmain.cpp
+    )
+    set(VSTGUI_LTO_COMPILER_FLAGS "-O3 -flto")
+    set(VSTGUI_LTO_LINKER_FLAGS "")
+    find_package(X11 REQUIRED)
+    find_package(Freetype REQUIRED)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(LIBXCB REQUIRED xcb)
+    pkg_check_modules(LIBXCB_UTIL REQUIRED xcb-util)
+    pkg_check_modules(LIBXCB_CURSOR REQUIRED xcb-cursor)
+    pkg_check_modules(LIBXCB_KEYSYMS REQUIRED xcb-keysyms)
+    pkg_check_modules(LIBXCB_XKB REQUIRED xcb-xkb)
+    pkg_check_modules(LIBXKB_COMMON REQUIRED xkbcommon)
+    pkg_check_modules(LIBXKB_COMMON_X11 REQUIRED xkbcommon-x11)
+    set(LINUX_LIBRARIES
+        ${X11_LIBRARIES}
+        ${FREETYPE_LIBRARIES}
+        ${LIBXCB_LIBRARIES}
+        ${LIBXCB_UTIL_LIBRARIES}
+        ${LIBXCB_CURSOR_LIBRARIES}
+        ${LIBXCB_KEYSYMS_LIBRARIES}
+        ${LIBXCB_XKB_LIBRARIES}
+        ${LIBXKB_COMMON_LIBRARIES}
+        ${LIBXKB_COMMON_X11_LIBRARIES}
+        cairo
+        fontconfig
+        dl
+    )
+    target_link_libraries(${target} PRIVATE ${LINUX_LIBRARIES})
+endif()
 
-#########################
-# Set bundle properties #
-#########################
+## Include Windows specific libraries
 
-set_target_properties(vstsid PROPERTIES
-  BUNDLE true
-  BUNDLE_EXTENSION "vst3"
-  XCODE_ATTRIBUTE_WRAPPER_EXTENSION "vst3"
-  MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist"
-  MACOSX_BUNDLE_BUNDLE_NAME "VSTSID"
-  MACOSX_BUNDLE_GUI_IDENTIFIER "nl.igorski.VSTSID"
-  MACOSX_BUNDLE_ICON_FILE ""
-  MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
-  MACOSX_BUNDLE_COPYRIGHT "igorski.nl © 2018"
-)
+if(WIN)
+    target_sources (${target} PRIVATE
+        ${VST3_SDK_ROOT}/public.sdk/source/main/dllmain.cpp
+#        ${VST3_SDK_ROOT}/vstgui4/vstgui/vstgui_win32.cpp
+    )
+endif()
 
-if(MAC)
-    smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/osx/Info.plist" PREPROCESS)
+## Add the resource files to the bundle
+
+smtg_add_vst3_resource(${target} ${vst_ui_descr})
+foreach(resource IN ITEMS ${vst_resources})
+    smtg_add_vst3_resource(${target} ${resource})
+endforeach()
+
+if(APPLE)
+    smtg_set_bundle(${target} INFOPLIST "${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist" PREPROCESS)
+    smtg_add_plugin_resource(${target} "${CMAKE_CURRENT_SOURCE_DIR}/mac/PkgInfo" "../") # adding PkgInfo at root level makes plugin appear as a file instead of folder
 elseif(WIN)
-    target_sources(${target} PRIVATE resources/graphics/vstsid.rc)
+    target_sources(${target} PRIVATE resource/plugin.rc)
 endif()
 
 if (SMTG_CREATE_VST2_VERSION)
@@ -212,24 +324,26 @@ if (SMTG_CREATE_VST2_VERSION)
     endif()
 endif()
 
-####################
-# Set Install Path #
-####################
+endif()
+
+######################
+# Installation paths #
+######################
 
 if(APPLE)
-  install(TARGETS vstsid
+  install(TARGETS ${target}
     DESTINATION "$ENV{HOME}/Library/Audio/Plug-Ins/VST"
   )
 elseif(WIN32)
-  install(TARGETS vstsid
+  install(TARGETS ${target}
     DESTINATION "C:/Program Files (x86)/Common Files/VST3/"
   )
 elseif(WIN)
-  install(TARGETS vstsid
+  install(TARGETS ${target}
     DESTINATION "C:/Program Files/Common Files/VST3/"
   )
-elseif(UNIX AND NOT APPLE) #Linux
-  install(TARGETS vstsid
+elseif(LINUX)
+  install(TARGETS ${target}
     DESTINATION "/usr/lib/lxvst"
   )
 endif()
