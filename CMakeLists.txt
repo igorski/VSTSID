@@ -1,6 +1,6 @@
-﻿#####################################
-# CMake Project for REGRADER Plugin #
-#####################################
+###################################
+# CMake Project for VSTSID Plugin #
+###################################
 
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_COLOR_MAKEFILE ON)
