@@ -36,6 +36,8 @@
 
 #include <stdio.h>
 
+float Igorski::VST::SAMPLE_RATE = 44100.f; // updated in setupProcessing()
+
 namespace Steinberg {
 namespace Vst {
 

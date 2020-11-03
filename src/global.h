@@ -16,8 +16,7 @@ namespace VST {
     static const FUID ProcessorUID( 0x6EEE9708, 0xD3784BB6, 0x9C19F7CB, 0x61D14593 );
     static const FUID ControllerUID( 0xB6E29CFB, 0xD6694CB0, 0xA3743B49, 0xE6113472 );
 
-    // set upon initialization, see vst.cpp
-    static float SAMPLE_RATE = 44100.f;
+    extern float SAMPLE_RATE; // set upon initialization, see vst.cpp
 
     // filter ranges, also see https://www.waitingforfriday.com/?p=661
     // also see plugin.uidesc to update the controls to match
