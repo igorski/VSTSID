@@ -22,11 +22,7 @@
 #define VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR
 
 #define stringOriginalFilename  "vstsid.vst3"
-#if PLATFORM_64
-#define stringFileDescription   "VSTSID plugin (64Bit)"
-#else
 #define stringFileDescription   "VSTSID plugin"
-#endif
 #define stringCompanyName       "igorski.nl\0"
 #define stringLegalCopyright    #PLUGIN_COPYRIGHT
 #define stringLegalTrademarks   "VST is a trademark of Steinberg Media Technologies GmbH"

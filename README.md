@@ -10,8 +10,8 @@ If you want to hear what it sounds like, you can [view the example videos](https
 
 VST3 is great and all, but support across DAW's is poor (looking at a certain popular German product). You can however build as a VST2.4 plugin and enjoy it on a wider range of host platforms.
 
-However: as of SDK 3.6.11, Steinberg no longer packages the required _./pluginterfaces/vst2.x_-folder inside the VST3_SDK folder.
-If you wish to build a VST2 plugin, copying the folder from an older SDK version _could_ work (verified 3.6.9. _vst2.x_ folders to work with SDK 3.7.0), though be aware
+However: as of SDK 3.6.11, Steinberg no longer packages the required _./pluginterfaces/vst2.x_-folder inside the vst3sdk folder.
+If you wish to build a VST2 plugin, copying the folder from an older SDK version _could_ work (verified 3.6.9. _vst2.x_ folders to work with SDK 3.7.6), though be aware
 that you _need a license to target VST2_. You can view [Steinbergs rationale on this decision here](https://www.steinberg.net/en/newsandevents/news/newsdetail/article/vst-2-coming-to-an-end-4727.html).
 
 Once your SDK is "setup" for VST2, simply uncomment the following line in _CMakeLists.txt_:
@@ -20,7 +20,44 @@ Once your SDK is "setup" for VST2, simply uncomment the following line in _CMake
 set(SMTG_CREATE_VST2_VERSION "Use VST2" ON)
 ```
 
-And rename the generated plugin extension from _.vst3_ to _.vst_ (or _.dll_ on Windows).
+And rename the generated plugin extension from _.vst3_ to _.vst_ (or _.dll_ on Windows). Alternatively, pass
+"_vst2_" as an argument to the _build.sh_ and _build.bat_ files without having to edit the make file or
+rename the generated VST manually. E.g.:
+
+```
+sh build.sh vst2
+```
+
+### Compiling for both 32-bit and 64-bit architectures
+
+Depending on your host software having 32-bit or 64-bit support (either Intel or M1), you can best compile for a wider range of architectures. To do so,
+replace all invocations of _cmake_ in this README with the following:
+
+**macOS:**
+
+```
+cmake -"DCMAKE_OSX_ARCHITECTURES=x86_64;arm64;i1386" ..
+```
+
+Which will allow you to compile a single, "fat" binary that supports all architectures (Intel, M1 and legacy 32-bit Intel).
+
+**Windows:**
+
+```
+cmake.exe -G "Visual Studio 16 2019" -A Win64 -S .. -B "build64"
+cmake.exe --build build64 --config Release
+
+cmake.exe -G "Visual Studio 16 2019" -A Win32 -S .. -B "build32"
+cmake.exe --build build32 --config Release
+```
+
+Which is a little more cumbersome as you compile separate binaries for the separate architectures.
+
+Note that the above also needs to be done when building the Steinberg SDK (which for the Windows build implies that a separate build is created for each architecture).
+
+While macOS has been fully 64-bit for the past versions, building for 32-bit provides the best backward
+compatibility for older OS versions. And musicians are known to keep working systems at the cost of not
+running an up to date system...
 
 ## Build instructions
 
@@ -28,20 +65,20 @@ The project uses [CMake](https://cmake.org) to generate the Makefiles and has be
 
 ### Environment setup
 
-Apart from requiring _CMake_ and a C(++) compiler such as _Clang_ or _MSVC_, the only other dependency is the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.html) (the projects latest update requires SDK version 3.7.0).
+Apart from requiring _CMake_ and a C(++) compiler such as _Clang_ or _MSVC_, the only other dependency is the [VST SDK from Steinberg](https://www.steinberg.net/en/company/developers.html) (the projects latest update requires SDK version 3.7.6).
 
-Be aware that prior to building the plugin, the Steinberg SDK needs to be built from source as well. Following Steinbergs guidelines, the build target should be a _/build_-subfolder of the _/VST3_SDK_-folder.
+Be aware that prior to building the plugin, the Steinberg SDK needs to be built from source as well. Following Steinbergs guidelines, the build target should be a _/build_-subfolder of the _/vst3sdk_-folder.
 To generate a release build of the library, execute the following commands from the root of the Steinberg SDK folder:
 
 ```
-cd VST3_SDK
+cd vst3sdk
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
 
-The result being that _{VST3_SDK_ROOT}/VST3_SDK/build/lib/Release/_ will contain the Steinberg VST libraries required to build the plugin.
+The result being that _{VST3_SDK_ROOT}/build/lib/Release/_ will contain the Steinberg VST libraries required to build the plugin.
 NOTE: Windows users need to append _--config Release_ to the last cmake (build) call as the build type must be defined during this step.
 
 If you intend to build VST2 versions as well, run the following from the root of the Steinberg SDK folder (run the _.bat_ version instead of the _.sh_ version on Windows) prior to building the library:
@@ -63,7 +100,7 @@ Run CMake to generate the Makefile for your environment, after which you can com
 You must provide the path to the Steinberg SDK by providing _VST3_SDK_ROOT_ to CMake like so:
 
 ```
-cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
+cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/vst3sdk/ ..
 ```
 
 #### Compiling on Unix systems:
@@ -71,7 +108,7 @@ cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
 ```
 mkdir build
 cd build
-cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
+cmake -DVST3_SDK_ROOT=/path/to/VST_SDK/vst3sdk/ ..
 make .
 ```
 
@@ -82,7 +119,7 @@ Assuming the Visual Studio Build Tools have been installed:
 ```
 mkdir build
 cd build
-cmake.exe -G"Visual Studio 16 2019" -DVST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK/ ..
+cmake.exe -G"Visual Studio 16 2019" -DVST3_SDK_ROOT=/path/to/VST_SDK/vst3sdk/ ..
 cmake.exe --build .
 ```
 
@@ -92,8 +129,10 @@ You can copy the build output into your system VST(3) folder and run it directly
 
 When debugging, you can also choose to run the plugin against Steinbergs validator and editor host utilities:
 
-    {VST3_SDK_ROOT}/build/bin/validator  build/VST3/vstsid.vst3
-    {VST3_SDK_ROOT}/build/bin/editorhost build/VST3/vstsid.vst3
+```
+{VST3_SDK_ROOT}/build/bin/validator  build/VST3/vstsid.vst3
+{VST3_SDK_ROOT}/build/bin/editorhost build/VST3/vstsid.vst3
+```
 
 ### Build as Audio Unit (macOS only)
 
@@ -104,7 +143,7 @@ Is aided by the excellent [Jamba framework](https://github.com/pongasoft/jamba) 
 * Run _sh build_au.sh_ from the repository root, providing the path to _VST3_SDK_ROOT_ as before:
 
 ```
-VST3_SDK_ROOT=/path/to/VST_SDK/VST3_SDK sh build_au.sh
+VST3_SDK_ROOT=/path/to/VST_SDK/vst3sdk sh build_au.sh
 ```
 
 The subsequent Audio Unit component will be located in _./build/VST3/vstsid.component_ as well as linked
