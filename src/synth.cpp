@@ -323,6 +323,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
             // synthesize waveform
 
+            // TODO: portamento
+            float frequency = event->frequency; 
+
             switch ( waveform )
             {
                 case Waveforms::TRIANGLE:
@@ -339,7 +342,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                     // the actual triangulation function
                     amp = amp < 0 ? -amp : amp;
 
-                    phase += ( event->frequency / ( float ) SAMPLE_RATE );
+                    phase += ( frequency / ( float ) SAMPLE_RATE );
 
                     // keep phase within range
                     if ( phase > 1.f )
@@ -352,7 +355,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                     pmv   = i + ( ++event->pwm );
                     dpw   = sinf( pmv / ( float ) 0x4800 ) * PWR;
                     amp   = phase < PI - dpw ? PW_AMP : -PW_AMP;
-                    phase = phase + ( TWO_PI_OVER_SR * event->frequency );
+                    phase = phase + ( TWO_PI_OVER_SR * frequency );
                     phase = phase > TWO_PI ? phase - TWO_PI : phase;
                     //am    = sinf( pmv / ( float ) 0x1000 );
 
