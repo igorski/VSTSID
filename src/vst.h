@@ -100,15 +100,17 @@ class VSTSID : public AudioEffect
         float fLFODepth;
 
         float fRingModRate;
+        bool _bypass = false;
 
         int32 currentProcessMode;
 
-        Igorski::Synthesizer* synth;
-        Igorski::Filter*      filter;
+        Igorski::Synthesizer* synth  = nullptr;
+        Igorski::Filter*      filter = nullptr;
 
         // synchronize the processors model after UI led changes
 
         void syncModel();
+        void initPlugin( float sampleRate );
 };
 
 //------------------------------------------------------------------------
