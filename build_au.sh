@@ -22,7 +22,7 @@ if [ -n "${VST3_SDK_ROOT}" ]; then
 fi
 
 # run CMake using Audio Unit build target
-cmake -GXcode ${DVST3_SDK_ROOT} "-DCMAKE_OSX_ARCHITECTURES=x86_64" "-DCREATE_AUDIO_UNIT=ON" "-DSMTG_COREAUDIO_SDK_PATH=/Library/CoreAudioSDK/CoreAudio" "${BASEDIR}"
+cmake -GXcode ${DVST3_SDK_ROOT} "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64" "-DCREATE_AUDIO_UNIT=ON" "-DSMTG_COREAUDIO_SDK_PATH=/Library/CoreAudioSDK/CoreAudio" "${BASEDIR}"
 cmake --build . --config Release
 
 cd ..
