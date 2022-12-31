@@ -31,6 +31,7 @@
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 #include "base/source/fstring.h"
+#include "base/source/fstreamer.h"
 
 #include "vstgui/uidescription/delegationcontroller.h"
 
@@ -144,6 +145,11 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     );
     parameters.addParameter( ringModRateParam );
 
+    // Bypass
+	parameters.addParameter(
+        STR16( "Bypass" ), nullptr, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, kBypassId
+    );
+
     // initialization
 
     String str( "VST SID" );
@@ -162,67 +168,62 @@ tresult PLUGIN_API VSTSIDController::terminate()
 tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
 {
     // we receive the current state of the component (processor part)
-    if ( state )
-    {
-        float savedAttack = 1.f;
-        if ( state->read( &savedAttack, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    if ( !state )
+        return kResultFalse;
 
-        float savedDecay = 1.f;
-        if ( state->read( &savedDecay, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    IBStreamer streamer( state, kLittleEndian );
 
-        float savedSustain = 1.f;
-        if ( state->read( &savedSustain, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedAttack = 1.f;
+    if ( streamer.readFloat( savedAttack ) == false )
+        return kResultFalse;
+    setParamNormalized( kAttackId, savedAttack );
 
-        float savedRelease = 1.f;
-        if ( state->read( &savedRelease, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedDecay = 1.f;
+    if ( streamer.readFloat( savedDecay ) == false )
+        return kResultFalse;
+    setParamNormalized( kDecayId, savedDecay );
 
-        float savedCutoff = Igorski::VST::FILTER_MAX_FREQ;
-        if ( state->read( &savedCutoff, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedSustain = 1.f;
+    if ( streamer.readFloat( savedSustain ) == false )
+        return kResultFalse;
+    setParamNormalized( kSustainId, savedSustain );
 
-        float savedResonance = Igorski::VST::FILTER_MAX_RESONANCE;
-        if ( state->read( &savedResonance, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedRelease = 1.f;
+    if ( streamer.readFloat( savedRelease ) == false )
+        return kResultFalse;
+    setParamNormalized( kReleaseId, savedRelease );
 
-        float savedLFORate = Igorski::VST::MIN_LFO_RATE();
-        if ( state->read( &savedLFORate, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedCutoff = Igorski::VST::FILTER_MAX_FREQ;
+    if ( streamer.readFloat( savedCutoff ) == false )
+        return kResultFalse;
+    setParamNormalized( kCutoffId, savedCutoff );
 
-        float savedLFODepth = 1.f;
-        if ( state->read( &savedLFODepth, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedResonance = Igorski::VST::FILTER_MAX_RESONANCE;
+    if ( streamer.readFloat( savedResonance ) == false )
+        return kResultFalse;
+    setParamNormalized( kResonanceId, savedResonance );
 
-        float savedRingModRate = Igorski::VST::MIN_RING_MOD_RATE();
-        if ( state->read( &savedRingModRate, sizeof( float )) != kResultOk )
-            return kResultFalse;
+    float savedLFORate = Igorski::VST::MIN_LFO_RATE();
+    if ( streamer.readFloat( savedLFORate ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFORateId, savedLFORate );
 
-#if BYTEORDER == kBigEndian
-    SWAP_32( savedAttack )
-    SWAP_32( savedDecay )
-    SWAP_32( savedSustain )
-    SWAP_32( savedRelease )
-    SWAP_32( savedCutoff )
-    SWAP_32( savedResonance )
-    SWAP_32( savedLFORate )
-    SWAP_32( savedLFODepth )
-    SWAP_32( savedRingModRate )
-#endif
-        setParamNormalized( kAttackId,      savedAttack );
-        setParamNormalized( kDecayId,       savedDecay );
-        setParamNormalized( kSustainId,     savedSustain );
-        setParamNormalized( kReleaseId,     savedRelease );
-        setParamNormalized( kCutoffId,      savedCutoff );
-        setParamNormalized( kResonanceId,   savedResonance );
-        setParamNormalized( kLFORateId,     savedLFORate );
-        setParamNormalized( kLFODepthId,    savedLFODepth );
-        setParamNormalized( kRingModRateId, savedRingModRate );
+    float savedLFODepth = 1.f;
+    if ( streamer.readFloat( savedLFODepth ) == false )
+        return kResultFalse;
+    setParamNormalized( kLFODepthId, savedLFODepth );
 
-        state->seek( sizeof ( float ), IBStream::kIBSeekCur );
+    float savedRingModRate = Igorski::VST::MIN_RING_MOD_RATE();
+    if ( streamer.readFloat( savedRingModRate ) == false )
+        return kResultFalse;
+    setParamNormalized( kRingModRateId, savedRingModRate );
+
+    // may fail as this was only added in version 1.0.3
+    int32 savedBypass = 0;
+    if ( streamer.readInt32( savedBypass ) != false ) {
+        setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
     }
+
     return kResultOk;
 }
 

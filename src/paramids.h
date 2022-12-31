@@ -38,7 +38,9 @@ enum
 
     kRingModRateId, // ring modulator rate
 
-    kLFODepthId     // filter LFO depth (added in v1.0.1.1)
+    kLFODepthId,    // filter LFO depth (added in v1.0.1.1)
+
+    kBypassId,      // bypass process (added in v.1.0.3)
 };
 
 #endif

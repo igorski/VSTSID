@@ -34,6 +34,8 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/vstpresetkeys.h"
 
+#include "base/source/fstreamer.h"
+
 #include <stdio.h>
 
 float Igorski::VST::SAMPLE_RATE = 44100.f; // updated in setupProcessing()
@@ -58,6 +60,9 @@ VSTSID::VSTSID ()
 {
     // register its editor class (the same as used in entry.cpp)
     setControllerClass( Igorski::VST::ControllerUID );
+
+    // should be created on setupProcessing, this however doesn't fire for Audio Unit using auval?
+    initPlugin( Igorski::VST::SAMPLE_RATE );
 }
 
 //------------------------------------------------------------------------
@@ -178,6 +183,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                         if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
                             fRingModRate = ( float ) value;
                         break;
+
+                    case kBypassId:
+                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
+                            _bypass = ( value > 0.5f );
+                        break;
                 }
                 syncModel();
             }
@@ -222,8 +232,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     //---3) Process Audio---------------------
     //-------------------------------------
 
-    if ( data.numOutputs == 0 )
-    {
+    if ( data.numOutputs == 0 ) {
         // nothing to do
         return kResultOk;
     }
@@ -235,14 +244,19 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 //    void** in  = getChannelBuffersPointer( processSetup, data.inputs [ 0 ] );
     void** out = getChannelBuffersPointer( processSetup, data.outputs[ 0 ] );
 
-    // synthesize !
+    bool hasContent = false;
 
-    bool hasContent = synth->synthesize(
-        ( float** ) out, numChannels, data.numSamples, sampleFramesSize
-    );
+    if ( !_bypass )
+    {
+        // synthesize !
+        hasContent = synth->synthesize(
+            ( float** ) out, numChannels, data.numSamples, sampleFramesSize
+        );
 
-    if ( hasContent )
-        filter->process(( float** ) out, numChannels, data.numSamples );
+        if ( hasContent ) {
+            filter->process(( float** ) out, numChannels, data.numSamples );
+        }
+    }
 
     // mark our outputs as not silent if content had been synthesized
     data.outputs[ 0 ].silenceFlags = !hasContent;
@@ -264,55 +278,51 @@ tresult VSTSID::receiveText( const char* text )
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setState( IBStream* state )
 {
+    IBStreamer streamer( state, kLittleEndian );
+
     // called when we load a preset, the model has to be reloaded
 
     float savedAttack = 0.f;
-    if ( state->read( &savedAttack, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedAttack ) == false )
         return kResultFalse;
 
     float savedDecay = 0.f;
-    if ( state->read( &savedDecay, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedDecay ) == false )
         return kResultFalse;
 
     float savedSustain = 0.f;
-    if ( state->read( &savedSustain, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedSustain ) == false )
         return kResultFalse;
 
     float savedRelease = 0.f;
-    if ( state->read( &savedRelease, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedRelease ) == false )
         return kResultFalse;
 
     float savedCutoff = 0.f;
-    if ( state->read( &savedCutoff, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedCutoff ) == false )
         return kResultFalse;
 
     float savedResonance = 0.f;
-    if ( state->read( &savedResonance, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedResonance ) == false )
         return kResultFalse;
 
     float savedLFORate = 0.f;
-    if ( state->read( &savedLFORate, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFORate ) == false )
         return kResultFalse;
 
     float savedLFODepth = 1.f;
-    if ( state->read( &savedLFODepth, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedLFODepth ) == false )
         return kResultFalse;
 
     float savedRingModRate = 0.f;
-    if ( state->read( &savedRingModRate, sizeof ( float )) != kResultOk )
+    if ( streamer.readFloat( savedRingModRate ) == false )
         return kResultFalse;
 
-#if BYTEORDER == kBigEndian
-    SWAP_32( savedAttack )
-    SWAP_32( savedDecay )
-    SWAP_32( savedSustain )
-    SWAP_32( savedRelease )
-    SWAP_32( savedCutoff )
-    SWAP_32( savedResonance )
-    SWAP_32( savedLFORate )
-    SWAP_32( savedLFODepth )
-    SWAP_32( savedRingModRate )
-#endif
+    // may fail as this was only added in version 1.0.3
+    int32 savedBypass = 0;
+    if ( streamer.readInt32( savedBypass ) != false ) {
+        _bypass = savedBypass > 0;
+    }
 
     fAttack      = savedAttack;
     fDecay       = savedDecay;
@@ -362,39 +372,20 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::getState( IBStream* state )
 {
-    // here we need to save the model
+    // here we save the model values
 
-    float toSaveAttack      = fAttack;
-    float toSaveDecay       = fDecay;
-    float toSaveSustain     = fSustain;
-    float toSaveRelease     = fRelease;
-    float toSaveCutoff      = fCutoff;
-    float toSaveResonance   = fResonance;
-    float toSaveLFORate     = fLFORate;
-    float toSaveLFODepth    = fLFODepth;
-    float toSaveRingModRate = fRingModRate;
+    IBStreamer streamer( state, kLittleEndian );
 
-#if BYTEORDER == kBigEndian
-    SWAP_32( toSaveAttack )
-    SWAP_32( toSaveDecay )
-    SWAP_32( toSaveSustain )
-    SWAP_32( toSaveRelease )
-    SWAP_32( toSaveCutoff )
-    SWAP_32( toSaveResonance )
-    SWAP_32( toSaveLFORate )
-    SWAP_32( toSaveLFODepth )
-    SWAP_32( toSaveRingModRate )
-#endif
-
-    state->write( &toSaveAttack,      sizeof( float ));
-    state->write( &toSaveDecay,       sizeof( float ));
-    state->write( &toSaveSustain,     sizeof( float ));
-    state->write( &toSaveRelease,     sizeof( float ));
-    state->write( &toSaveCutoff,      sizeof( float ));
-    state->write( &toSaveResonance,   sizeof( float ));
-    state->write( &toSaveLFORate,     sizeof( float ));
-    state->write( &toSaveLFODepth,    sizeof( float ));
-    state->write( &toSaveRingModRate, sizeof( float ));
+    streamer.writeFloat( fAttack );
+    streamer.writeFloat( fDecay );
+    streamer.writeFloat( fSustain );
+    streamer.writeFloat( fRelease );
+    streamer.writeFloat( fCutoff );
+    streamer.writeFloat( fResonance );
+    streamer.writeFloat( fLFORate );
+    streamer.writeFloat( fLFODepth );
+    streamer.writeFloat( fRingModRate );
+    streamer.writeInt32( _bypass ? 1 : 0 );
 
     return kResultOk;
 }
@@ -409,12 +400,7 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 
     Igorski::VST::SAMPLE_RATE = newSetup.sampleRate;
 
-    synth = new Igorski::Synthesizer();
-    synth->init( newSetup.sampleRate, 120.f );
-
-    filter = new Igorski::Filter(( float ) newSetup.sampleRate );
-
-    syncModel();
+    initPlugin( newSetup.sampleRate );
 
     return AudioEffect::setupProcessing( newSetup );
 }
@@ -510,6 +496,21 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
     }
 
     return AudioEffect::notify( message );
+}
+
+void VSTSID::initPlugin( float sampleRate )
+{
+    if ( synth != nullptr ) {
+        delete synth;
+        delete filter;
+    }
+
+    synth = new Igorski::Synthesizer();
+    synth->init( sampleRate, 120.f );
+
+    filter = new Igorski::Filter( sampleRate );
+
+    syncModel();
 }
 
 void VSTSID::syncModel()
