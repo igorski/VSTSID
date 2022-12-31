@@ -11,8 +11,8 @@ If you want to hear what it sounds like, you can [view the example videos](https
 VST3 is great and all, but support across DAW's is poor (looking at a certain popular German product). You can however build as a VST2.4 plugin and enjoy it on a wider range of host platforms.
 
 However: as of SDK 3.6.11, Steinberg no longer packages the required _./pluginterfaces/vst2.x_-folder inside the vst3sdk folder.
-If you wish to build a VST2 plugin, copying the folder from an older SDK version _could_ work (verified 3.6.9. _vst2.x_ folders to work with SDK 3.7.6), though be aware
-that you _need a license to target VST2_. You can view [Steinbergs rationale on this decision here](https://www.steinberg.net/en/newsandevents/news/newsdetail/article/vst-2-coming-to-an-end-4727.html).
+If you wish to build a VST2 plugin, copying the folder from an older SDK version _could_ work (verified 3.6.9. _vst2.x_ folders to work with SDK 3.7.6), though be aware that you _need a license to target VST2_. You can
+view [Steinbergs rationale on this decision here](https://www.steinberg.net/en/newsandevents/news/newsdetail/article/vst-2-coming-to-an-end-4727.html).
 
 Once your SDK is "setup" for VST2, simply uncomment the following line in _CMakeLists.txt_:
 
@@ -136,10 +136,19 @@ When debugging, you can also choose to run the plugin against Steinbergs validat
 
 ### Build as Audio Unit (macOS only)
 
-Is aided by the excellent [Jamba framework](https://github.com/pongasoft/jamba) by Pongasoft, which provides a toolchain around Steinbergs SDK. Execute the following instructions to build VSTSID as an Audio Unit:
+For this you will need a little extra preparation while building Steinberg SDK. Additionally, you will need the
+CoreAudio SDK and XCode. Execute the following instructions to build the SDK with Audio Unit support, replace `SMTG_COREAUDIO_SDK_PATH` with the actual installation location of the CoreAudio SDK:
 
-* Build the AUWrapper Project in the Steinberg SDK folder
-* Create a Release build of the Xcode project generated in step 1, this creates _VST3_SDK/public.sdk/source/vst/auwrapper/build/lib/Release/libauwrapper.a_
+```
+cd vst3sdk
+mkdir build
+cd build
+cmake -GXcode -DCMAKE_BUILD_TYPE=Release -DSMTG_COREAUDIO_SDK_PATH=/Library/CoreAudioSDK/CoreAudio ..
+cmake --build . --config Release
+```
+
+Execute the following instructions to build the plugin as an Audio Unit:
+
 * Run _sh build_au.sh_ from the repository root, providing the path to _VST3_SDK_ROOT_ as before:
 
 ```
@@ -150,3 +159,7 @@ The subsequent Audio Unit component will be located in _./build/VST3/vstsid.comp
 in _~/Library/Audio/Plug-Ins/Components/_
 
 You can validate the Audio Unit using Apple's _auval_ utility, by running _auval -v aumu synt IGOR_ on the command line. Note that there is the curious behaviour that you might need to reboot before the plugin shows up, though you can force a flush of the Audio Unit cache at runtime by running _killall -9 AudioComponentRegistrar_.
+
+NOTE: Updates of the Steinberg SDK have been known to break Audio Unit support. You can always try building
+the plugin as part of the SDK examples (see CMakeLists.txt in audio-unit folder) when building the VST3_SDK as
+that _might_ work.
