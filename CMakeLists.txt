@@ -133,6 +133,7 @@ set(vst_sources
     src/ui/controller.h
     src/ui/controller.cpp
     src/ui/uimessagecontroller.h
+    resource/plugin.uidesc
     ${VSTSDK_PLUGIN_SOURCE}
 )
 
@@ -151,59 +152,34 @@ set(vst_resources
 )
 set(vst_ui_descr "resource/plugin.uidesc")
 
-##############
-# Audio Unit #
-##############
-
-if (JAMBA_ENABLE_AUDIO_UNIT)
-    set(JAMBA_TEST_CASES_DIR "${JAMBA_ROOT}/test/cpp")
-    set(JAMBA_TEST_CASES_SOURCES
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/Collection/test-CircularBuffer.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/Concurrent/test-concurrent.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/Concurrent/test-concurrent_lockfree.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/test-Lerp.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/Utils/test-StringUtils.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Params/test-GUIParameters.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Params/test-ParamAware.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Views/test-CustomViewCreator.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/GUI/Views/test-SelfContainedViewListener.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-AudioBuffers.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-AudioUtils.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-ParamConverters.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/test-SampleRateBasedClock.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/Utils/test-Utils.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/Utils/test-FastWriteMemoryStream.cpp
-        ${JAMBA_TEST_CASES_DIR}/pongasoft/VST/Utils/test-ReadOnlyMemoryStream.cpp
-    )
-
-    include(jamba.cmake)
-    set(CPP_SOURCES src)
-
-    configure_file(${CPP_SOURCES}/version.h ${CMAKE_BINARY_DIR}/generated/version.h)
-    include_directories(${CMAKE_BINARY_DIR}/generated/)
-
-    jamba_add_vst_plugin(
-        TARGET              "${target}"
-        RELEASE_FILENAME    "${target}.component"
-        TARGETS_PREFIX      "jmb_"
-        VST_SOURCES         "${vst_sources}"
-        UIDESC              "${vst_ui_descr}"
-        RESOURCES           "${vst_resources}"
-        TEST_CASE_SOURCES   "${JAMBA_TEST_CASES_SOURCES}"
-        TEST_LINK_LIBRARIES "jamba"
-    )
-
-else()
-
 #######
 # VST #
 #######
 
+set(steinberg_libs "base" "pluginterfaces" "sdk" "vstgui_support" "vstgui_uidescription" "vstgui")
 smtg_add_vst3plugin(${target} ${vst_sources})
 
-## include Steinberg libraries
+##############
+# Audio Unit #
+##############
 
-set(steinberg_libs "base" "pluginterfaces" "sdk" "vstgui_support" "vstgui_uidescription" "vstgui")
+if (CREATE_AUDIO_UNIT)
+    set(SDK_ROOT ${VST3_SDK_ROOT})
+    include(SMTG_AddVST3AuV2)
+    set(steinberg_libs ${steinberg_libs} "auwrapper" "sdk_hosting")
+    smtg_target_add_auv2(${target}-au
+        BUNDLE_NAME ${target}
+        BUNDLE_IDENTIFIER nl.igorski.vst.vstsid.audiounit
+        INFO_PLIST_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/audio-unit/Info.plist
+        VST3_PLUGIN_TARGET ${target}
+    )
+    set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_OTHER_LDFLAGS "-all_load")
+endif()
+
+#######################
+# Steinberg libraries #
+#######################
+
 include_directories(${VSTSDK_INCLUDE_DIR})
 foreach(lib IN ITEMS ${steinberg_libs})
     if(UNIX)
@@ -221,6 +197,10 @@ target_sources(${target} PRIVATE
     ${VST3_SDK_ROOT}/vstgui4/vstgui/plugin-bindings/vst3editor.cpp
     ${VST3_SDK_ROOT}/public.sdk/source/vst/vstguieditor.cpp
 )
+
+#############################
+# System specific libraries #
+#############################
 
 ## include macOS specific libraries
 
@@ -251,7 +231,21 @@ IF (APPLE)
             )
         else()
             ## macOS plugin
-            target_link_libraries(${target} PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework Accelerate" "-framework QuartzCore" "-framework Carbon")
+            set(MACOS_LIBRARIES
+                "-framework Cocoa"
+                "-framework OpenGL"
+                "-framework Accelerate"
+                "-framework QuartzCore"
+                "-framework Carbon"
+            )
+            if (CREATE_AUDIO_UNIT)
+                set(MACOS_LIBRARIES
+                    ${MACOS_LIBRARIES}
+                    "-framework AudioToolbox"
+                    "-framework CoreMIDI"
+                )
+            endif()
+            target_link_libraries(${target} PRIVATE ${MACOS_LIBRARIES})
         endif()
     else()
         find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
@@ -343,8 +337,6 @@ if (SMTG_CREATE_VST2_VERSION)
     if (WIN)
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     endif()
-endif()
-
 endif()
 
 ######################

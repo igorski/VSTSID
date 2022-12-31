@@ -76,14 +76,13 @@ VSTSID::~VSTSID ()
 //------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::initialize( FUnknown* context )
 {
-    //---always initialize the parent-------
     tresult result = AudioEffect::initialize( context );
-    // if everything Ok, continue
+
     if ( result != kResultOk )
         return result;
 
     //---create Audio In/Out buses------
-    //addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
+    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
     addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
 
     //---create Event In/Out buses (1 bus with only 1 channel)------
