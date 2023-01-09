@@ -122,11 +122,9 @@ namespace Igorski {
             void noteOn ( int16 pitch, float normalizedVelocity, float tuning );
             void noteOff( int16 pitch );
 
-            void setPortamento( bool enabled );
-
             void updateProperties(
-                float fAttack, float fDecay, float fSustain, float fRelease,
-                float fRingModRate, float fPitchBend
+                 float attack, float decay, float sustain, float release,
+                 float ringModRate, float pitchBend, float portamento 
             );
 
             // the whole point of this exercise: synthesizing sweet, sweet PWM !
@@ -147,8 +145,8 @@ namespace Igorski {
                 float decay;
                 float sustain;
                 float release;
-                float pitchShift; // 1 == no shift, >1 == shift up, <1 == shift down
-                bool portamento;
+                float pitchShift;   // 1 == no shift, >1 == shift up, <1 == shift down
+                float glide;        // 0 == no portamento
             };
             SIDProperties props;
 

@@ -157,7 +157,9 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     // Portamento
     parameters.addParameter(
-        STR16( "Portamento" ), nullptr, 1, 0, ParameterInfo::kCanAutomate, kPortamentoId
+        STR16( "Portamento" ), kPortamentoId, USTRING( "ms" ),
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
     );
 
     // Init Default MIDI-CC Map
@@ -168,7 +170,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     // initialization
 
-    String str( "VST SID" );
+    String str( "VSTSID" );
     str.copyTo16( defaultMessageText, 0, 127 );
 
     return result;

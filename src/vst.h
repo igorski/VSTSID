@@ -102,7 +102,7 @@ class VSTSID : public AudioEffect
 
         float fRingModRate;
         float fMasterTuning;
-        bool bPortamento;
+        float fPortamento;
         bool _bypass = false;
 
         int32 currentProcessMode;

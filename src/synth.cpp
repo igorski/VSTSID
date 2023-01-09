@@ -247,20 +247,16 @@ void Synthesizer::handleNoteAmountChange()
     }
 }
 
-void Synthesizer::setPortamento( bool enabled )
+void Synthesizer::updateProperties( float attack, float decay, float sustain, float release, float ringModRate, float pitchBend, float portamento )
 {
-    props.portamento = enabled;
-}
+    props.attack     = attack;
+    props.decay      = decay;
+    props.sustain    = sustain;
+    props.release    = release;
+    props.pitchShift = pitchBend;
+    props.glide      = portamento;
 
-void Synthesizer::updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate, float fPitchBend )
-{
-    props.attack     = fAttack;
-    props.decay      = fDecay;
-    props.sustain    = fSustain;
-    props.release    = fRelease;
-    props.pitchShift = fPitchBend;
-
-    ringModulator->setRate( fRingModRate );
+    ringModulator->setRate( ringModRate );
 }
 
 bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int bufferSize, uint32 sampleFramesSize )

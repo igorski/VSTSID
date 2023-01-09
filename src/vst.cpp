@@ -55,7 +55,7 @@ VSTSID::VSTSID ()
 , fLFORate( 0.f )
 , fLFODepth( 1.f )
 , fRingModRate( 0.f )
-, bPortamento( false )
+, fPortamento( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
@@ -190,7 +190,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 						break;
 
                     case kPortamentoId:
-                        bPortamento = ( value > 0.5f );
+                        fPortamento = ( float ) value;
                         break;
                 }
                 syncModel();
@@ -329,9 +329,9 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     }
 
     // may fail as this was only added in version 1.1.0
-    int32 savedPortamento = 0;
-    if ( streamer.readInt32( savedPortamento ) != false ) {
-        bPortamento = savedPortamento > 0;
+    float savedPortamento = 0;
+    if ( streamer.readFloat( savedPortamento ) != false ) {
+        fPortamento = savedPortamento;
     }
 
     fAttack      = savedAttack;
@@ -396,7 +396,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     streamer.writeFloat( fLFODepth );
     streamer.writeFloat( fRingModRate );
     streamer.writeInt32( _bypass ? 1 : 0 );
-    streamer.writeInt32( bPortamento ? 1 : 0 );
+    streamer.writeFloat( fPortamento );
 
     return kResultOk;
 }
@@ -526,8 +526,7 @@ void VSTSID::initPlugin( float sampleRate )
 
 void VSTSID::syncModel()
 {
-    synth->setPortamento( bPortamento );
-    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate, fMasterTuning );
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate, fMasterTuning, fPortamento );
     filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
 }
 
