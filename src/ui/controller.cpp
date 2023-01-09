@@ -78,72 +78,63 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     // ADSR controls
 
-    RangeParameter* attackParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Attack time" ), kAttackId, USTRING( "seconds" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( attackParam );
+    ));
 
-    RangeParameter* decayParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Decay time" ), kDecayId, USTRING( "seconds" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-     );
-    parameters.addParameter( decayParam );
+    ));
 
-    RangeParameter* sustainParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Sustain volume" ), kSustainId, USTRING( "0 - 1" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( sustainParam );
+    ));
 
-    RangeParameter* releaseParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Release time" ), kReleaseId, USTRING( "seconds" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( releaseParam );
+    ));
 
     // filter controls
 
-    RangeParameter* cutoffParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Cutoff frequency" ), kCutoffId, USTRING( "Hz" ),
         Igorski::VST::FILTER_MIN_FREQ, Igorski::VST::FILTER_MAX_FREQ, Igorski::VST::FILTER_MIN_FREQ,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( cutoffParam );
+    ));
 
-    RangeParameter* resonanceParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Resonance" ), kResonanceId, USTRING( "db" ),
         Igorski::VST::FILTER_MIN_RESONANCE, Igorski::VST::FILTER_MAX_RESONANCE, Igorski::VST::FILTER_MIN_RESONANCE,
         0, ParameterInfo::kCanAutomate, unitId
-   );
-    parameters.addParameter( resonanceParam );
+    ));
 
-    RangeParameter* lfoRateParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "LFO rate" ), kLFORateId, USTRING( "Hz" ),
         Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( lfoRateParam );
+    ));
 
-    RangeParameter* lfoDepthParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "LFO depth" ), kLFODepthId, USTRING( "%" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( lfoDepthParam );
+    ));
 
     // ring modulator
 
-    RangeParameter* ringModRateParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Ring modulator rate" ), kRingModRateId, USTRING( "Hz" ),
         Igorski::VST::MIN_RING_MOD_RATE(), Igorski::VST::MAX_RING_MOD_RATE(), Igorski::VST::MIN_RING_MOD_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( ringModRateParam );
+    ));
 
     // Bypass
 	parameters.addParameter(
@@ -156,11 +147,11 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 	parameters.addParameter( param );
 
     // Portamento
-    parameters.addParameter(
+    parameters.addParameter( new RangeParameter(
         STR16( "Portamento" ), kPortamentoId, USTRING( "ms" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
+    ));
 
     // Init Default MIDI-CC Map
 	std::for_each( midiCCMapping.begin (), midiCCMapping.end (), [] ( ParamID& pid ) {
