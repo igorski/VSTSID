@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -27,20 +27,22 @@ enum
 {
     // ids for all visual parameters
 
-    kAttackId = 0,  // < ADSR attack time
-    kDecayId,       // < ADSR decay time
-    kSustainId,     // < ADSR sustain level
-    kReleaseId,     // < ADSR release time
+    kAttackId = 0,   // < ADSR attack time
+    kDecayId,        // < ADSR decay time
+    kSustainId,      // < ADSR sustain level
+    kReleaseId,      // < ADSR release time
 
-    kCutoffId,      // filter cutoff
-    kResonanceId,   // filter resonance
-    kLFORateId,     // filter LFO rate
+    kCutoffId,       // filter cutoff
+    kResonanceId,    // filter resonance
+    kLFORateId,      // filter LFO rate
 
-    kRingModRateId, // ring modulator rate
+    kRingModRateId,  // ring modulator rate
 
-    kLFODepthId,    // filter LFO depth (added in v1.0.1)
+    kLFODepthId,     // filter LFO depth (added in v1.0.1)
 
-    kBypassId,      // bypass process (added in v.1.0.3)
+    kBypassId,       // bypass process (added in v1.0.3)
+    kMasterTuningId, // pitch bend (added in v1.1.0)
+    kPortamentoId,   // portamento (added in v1.1.0)
 };
 
 #endif

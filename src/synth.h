@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,8 @@ namespace Igorski {
         int16 pitch;
         bool released;
         bool muted;
-        float baseFrequency; // frequency for event's noteOn
+        float volume;
+        float baseFrequency; // frequency (in Hz) for event's noteOn
         float frequency;     // current render frequency (can be shifted by arpeggiator!)
         float phase;
         float pwm;
@@ -118,10 +119,15 @@ namespace Igorski {
             void init( int sampleRate, double tempo );
 
             // create a new Note for a MIDI noteOn/noteOff Event
-            void noteOn ( int16 pitch );
+            void noteOn ( int16 pitch, float normalizedVelocity, float tuning );
             void noteOff( int16 pitch );
 
-            void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate );
+            void setPortamento( bool enabled );
+
+            void updateProperties(
+                float fAttack, float fDecay, float fSustain, float fRelease,
+                float fRingModRate, float fPitchBend
+            );
 
             // the whole point of this exercise: synthesizing sweet, sweet PWM !
 
@@ -141,6 +147,8 @@ namespace Igorski {
                 float decay;
                 float sustain;
                 float release;
+                float pitchShift; // 1 == no shift, >1 == shift up, <1 == shift down
+                bool portamento;
             };
             SIDProperties props;
 
@@ -166,7 +174,7 @@ namespace Igorski {
                 MAX_ENVELOPE_SAMPLES,
                 ARPEGGIO_DURATION;
 
-            bool doArpeggiate;
+            bool doArpeggiate = false;
 
             // retrieves an existing Note for given arguments, if none
             // could be found, nullptr is returned

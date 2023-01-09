@@ -8,6 +8,7 @@ slider_handle.png       PNG  "slider_handle.png"
 slider_handle_2.0x.png  PNG  "slider_handle_2.0x.png"
 slider_background.png   PNG  "slider_background.png"
 background.png          PNG  "background.png"
+version.png             PNG  "version.png"
 
 /////////////////////////////////////////////////////////////////////////////
 // Version
@@ -48,4 +49,3 @@ BEGIN
         VALUE "Translation", 0x400, 1252
     END
 END
-

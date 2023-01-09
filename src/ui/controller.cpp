@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -150,6 +150,22 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
         STR16( "Bypass" ), nullptr, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, kBypassId
     );
 
+    // Pitch bend
+    auto param = new RangeParameter( USTRING( "Pitch Bend" ), kMasterTuningId, USTRING( "cent" ), -200, 200, 0 );
+	param->setPrecision( 0 );
+	parameters.addParameter( param );
+
+    // Portamento
+    parameters.addParameter(
+        STR16( "Portamento" ), nullptr, 1, 0, ParameterInfo::kCanAutomate, kPortamentoId
+    );
+
+    // Init Default MIDI-CC Map
+	std::for_each( midiCCMapping.begin (), midiCCMapping.end (), [] ( ParamID& pid ) {
+        pid = InvalidParamID;
+    });
+	midiCCMapping[ ControllerNumbers::kPitchBend ] = kMasterTuningId;
+
     // initialization
 
     String str( "VST SID" );
@@ -218,10 +234,21 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         return kResultFalse;
     setParamNormalized( kRingModRateId, savedRingModRate );
 
-    // may fail as this was only added in version 1.0.3
-    int32 savedBypass = 0;
+    // the following properties are allowed to fail (no return) as these were added in later versions
+
+    int32 savedBypass = 0; // added in version 1.0.3
     if ( streamer.readInt32( savedBypass ) != false ) {
         setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
+    }
+
+    float savedTuning = 0.f; // added in version 1.1.0
+    if ( streamer.readFloat( savedTuning ) != false ) {
+        setParamNormalized( kMasterTuningId, ( savedTuning + 1 ) / 2.f );
+    }
+
+    int32 savedPortamento = 0; // added in version 1.1.0
+    if ( streamer.readInt32( savedPortamento ) != false ) {
+        setParamNormalized( kPortamentoId, savedPortamento ? 1 : 0 );
     }
 
     return kResultOk;
@@ -417,18 +444,16 @@ tresult PLUGIN_API VSTSIDController::queryInterface( const char* iid, void** obj
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex, int16 /*midiChannel*/,
-    CtrlNumber midiControllerNumber, ParamID& tag )
+tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex, int16 channel,
+    CtrlNumber midiControllerNumber, ParamID& id /*out*/)
 {
-    // we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)
-/*
-    if ( busIndex == 0 && midiControllerNumber == kCtrlVolume )
-    {
-        tag = kAttackId;
-        return kResultTrue;
-    }
-*/
-    return kResultFalse;
+    if ( busIndex == 0 && channel == 0 && midiControllerNumber < kCountCtrlNumber ) {
+		if ( midiCCMapping[ midiControllerNumber ] != InvalidParamID ) {
+			id = midiCCMapping[ midiControllerNumber ];
+			return kResultTrue;
+		}
+	}
+	return kResultFalse;
 }
 
 //------------------------------------------------------------------------

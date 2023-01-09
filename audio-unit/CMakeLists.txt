@@ -59,6 +59,7 @@ smtg_target_add_plugin_resources(${target}
         resource/slider_background.png
         resource/slider_handle_2.0x.png
         resource/slider_handle.png
+        resource/version.png
 )
 
 #smtg_target_add_plugin_snapshots (${target}

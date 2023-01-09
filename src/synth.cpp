@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -29,9 +29,9 @@ using namespace Steinberg;
 
 namespace Igorski {
 
-Synthesizer::Synthesizer() {
-    doArpeggiate = false;
-    TEMPO        = 120.f;
+Synthesizer::Synthesizer()
+{
+    TEMPO = 120.f;
 
     TWO_PI_OVER_SR       = TWO_PI / 44100.f;
     SAMPLE_RATE          = 44100;
@@ -62,16 +62,21 @@ void Synthesizer::init( int sampleRate, double tempo )
     TEMPO = tempo;
 }
 
-void Synthesizer::noteOn( int16 pitch )
+void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float normalizedTuning )
 {
     // do not allow a noteOn for the same pitch twice
     if ( getExistingNote( pitch ) != nullptr )
         removeNote( getExistingNote( pitch ));
 
+    // TODO when portamento is enabled, ignore arpeggiator and calculate glide to dest pitch duration
+    // for previous sounding note (first available one without portamento enabled),
+    // instead of creating a new one
+
     Note* note = new Note();
 
     note->id             = ++note_ids;
     note->pitch          = pitch;
+    note->volume         = normalizedVelocity;
     note->released       = false;
     note->muted          = false;
     note->baseFrequency  = MIDITable::frequencies[ pitch ];
@@ -242,12 +247,18 @@ void Synthesizer::handleNoteAmountChange()
     }
 }
 
-void Synthesizer::updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate )
+void Synthesizer::setPortamento( bool enabled )
 {
-    props.attack  = fAttack;
-    props.decay   = fDecay;
-    props.sustain = fSustain;
-    props.release = fRelease;
+    props.portamento = enabled;
+}
+
+void Synthesizer::updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate, float fPitchBend )
+{
+    props.attack     = fAttack;
+    props.decay      = fDecay;
+    props.sustain    = fSustain;
+    props.release    = fRelease;
+    props.pitchShift = fPitchBend;
 
     ringModulator->setRate( fRingModRate );
 }
@@ -296,9 +307,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
         bool arpeggiate = doArpeggiate && isArpeggiatedNote( event );
 
-        if ( arpIndex == -1 && arpeggiate )
+        if ( arpIndex == -1 && arpeggiate ) {
             arpIndex = event->arpIndex;
-
+        }
         bool disposeEvent = false;
 
         phase = event->phase;
@@ -310,9 +321,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
             if ( arpeggiate && event->arpOffset == 0 ) {
 
-                if ( ++arpIndex == voiceAmount )
+                if ( ++arpIndex == voiceAmount ) {
                     arpIndex = 0;
-
+                }
                 event->frequency = getArpeggiatorFrequency( arpIndex );
                 event->arpOffset = ARPEGGIO_DURATION;
 
@@ -324,7 +335,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             // synthesize waveform
 
             // TODO: portamento
-            float frequency = event->frequency; 
+            float frequency = event->frequency * props.pitchShift;
 
             switch ( waveform )
             {
@@ -363,8 +374,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                     break;
             }
 
-            if ( event->arpOffset > 0 )
+            if ( event->arpOffset > 0 ) {
                 --event->arpOffset;
+            }
 
             // apply envelopes
 
@@ -408,8 +420,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             // write into output buffers
             // this is (currently?) essentially a mono synth
 
-            for ( int32 c = 0; c < numChannels; ++c )
-                outputBuffers[ c ][ i ] += amp;
+            for ( int32 c = 0; c < numChannels; ++c ) {
+                outputBuffers[ c ][ i ] += ( amp * event->volume );
+            }
 
             // if event can be disposed, break this evens write loop
 
@@ -426,8 +439,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             // commit updated properties back into event
             event->phase = phase;
 
-            if ( arpeggiate )
+            if ( arpeggiate ) {
                 event->arpIndex = arpIndex;
+            }
         }
     }
 

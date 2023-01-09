@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -40,8 +40,7 @@
 
 float Igorski::VST::SAMPLE_RATE = 44100.f; // updated in setupProcessing()
 
-namespace Steinberg {
-namespace Vst {
+namespace Igorski {
 
 //------------------------------------------------------------------------
 // VSTSID Implementation
@@ -56,6 +55,7 @@ VSTSID::VSTSID ()
 , fLFORate( 0.f )
 , fLFODepth( 1.f )
 , fRingModRate( 0.f )
+, bPortamento( false )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
@@ -132,6 +132,12 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                 ParamValue value;
                 int32 sampleOffset;
                 int32 numPoints = paramQueue->getPointCount();
+
+                if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) != kResultTrue ) {
+                    continue;
+                }
+                float tmpValue;
+
                 switch ( paramQueue->getParameterId())
                 {
                     // we use in this example only the last point of the queue.
@@ -139,53 +145,52 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     // and process the whole audio block in small blocks.
 
                     case kAttackId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fAttack = ( float ) value;
+                        fAttack = ( float ) value;
                         break;
 
                     case kDecayId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fDecay = ( float ) value;
+                        fDecay = ( float ) value;
                         break;
 
                     case kSustainId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fSustain = ( float ) value;
+                        fSustain = ( float ) value;
                         break;
 
                     case kReleaseId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fRelease = ( float ) value;
+                        fRelease = ( float ) value;
                         break;
 
                     case kCutoffId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fCutoff = ( float ) value;
+                        fCutoff = ( float ) value;
                         break;
 
                     case kResonanceId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fResonance = ( float ) value;
+                        fResonance = ( float ) value;
                         break;
 
                     case kLFORateId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFORate = ( float ) value;
+                        fLFORate = ( float ) value;
                         break;
 
                     case kLFODepthId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFODepth = ( float ) value;
+                        fLFODepth = ( float ) value;
                         break;
 
                     case kRingModRateId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fRingModRate = ( float ) value;
+                        fRingModRate = ( float ) value;
                         break;
 
                     case kBypassId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            _bypass = ( value > 0.5f );
+                        _bypass = ( value > 0.5f );
+                        break;
+
+                    case kMasterTuningId:
+						tmpValue = 2 * ( value - 0.5f ); // -1 to +1 range
+                        fMasterTuning = ( tmpValue >= 0 ) ? pow( 1.05946f, tmpValue * VST::MAX_PITCH_BEND ) : pow( 0.94387f, tmpValue * VST::MAX_PITCH_BEND );
+						break;
+
+                    case kPortamentoId:
+                        bPortamento = ( value > 0.5f );
                         break;
                 }
                 syncModel();
@@ -214,7 +219,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     //----------------------
                     case Event::kNoteOnEvent:
                         // event has properties: channel, pitch, velocity, length, tuning, noteId
-                        synth->noteOn( event.noteOn.pitch );
+                        synth->noteOn( event.noteOn.pitch, event.noteOn.velocity, event.noteOn.tuning );
                         break;
 
                     //----------------------
@@ -323,6 +328,12 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
         _bypass = savedBypass > 0;
     }
 
+    // may fail as this was only added in version 1.1.0
+    int32 savedPortamento = 0;
+    if ( streamer.readInt32( savedPortamento ) != false ) {
+        bPortamento = savedPortamento > 0;
+    }
+
     fAttack      = savedAttack;
     fDecay       = savedDecay;
     fSustain     = savedSustain;
@@ -385,6 +396,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     streamer.writeFloat( fLFODepth );
     streamer.writeFloat( fRingModRate );
     streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeInt32( bPortamento ? 1 : 0 );
 
     return kResultOk;
 }
@@ -514,10 +526,10 @@ void VSTSID::initPlugin( float sampleRate )
 
 void VSTSID::syncModel()
 {
-    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate );
+    synth->setPortamento( bPortamento );
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate, fMasterTuning );
     filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
 }
 
 //------------------------------------------------------------------------
-} // namespace Vst
-} // namespace Steinberg
+} // namespace Igorski
