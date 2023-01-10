@@ -21,6 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "global.h"
+#include "calc.h"
 #include "vst.h"
 #include "synth.h"
 #include "filter.h"
@@ -51,10 +52,11 @@ VSTSID::VSTSID ()
 , fSustain( .5f )
 , fRelease( 0.f )
 , fCutoff( .5f )
-, fResonance( 1.f )
+, fResonance( 0.f )
 , fLFORate( 0.f )
 , fLFODepth( 1.f )
 , fRingModRate( 0.f )
+, fPitchBendRange( 1.f )
 , fPortamento( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
@@ -136,7 +138,6 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                 if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) != kResultTrue ) {
                     continue;
                 }
-                float tmpValue;
 
                 switch ( paramQueue->getParameterId())
                 {
@@ -185,9 +186,14 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                         break;
 
                     case kMasterTuningId:
-						tmpValue = 2 * ( value - 0.5f ); // -1 to +1 range
-                        fMasterTuning = ( tmpValue >= 0 ) ? pow( 1.05946f, tmpValue * VST::MAX_PITCH_BEND ) : pow( 0.94387f, tmpValue * VST::MAX_PITCH_BEND );
+						fMasterTuning = 2 * ( value - 0.5f ); // -1 to +1 range
+                        scaleTuning();
 						break;
+
+                    case kPitchBendRangeId:
+                        fPitchBendRange = ( float ) value;
+                        scaleTuning();
+                        break;
 
                     case kPortamentoId:
                         fPortamento = ( float ) value;
@@ -328,7 +334,12 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
         _bypass = savedBypass > 0;
     }
 
-    // may fail as this was only added in version 1.1.0
+    // may fail as these were only added in version 1.1.0
+    float savedPBrange = 0.f;
+    if ( streamer.readFloat( savedPBrange ) != false ) {
+        fPitchBendRange = savedPBrange;
+    }
+
     float savedPortamento = 0;
     if ( streamer.readFloat( savedPortamento ) != false ) {
         fPortamento = savedPortamento;
@@ -396,6 +407,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     streamer.writeFloat( fLFODepth );
     streamer.writeFloat( fRingModRate );
     streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeFloat( fPitchBendRange );
     streamer.writeFloat( fPortamento );
 
     return kResultOk;
@@ -423,18 +435,18 @@ tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int3
     if ( numIns == 1 && numOuts == 1 )
     {
         // the host wants Mono => Mono (or 1 channel -> 1 channel)
-        if ( SpeakerArr::getChannelCount( inputs[0])  == 1 &&
-             SpeakerArr::getChannelCount( outputs[0]) == 1 )
+        if ( SpeakerArr::getChannelCount( inputs[ 0 ])  == 1 &&
+             SpeakerArr::getChannelCount( outputs[ 0 ]) == 1 )
         {
             AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
             if ( bus )
             {
                 // check if we are Mono => Mono, if not we need to recreate the buses
-                if ( bus->getArrangement () != inputs[0])
+                if ( bus->getArrangement () != inputs[ 0 ])
                 {
                     removeAudioBusses();
-                    addAudioInput ( STR16( "Mono In" ),  inputs[0] );
-                    addAudioOutput( STR16( "Mono Out" ), inputs[0] );
+                    addAudioInput ( STR16( "Mono In" ),  inputs[ 0 ] );
+                    addAudioOutput( STR16( "Mono Out" ), inputs[ 0 ] );
                 }
                 return kResultOk;
             }
@@ -442,25 +454,25 @@ tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int3
         // the host wants something else than Mono => Mono, in this case we are always Stereo => Stereo
         else
         {
-            AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
+            AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
             if ( bus )
             {
                 tresult result = kResultFalse;
 
                 // the host wants 2->2 (could be LsRs -> LsRs)
-                if ( SpeakerArr::getChannelCount (inputs[0]) == 2 && SpeakerArr::getChannelCount( outputs[0]) == 2 )
+                if ( SpeakerArr::getChannelCount (inputs[ 0 ]) == 2 && SpeakerArr::getChannelCount( outputs[ 0 ]) == 2 )
                 {
                     removeAudioBusses();
-                    addAudioInput  ( STR16( "Stereo In"),  inputs[0] );
-                    addAudioOutput ( STR16( "Stereo Out"), outputs[0]);
+                    addAudioInput  ( STR16( "Stereo In" ),  inputs[ 0 ] );
+                    addAudioOutput ( STR16( "Stereo Out" ), outputs[ 0 ]);
                     result = kResultTrue;
                 }
                 // the host want something different than 1->1 or 2->2 : in this case we want stereo
                 else if ( bus->getArrangement () != SpeakerArr::kStereo )
                 {
                     removeAudioBusses();
-                    addAudioInput ( STR16( "Stereo In"),  SpeakerArr::kStereo );
-                    addAudioOutput( STR16( "Stereo Out"), SpeakerArr::kStereo );
+                    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
+                    addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
                     result = kResultFalse;
                 }
 
@@ -498,7 +510,7 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
         {
             // we are in UI thread
             // size should be 100
-            if ( size == 100 && ((char*)data)[1] == 1 ) // yeah...
+            if ( size == 100 && (( char* )data )[ 1 ] == 1 ) // yeah...
             {
                 fprintf( stderr, "[VSTSID] received the binary message!\n" );
             }
@@ -524,10 +536,15 @@ void VSTSID::initPlugin( float sampleRate )
     syncModel();
 }
 
+void VSTSID::scaleTuning()
+{
+    _scaledTuning = Calc::pitchShiftFactor( fMasterTuning * round( fPitchBendRange * VST::MAX_PITCH_BEND ));
+}
+
 void VSTSID::syncModel()
 {
-    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate, fMasterTuning, fPortamento );
-    filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate, _scaledTuning, fPortamento );
+    filter->updateProperties( fCutoff, Calc::inverseNormalize( fResonance ), fLFORate, fLFODepth );
 }
 
 //------------------------------------------------------------------------

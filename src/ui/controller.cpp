@@ -146,6 +146,13 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 	param->setPrecision( 0 );
 	parameters.addParameter( param );
 
+    // Pitch bend range
+    parameters.addParameter( new RangeParameter(
+        STR16( "Pitch bend range" ), kPitchBendRangeId, USTRING( "semitones" ),
+        0.f, 1.f, 1.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
     // Portamento
     parameters.addParameter( new RangeParameter(
         STR16( "Portamento" ), kPortamentoId, USTRING( "ms" ),
@@ -154,7 +161,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
     ));
 
     // Init Default MIDI-CC Map
-	std::for_each( midiCCMapping.begin (), midiCCMapping.end (), [] ( ParamID& pid ) {
+	std::for_each( midiCCMapping.begin(), midiCCMapping.end(), []( ParamID& pid ) {
         pid = InvalidParamID;
     });
 	midiCCMapping[ ControllerNumbers::kPitchBend ] = kMasterTuningId;
@@ -239,9 +246,14 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         setParamNormalized( kMasterTuningId, ( savedTuning + 1 ) / 2.f );
     }
 
-    int32 savedPortamento = 0; // added in version 1.1.0
-    if ( streamer.readInt32( savedPortamento ) != false ) {
-        setParamNormalized( kPortamentoId, savedPortamento ? 1 : 0 );
+    float savedPBRange = 1.f; // added in version 1.1.0
+    if ( streamer.readFloat( savedPBRange ) != false ) {
+        setParamNormalized( kPitchBendRangeId, savedPBRange );
+    }
+
+    float savedPortamento = 0; // added in version 1.1.0
+    if ( streamer.readFloat( savedPortamento ) != false ) {
+        setParamNormalized( kPortamentoId, savedPortamento );
     }
 
     return kResultOk;
@@ -344,12 +356,21 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
 
         case kAttackId:
         case kDecayId:
-        case kSustainId:
         case kReleaseId:
-        case kLFODepthId:
         {
             char text[32];
-            sprintf( text, "%.2f", ( float ) valueNormalized );
+            sprintf( text, "%.f ms", ( float ) valueNormalized * 1000.f );
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
+        case kSustainId:
+        case kLFODepthId:
+        case kResonanceId:
+        {
+            char text[32];
+            sprintf( text, "%.f pct", ( float ) valueNormalized * 100.f );
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -359,16 +380,49 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
         // request the plain value from the normalized value
 
         case kCutoffId:
-        case kResonanceId:
+        {
+            char text[32];
+            if ( valueNormalized == 0 )
+                sprintf( text, "%s", "Off" );
+            else
+                sprintf( text, "%.f Hz", normalizedParamToPlain( tag, valueNormalized ));
+
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
+        case kPortamentoId:
+        {
+            char text[32];
+            if ( valueNormalized == 0 )
+                sprintf( text, "%s", "Off" );
+            else
+                sprintf( text, "%.f ms", normalizedParamToPlain( tag, ( float ) valueNormalized * 1000.f ));
+
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
         case kLFORateId:
         case kRingModRateId:
         {
             char text[32];
-            if (( tag == kLFORateId || tag == kRingModRateId || tag == kPortamentoId ) && valueNormalized == 0 )
+            if ( valueNormalized == 0 )
                 sprintf( text, "%s", "Off" );
             else
-                sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
-            
+                sprintf( text, "%.f Hz", normalizedParamToPlain( tag, valueNormalized ));
+
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
+        case kPitchBendRangeId:
+        {
+            char text[32];
+            sprintf( text, "%.f semitones", round(( float ) valueNormalized * Igorski::VST::MAX_PITCH_BEND ));
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;

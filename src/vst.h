@@ -102,7 +102,10 @@ class VSTSID : public AudioEffect
 
         float fRingModRate;
         float fMasterTuning;
+        float fPitchBendRange;
         float fPortamento;
+
+        float _scaledTuning = 1.f;
         bool _bypass = false;
 
         int32 currentProcessMode;
@@ -112,6 +115,7 @@ class VSTSID : public AudioEffect
 
         // synchronize the processors model after UI led changes
 
+        void scaleTuning();
         void syncModel();
         void initPlugin( float sampleRate );
 };

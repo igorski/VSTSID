@@ -63,7 +63,7 @@ void Synthesizer::init( int sampleRate, double tempo )
     TEMPO = tempo;
 }
 
-void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float normalizedTuning )
+void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float tuning )
 {
     // do not allow a noteOn for the same pitch twice
     if ( getExistingNote( pitch ) != nullptr )
@@ -94,7 +94,12 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float normalize
         }
     }
 
-    // TODO: also apply normalizedTuning (1.f = +1 cent, -1.f = -1 cent)
+    float tuningDelta = 1.f;
+
+    if ( tuning != 0.f ) {
+        // given tuning defines a detuning in centers (e.g. 1.f = +1 cent, -1.f = -1 cent)
+        tuningDelta = Calc::pitchShiftFactor( tuning / 100.f );
+    }
 
     note = new Note();
 
@@ -103,7 +108,7 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float normalize
     note->volume         = normalizedVelocity;
     note->released       = false;
     note->muted          = false;
-    note->baseFrequency  = MIDITable::frequencies[ pitch ];
+    note->baseFrequency  = MIDITable::frequencies[ pitch ] * tuningDelta;
     note->frequency      = note->baseFrequency;
     note->phase          = 0.f;
     note->pwm            = 0.f;

@@ -52,6 +52,26 @@ namespace Calc {
         return secondsToBuffer( milliseconds / 1000.f );
     }
 
+    /**
+     * Calculates the multiplication factor to shift a frequency (in Hz)
+     * up/down to reach the resulting frequency implied by the addition/subtraction
+     * of given value in semitones
+     */
+    inline float pitchShiftFactor( float semitones )
+    {
+        if ( semitones == 0.f ) {
+            return 1.f;
+        }
+        return ( semitones > 0.f ) ? pow( 1.05946f, semitones ) : pow( 0.94387f, -semitones );
+    }
+
+    // inverts a 0 - 1 normalized min-to-max value to have 0 be the max and 1 the min
+
+    inline float inverseNormalize( float value )
+    {
+        return ( 1.f - value ) / 1.f;
+    }
+
 } // E.O. namespace Calc
 } // E.O. namespace Igorski
 
