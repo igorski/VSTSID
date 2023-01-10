@@ -49,6 +49,19 @@ namespace Igorski {
         int arpIndex;
         float* arpFreqs;
 
+        struct PORTAMENTO {
+            bool enabled;
+            int steps;       // amount of samples over which portamento is executed
+            float increment; // pitch increment in Hz (per step)
+
+            PORTAMENTO() {
+                enabled   = false;
+                steps     = 0;
+                increment = 0.f;
+            }
+        };
+        PORTAMENTO portamento;
+
         struct ADSR {
             float attack;
             float decay;
@@ -124,7 +137,7 @@ namespace Igorski {
 
             void updateProperties(
                  float attack, float decay, float sustain, float release,
-                 float ringModRate, float pitchBend, float portamento 
+                 float ringModRate, float pitchBend, float portamento
             );
 
             // the whole point of this exercise: synthesizing sweet, sweet PWM !

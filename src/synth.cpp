@@ -21,6 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "synth.h"
+#include "calc.h"
 #include "miditable.h"
 #include <algorithm>
 #include <math.h>
@@ -68,11 +69,34 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float normalize
     if ( getExistingNote( pitch ) != nullptr )
         removeNote( getExistingNote( pitch ));
 
-    // TODO when portamento is enabled, ignore arpeggiator and calculate glide to dest pitch duration
-    // for previous sounding note (first available one without portamento enabled),
-    // instead of creating a new one
+    Note* note = nullptr;
 
-    Note* note = new Note();
+    if ( props.glide > 0.f ) {
+
+        // when glide/portamento is enabled, get the previous sounding note
+        // that currently isn't gliding
+
+        for ( size_t i = 0, l = notes.size(); i < l; ++i ) {
+            if ( !notes.at( i )->portamento.enabled ) {
+                note = notes.at( i );
+                break;
+            }
+        }
+
+        if ( note != nullptr ) {
+            float targetFrequency = MIDITable::frequencies[ pitch ];
+
+            note->portamento.enabled   = true;
+            note->portamento.steps     = Igorski::Calc::millisecondsToBuffer( 1000.f * props.glide );
+            note->portamento.increment = ( targetFrequency - note->frequency ) / note->portamento.steps;
+
+            return;
+        }
+    }
+
+    // TODO: also apply normalizedTuning (1.f = +1 cent, -1.f = -1 cent)
+
+    note = new Note();
 
     note->id             = ++note_ids;
     note->pitch          = pitch;
@@ -268,7 +292,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     if ( notes.size() == 0 )
         return false; // nothing to do
 
-    float pmv, dpw, amp, phase, envelope, tmp;
+    float pmv, dpw, amp, frequency, phase, envelope, tmp;
 
     int voiceAmount = notes.size();
     int arpIndex    = -1;
@@ -301,7 +325,8 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             continue;
         }
 
-        bool arpeggiate = doArpeggiate && isArpeggiatedNote( event );
+        bool portamento = event->portamento.enabled;
+        bool arpeggiate = !portamento && doArpeggiate && isArpeggiatedNote( event );
 
         if ( arpIndex == -1 && arpeggiate ) {
             arpIndex = event->arpIndex;
@@ -330,7 +355,14 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
             // synthesize waveform
 
-            // TODO: portamento
+            if ( portamento ) {
+                event->frequency += event->portamento.increment;
+                if ( --event->portamento.steps == 0 ) {
+                    event->portamento.enabled = false;
+                    portamento = false;
+                }
+            }
+            // apply global pitch bend onto event pitch
             float frequency = event->frequency * props.pitchShift;
 
             switch ( waveform )

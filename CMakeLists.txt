@@ -116,6 +116,7 @@ endif()
 
 set(vst_sources
     src/global.h
+    src/calc.h
     src/miditable.h
     src/paramids.h
     src/lfo.h

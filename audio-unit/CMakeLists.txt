@@ -12,6 +12,7 @@ endif()
 
 set(vstsid_sources
     src/global.h
+    src/calc.h
     src/miditable.h
     src/paramids.h
     src/lfo.h
