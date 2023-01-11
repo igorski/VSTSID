@@ -320,7 +320,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     if ( streamer.readFloat( savedLFORate ) == false )
         return kResultFalse;
 
-    float savedLFODepth = 1.f;
+    float savedLFODepth = 0.f;
     if ( streamer.readFloat( savedLFODepth ) == false )
         return kResultFalse;
 
@@ -335,6 +335,11 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     }
 
     // may fail as these were only added in version 1.1.0
+    float savedTuning = 0.f;
+    if ( streamer.readFloat( savedTuning ) != false ) {
+        fMasterTuning = savedTuning;
+    }
+
     float savedPBrange = 0.f;
     if ( streamer.readFloat( savedPBrange ) != false ) {
         fPitchBendRange = savedPBrange;
@@ -355,6 +360,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     fLFODepth    = savedLFODepth;
     fRingModRate = savedRingModRate;
 
+    scaleTuning();
     syncModel();
 
     // Example of using the IStreamAttributes interface
@@ -407,6 +413,7 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     streamer.writeFloat( fLFODepth );
     streamer.writeFloat( fRingModRate );
     streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeFloat( fMasterTuning );
     streamer.writeFloat( fPitchBendRange );
     streamer.writeFloat( fPortamento );
 
