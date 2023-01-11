@@ -39,7 +39,7 @@ namespace Igorski {
         bool released;
         bool muted;
         float volume;
-        float baseFrequency; // frequency (in Hz) for event's noteOn
+        float baseFrequency; // frequency (in Hz) at noteOn
         float frequency;     // current render frequency (can be shifted by arpeggiator!)
         float phase;
         float pwm;
@@ -131,7 +131,7 @@ namespace Igorski {
 
             void init( int sampleRate, double tempo );
 
-            // create a new Note for a MIDI noteOn/noteOff Event
+            // create a new Note for a MIDI noteOn/noteOff event
             void noteOn ( int16 pitch, float normalizedVelocity, float tuning );
             void noteOff( int16 pitch );
 
@@ -158,8 +158,8 @@ namespace Igorski {
                 float decay;
                 float sustain;
                 float release;
-                float pitchShift;   // 1 == no shift, >1 == shift up, <1 == shift down
-                float glide;        // 0 == no portamento
+                float pitchBend; // 1 == no shift, >1 == shift up, <1 == shift down
+                float glide;     // 0 == no portamento
             };
             SIDProperties props;
 

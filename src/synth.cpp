@@ -97,7 +97,7 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float tuning )
     float tuningDelta = 1.f;
 
     if ( tuning != 0.f ) {
-        // given tuning defines a detuning in centers (e.g. 1.f = +1 cent, -1.f = -1 cent)
+        // given tuning defines a detuning in cents (e.g. 1.f = +1 cent, -1.f = -1 cent)
         tuningDelta = Calc::pitchShiftFactor( tuning / 100.f );
     }
 
@@ -154,7 +154,7 @@ void Synthesizer::noteOff( int16 pitch )
         return;
     };
 
-    // apply release envelope to this event (will be disposed in render loop)
+    // apply release envelope to this note (will be disposed in render loop)
 
     if ( !note->released ) {
         note->adsr.release          = props.release;
@@ -278,12 +278,12 @@ void Synthesizer::handleNoteAmountChange()
 
 void Synthesizer::updateProperties( float attack, float decay, float sustain, float release, float ringModRate, float pitchBend, float portamento )
 {
-    props.attack     = attack;
-    props.decay      = decay;
-    props.sustain    = sustain;
-    props.release    = release;
-    props.pitchShift = pitchBend;
-    props.glide      = portamento;
+    props.attack    = attack;
+    props.decay     = decay;
+    props.sustain   = sustain;
+    props.release   = release;
+    props.pitchBend = pitchBend;
+    props.glide     = portamento;
 
     ringModulator->setRate( ringModRate );
 }
@@ -310,48 +310,48 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     int32 j = notes.size();
     while ( j-- )
     {
-        Note* event = notes.at( j );
+        Note* note = notes.at( j );
 
-        bool doAttack  = event->adsr.attack  > 0.f;
-        bool doDecay   = event->adsr.decay   > 0.f && event->adsr.sustain != 1.f;
-        bool doRelease = event->adsr.release > 0.f && event->released;
+        bool doAttack  = note->adsr.attack  > 0.f;
+        bool doDecay   = note->adsr.decay   > 0.f && note->adsr.sustain != 1.f;
+        bool doRelease = note->adsr.release > 0.f && note->released;
 
-        // is event muted (e.g. is the amount of notes above the arpeggio threshold) ?
+        // is note muted (e.g. is the amount of notes above the arpeggio threshold) ?
 
-        if ( event->muted ) {
+        if ( note->muted ) {
             if ( doRelease ) {
-                // if event is released, increments it release value, if the resulting
-                // envelope is silent, remove the event
-                event->adsr.releaseValue += ( event->adsr.releaseIncrement * bufferSize );
-                if ( event->adsr.sustain - event->adsr.releaseValue < 0.f ) {
-                    removeNote( event );
+                // if note is released, increments it release value, if the resulting
+                // envelope is silent, remove the note
+                note->adsr.releaseValue += ( note->adsr.releaseIncrement * bufferSize );
+                if ( note->adsr.sustain - note->adsr.releaseValue < 0.f ) {
+                    removeNote( note );
                 }
             }
             continue;
         }
 
-        bool portamento = event->portamento.enabled;
-        bool arpeggiate = !portamento && doArpeggiate && isArpeggiatedNote( event );
+        bool portamento = note->portamento.enabled;
+        bool arpeggiate = !portamento && doArpeggiate && isArpeggiatedNote( note );
 
         if ( arpIndex == -1 && arpeggiate ) {
-            arpIndex = event->arpIndex;
+            arpIndex = note->arpIndex;
         }
-        bool disposeEvent = false;
+        bool disposeNote = false;
 
-        phase = event->phase;
+        phase = note->phase;
 
         for ( int32 i = 0; i < bufferSize; ++i )
         {
             // update note's frequency when arpeggiators offset
             // has exceeded the current length
 
-            if ( arpeggiate && event->arpOffset == 0 ) {
+            if ( arpeggiate && note->arpOffset == 0 ) {
 
                 if ( ++arpIndex == voiceAmount ) {
                     arpIndex = 0;
                 }
-                event->frequency = getArpeggiatorFrequency( arpIndex );
-                event->arpOffset = ARPEGGIO_DURATION;
+                note->frequency = getArpeggiatorFrequency( arpIndex );
+                note->arpOffset = ARPEGGIO_DURATION;
 
                 // WebSID had a maximum voice count, not sure why we'd want that actually =)
 //                    if ( voiceAmount > 4 )
@@ -361,14 +361,14 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             // synthesize waveform
 
             if ( portamento ) {
-                event->frequency += event->portamento.increment;
-                if ( --event->portamento.steps == 0 ) {
-                    event->portamento.enabled = false;
+                note->frequency += note->portamento.increment;
+                if ( --note->portamento.steps == 0 ) {
+                    note->portamento.enabled = false; // glide completed
                     portamento = false;
                 }
             }
-            // apply global pitch bend onto event pitch
-            float frequency = event->frequency * props.pitchShift;
+            // apply global pitch bend onto note pitch
+            float frequency = note->frequency * props.pitchBend;
 
             switch ( waveform )
             {
@@ -396,7 +396,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
                 case Waveforms::PWM:
                     // 1 == PWM
-                    pmv   = i + ( ++event->pwm );
+                    pmv   = i + ( ++note->pwm );
                     dpw   = sinf( pmv / ( float ) 0x4800 ) * PWR;
                     amp   = phase < PI - dpw ? PW_AMP : -PW_AMP;
                     phase = phase + ( TWO_PI_OVER_SR * frequency );
@@ -407,8 +407,8 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                     break;
             }
 
-            if ( event->arpOffset > 0 ) {
-                --event->arpOffset;
+            if ( note->arpOffset > 0 ) {
+                --note->arpOffset;
             }
 
             // apply envelopes
@@ -419,34 +419,34 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
             if ( doRelease ) {
 
-                envelope = event->adsr.sustain - event->adsr.releaseValue;
+                envelope = note->adsr.sustain - note->adsr.releaseValue;
 
                 if ( envelope < 0.f ) {
                     envelope = 0.f;
-                    disposeEvent = true;
+                    disposeNote = true;
                 }
-                event->adsr.releaseValue += event->adsr.releaseIncrement;
+                note->adsr.releaseValue += note->adsr.releaseIncrement;
                 amp *= envelope;
             }
             else {
 
                 // attack phase
-                if ( doAttack && event->adsr.attackValue < event->adsr.attack ) {
+                if ( doAttack && note->adsr.attackValue < note->adsr.attack ) {
 
-                    event->adsr.envelope     = event->adsr.attackValue;
-                    event->adsr.attackValue += event->adsr.attackIncrement;
+                    note->adsr.envelope     = note->adsr.attackValue;
+                    note->adsr.attackValue += note->adsr.attackIncrement;
 
-                    amp *= event->adsr.envelope;
+                    amp *= note->adsr.envelope;
                 }
                 // decay phase
-                else if ( doDecay && event->adsr.envelope > event->adsr.sustain ) {
+                else if ( doDecay && note->adsr.envelope > note->adsr.sustain ) {
 
-                    event->adsr.envelope -= event->adsr.decayIncrement;
-                    amp *= event->adsr.envelope;
+                    note->adsr.envelope -= note->adsr.decayIncrement;
+                    amp *= note->adsr.envelope;
                 }
                 // sustain phase
                 else {
-                    amp *= event->adsr.sustain;
+                    amp *= note->adsr.sustain;
                 }
             }
 
@@ -454,26 +454,26 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             // this is (currently?) essentially a mono synth
 
             for ( int32 c = 0; c < numChannels; ++c ) {
-                outputBuffers[ c ][ i ] += ( amp * event->volume );
+                outputBuffers[ c ][ i ] += ( amp * note->volume );
             }
 
-            // if event can be disposed, break this evens write loop
+            // if note can be disposed, break this notes write loop
 
-            if ( disposeEvent ) {
+            if ( disposeNote ) {
                 break;
             }
         }
 
-        if ( disposeEvent ) {
-            // remove event from the list
-            removeNote( event );
+        if ( disposeNote ) {
+            // remove note from the list
+            removeNote( note );
         }
         else {
-            // commit updated properties back into event
-            event->phase = phase;
+            // commit updated properties back into note
+            note->phase = phase;
 
             if ( arpeggiate ) {
-                event->arpIndex = arpIndex;
+                note->arpIndex = arpIndex;
             }
         }
     }
