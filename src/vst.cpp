@@ -338,6 +338,10 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     float savedTuning = 0.f;
     if ( streamer.readFloat( savedTuning ) != false ) {
         fMasterTuning = savedTuning;
+    } else {
+        // in v1.1.0 we fixed a bug with the way resonance was saved
+        // correct value to ensure saved presets in older plugin versions sound the same
+        savedResonance = Calc::inverseNormalize( savedResonance );
     }
 
     float savedPBrange = 0.f;
