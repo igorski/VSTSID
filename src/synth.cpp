@@ -77,8 +77,10 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float tuning )
         // that currently isn't gliding
 
         for ( size_t i = 0, l = notes.size(); i < l; ++i ) {
-            if ( !notes.at( i )->portamento.enabled ) {
-                note = notes.at( i );
+            auto compareNote = notes.at( i );
+            if ( !compareNote->portamento.enabled && !compareNote->released ) {
+                note = compareNote;
+                note->pitch = pitch;
                 break;
             }
         }
@@ -103,7 +105,7 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float tuning )
 
     note = new Note();
 
-    note->id             = ++note_ids;
+    note->id             = generateNextNoteId();
     note->pitch          = pitch;
     note->volume         = normalizedVelocity;
     note->released       = false;
@@ -525,6 +527,16 @@ int Synthesizer::getArpeggiatorSpeedByTempo( float tempo )
 
     // what kind of ominous, slow chiptune music are you creating??
     return 128;
+}
+
+uint16 Synthesizer::generateNextNoteId()
+{
+    uint16 id = ++note_ids;
+
+    if ( note_ids >= SHRT_MAX ) {
+        note_ids = 0;
+    }
+    return id;
 }
 
 bool Synthesizer::isArpeggiatedNote( Note* note )

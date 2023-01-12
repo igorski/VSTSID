@@ -34,8 +34,8 @@ namespace Igorski {
     // data type for a single Note
 
     struct Note {
-        int32 id;
-        int16 pitch;
+        uint16 id;      // used internally to reference Notes
+        int16 pitch;    // provided by noteOn|Off events from host, used to map to playing Note
         bool released;
         bool muted;
         float volume;
@@ -204,9 +204,11 @@ namespace Igorski {
             // or as an arpeggiated sequence
 
             void handleNoteAmountChange();
+            uint16 generateNextNoteId();
+            uint16 note_ids;
+
             float getArpeggiatorFrequency( int index );
             bool isArpeggiatedNote( Note* note );
-            int note_ids;
 
             // get the appropriate arpeggiator speed for given tempo
             int getArpeggiatorSpeedByTempo( float tempo );
