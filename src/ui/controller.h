@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -25,9 +25,12 @@
 
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
+#include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 using namespace VSTGUI;
 
+#include <array>
+#include <limits>
 #include <vector>
 
 namespace Steinberg {
@@ -88,6 +91,10 @@ class VSTSIDController : public EditControllerEx1, public IMidiMapping, public V
 
         void setDefaultMessageText( String128 text );
         TChar* getDefaultMessageText();
+
+    protected:
+        static constexpr ParamID InvalidParamID = std::numeric_limits<ParamID>::max ();
+        std::array<ParamID, ControllerNumbers::kCountCtrlNumber> midiCCMapping;
 
     private:
         typedef std::vector<UIMessageController*> UIMessageControllerList;

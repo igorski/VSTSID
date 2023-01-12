@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -28,8 +28,9 @@
 #include "synth.h"
 #include "filter.h"
 
-namespace Steinberg {
-namespace Vst {
+using namespace Steinberg::Vst;
+
+namespace Igorski {
 
 //------------------------------------------------------------------------
 // VSTSID: directly derived from the helper class AudioEffect
@@ -100,6 +101,11 @@ class VSTSID : public AudioEffect
         float fLFODepth;
 
         float fRingModRate;
+        float fMasterTuning;
+        float fPitchBendRange;
+        float fPortamento;
+
+        float _scaledTuning = 1.f;
         bool _bypass = false;
 
         int32 currentProcessMode;
@@ -109,12 +115,12 @@ class VSTSID : public AudioEffect
 
         // synchronize the processors model after UI led changes
 
+        void scaleTuning();
         void syncModel();
         void initPlugin( float sampleRate );
 };
 
 //------------------------------------------------------------------------
-} // namespace Vst
-} // namespace Steinberg
+} // namespace Igorski
 
 #endif

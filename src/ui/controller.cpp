@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -78,81 +78,97 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     // ADSR controls
 
-    RangeParameter* attackParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Attack time" ), kAttackId, USTRING( "seconds" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( attackParam );
+    ));
 
-    RangeParameter* decayParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Decay time" ), kDecayId, USTRING( "seconds" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-     );
-    parameters.addParameter( decayParam );
+    ));
 
-    RangeParameter* sustainParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Sustain volume" ), kSustainId, USTRING( "0 - 1" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( sustainParam );
+    ));
 
-    RangeParameter* releaseParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Release time" ), kReleaseId, USTRING( "seconds" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( releaseParam );
+    ));
 
     // filter controls
 
-    RangeParameter* cutoffParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Cutoff frequency" ), kCutoffId, USTRING( "Hz" ),
         Igorski::VST::FILTER_MIN_FREQ, Igorski::VST::FILTER_MAX_FREQ, Igorski::VST::FILTER_MIN_FREQ,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( cutoffParam );
+    ));
 
-    RangeParameter* resonanceParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Resonance" ), kResonanceId, USTRING( "db" ),
         Igorski::VST::FILTER_MIN_RESONANCE, Igorski::VST::FILTER_MAX_RESONANCE, Igorski::VST::FILTER_MIN_RESONANCE,
         0, ParameterInfo::kCanAutomate, unitId
-   );
-    parameters.addParameter( resonanceParam );
+    ));
 
-    RangeParameter* lfoRateParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "LFO rate" ), kLFORateId, USTRING( "Hz" ),
         Igorski::VST::MIN_LFO_RATE(), Igorski::VST::MAX_LFO_RATE(), Igorski::VST::MIN_LFO_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( lfoRateParam );
+    ));
 
-    RangeParameter* lfoDepthParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "LFO depth" ), kLFODepthId, USTRING( "%" ),
         0.f, 1.f, 0.f,
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( lfoDepthParam );
+    ));
 
     // ring modulator
 
-    RangeParameter* ringModRateParam = new RangeParameter(
+    parameters.addParameter( new RangeParameter(
         USTRING( "Ring modulator rate" ), kRingModRateId, USTRING( "Hz" ),
         Igorski::VST::MIN_RING_MOD_RATE(), Igorski::VST::MAX_RING_MOD_RATE(), Igorski::VST::MIN_RING_MOD_RATE(),
         0, ParameterInfo::kCanAutomate, unitId
-    );
-    parameters.addParameter( ringModRateParam );
+    ));
 
     // Bypass
 	parameters.addParameter(
         STR16( "Bypass" ), nullptr, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, kBypassId
     );
 
+    // Pitch bend
+    auto param = new RangeParameter( USTRING( "Pitch Bend" ), kMasterTuningId, USTRING( "cent" ), -200, 200, 0 );
+	param->setPrecision( 0 );
+	parameters.addParameter( param );
+
+    // Pitch bend range
+    parameters.addParameter( new RangeParameter(
+        STR16( "Pitch bend range" ), kPitchBendRangeId, USTRING( "semitones" ),
+        0.f, 1.f, 1.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    // Portamento
+    parameters.addParameter( new RangeParameter(
+        STR16( "Portamento" ), kPortamentoId, USTRING( "ms" ),
+        0.f, 1.f, 0.f,
+        0, ParameterInfo::kCanAutomate, unitId
+    ));
+
+    // Init Default MIDI-CC Map
+	std::for_each( midiCCMapping.begin(), midiCCMapping.end(), []( ParamID& pid ) {
+        pid = InvalidParamID;
+    });
+	midiCCMapping[ ControllerNumbers::kPitchBend ] = kMasterTuningId;
+
     // initialization
 
-    String str( "VST SID" );
+    String str( "VSTSID" );
     str.copyTo16( defaultMessageText, 0, 127 );
 
     return result;
@@ -218,10 +234,26 @@ tresult PLUGIN_API VSTSIDController::setComponentState( IBStream* state )
         return kResultFalse;
     setParamNormalized( kRingModRateId, savedRingModRate );
 
-    // may fail as this was only added in version 1.0.3
-    int32 savedBypass = 0;
+    // the following properties are allowed to fail (no return) as these were added in later versions
+
+    int32 savedBypass = 0; // added in version 1.0.3
     if ( streamer.readInt32( savedBypass ) != false ) {
         setParamNormalized( kBypassId, savedBypass ? 1 : 0 );
+    }
+
+    float savedTuning = 0.f; // added in version 1.1.0
+    if ( streamer.readFloat( savedTuning ) != false ) {
+        setParamNormalized( kMasterTuningId, ( savedTuning + 1 ) / 2.f );
+    }
+
+    float savedPBRange = 1.f; // added in version 1.1.0
+    if ( streamer.readFloat( savedPBRange ) != false ) {
+        setParamNormalized( kPitchBendRangeId, savedPBRange );
+    }
+
+    float savedPortamento = 0; // added in version 1.1.0
+    if ( streamer.readFloat( savedPortamento ) != false ) {
+        setParamNormalized( kPortamentoId, savedPortamento );
     }
 
     return kResultOk;
@@ -324,12 +356,21 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
 
         case kAttackId:
         case kDecayId:
-        case kSustainId:
         case kReleaseId:
-        case kLFODepthId:
         {
             char text[32];
-            sprintf( text, "%.2f", ( float ) valueNormalized );
+            sprintf( text, "%.f ms", ( float ) valueNormalized * 1000.f );
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
+        case kSustainId:
+        case kLFODepthId:
+        case kResonanceId:
+        {
+            char text[32];
+            sprintf( text, "%.f pct", ( float ) valueNormalized * 100.f );
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -339,15 +380,49 @@ tresult PLUGIN_API VSTSIDController::getParamStringByValue( ParamID tag, ParamVa
         // request the plain value from the normalized value
 
         case kCutoffId:
-        case kResonanceId:
+        {
+            char text[32];
+            if ( valueNormalized == 0 )
+                sprintf( text, "%s", "Off" );
+            else
+                sprintf( text, "%.f Hz", normalizedParamToPlain( tag, valueNormalized ));
+
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
+        case kPortamentoId:
+        {
+            char text[32];
+            if ( valueNormalized == 0 )
+                sprintf( text, "%s", "Off" );
+            else
+                sprintf( text, "%.f ms", normalizedParamToPlain( tag, ( float ) valueNormalized * 1000.f ));
+
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
         case kLFORateId:
         case kRingModRateId:
         {
             char text[32];
-            if (( tag == kLFORateId || tag == kRingModRateId ) && valueNormalized == 0 )
+            if ( valueNormalized == 0 )
                 sprintf( text, "%s", "Off" );
             else
-                sprintf( text, "%.2f", normalizedParamToPlain( tag, valueNormalized ));
+                sprintf( text, "%.f Hz", normalizedParamToPlain( tag, valueNormalized ));
+
+            Steinberg::UString( string, 128 ).fromAscii( text );
+
+            return kResultTrue;
+        }
+
+        case kPitchBendRangeId:
+        {
+            char text[32];
+            sprintf( text, "%.f semitones", round(( float ) valueNormalized * Igorski::VST::MAX_PITCH_BEND ));
             Steinberg::UString( string, 128 ).fromAscii( text );
 
             return kResultTrue;
@@ -417,18 +492,16 @@ tresult PLUGIN_API VSTSIDController::queryInterface( const char* iid, void** obj
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex, int16 /*midiChannel*/,
-    CtrlNumber midiControllerNumber, ParamID& tag )
+tresult PLUGIN_API VSTSIDController::getMidiControllerAssignment( int32 busIndex, int16 channel,
+    CtrlNumber midiControllerNumber, ParamID& id /*out*/)
 {
-    // we support for the Gain parameter all MIDI Channel but only first bus (there is only one!)
-/*
-    if ( busIndex == 0 && midiControllerNumber == kCtrlVolume )
-    {
-        tag = kAttackId;
-        return kResultTrue;
-    }
-*/
-    return kResultFalse;
+    if ( busIndex == 0 && channel == 0 && midiControllerNumber < kCountCtrlNumber ) {
+		if ( midiCCMapping[ midiControllerNumber ] != InvalidParamID ) {
+			id = midiCCMapping[ midiControllerNumber ];
+			return kResultTrue;
+		}
+	}
+	return kResultFalse;
 }
 
 //------------------------------------------------------------------------

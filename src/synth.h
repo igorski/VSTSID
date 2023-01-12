@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -34,11 +34,12 @@ namespace Igorski {
     // data type for a single Note
 
     struct Note {
-        int32 id;
-        int16 pitch;
+        uint16 id;      // used internally to reference Notes
+        int16 pitch;    // provided by noteOn|Off events from host, used to map to playing Note
         bool released;
         bool muted;
-        float baseFrequency; // frequency for event's noteOn
+        float volume;
+        float baseFrequency; // frequency (in Hz) at noteOn
         float frequency;     // current render frequency (can be shifted by arpeggiator!)
         float phase;
         float pwm;
@@ -47,6 +48,19 @@ namespace Igorski {
         int arpOffset;
         int arpIndex;
         float* arpFreqs;
+
+        struct PORTAMENTO {
+            bool enabled;
+            int steps;       // amount of samples over which portamento is executed
+            float increment; // pitch increment in Hz (per step)
+
+            PORTAMENTO() {
+                enabled   = false;
+                steps     = 0;
+                increment = 0.f;
+            }
+        };
+        PORTAMENTO portamento;
 
         struct ADSR {
             float attack;
@@ -117,11 +131,14 @@ namespace Igorski {
 
             void init( int sampleRate, double tempo );
 
-            // create a new Note for a MIDI noteOn/noteOff Event
-            void noteOn ( int16 pitch );
+            // create a new Note for a MIDI noteOn/noteOff event
+            void noteOn ( int16 pitch, float normalizedVelocity, float tuning );
             void noteOff( int16 pitch );
 
-            void updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate );
+            void updateProperties(
+                 float attack, float decay, float sustain, float release,
+                 float ringModRate, float pitchBend, float portamento
+            );
 
             // the whole point of this exercise: synthesizing sweet, sweet PWM !
 
@@ -141,6 +158,8 @@ namespace Igorski {
                 float decay;
                 float sustain;
                 float release;
+                float pitchBend; // 1 == no shift, >1 == shift up, <1 == shift down
+                float glide;     // 0 == no portamento
             };
             SIDProperties props;
 
@@ -166,7 +185,7 @@ namespace Igorski {
                 MAX_ENVELOPE_SAMPLES,
                 ARPEGGIO_DURATION;
 
-            bool doArpeggiate;
+            bool doArpeggiate = false;
 
             // retrieves an existing Note for given arguments, if none
             // could be found, nullptr is returned
@@ -185,9 +204,11 @@ namespace Igorski {
             // or as an arpeggiated sequence
 
             void handleNoteAmountChange();
+            uint16 generateNextNoteId();
+            uint16 note_ids;
+
             float getArpeggiatorFrequency( int index );
             bool isArpeggiatedNote( Note* note );
-            int note_ids;
 
             // get the appropriate arpeggiator speed for given tempo
             int getArpeggiatorSpeedByTempo( float tempo );

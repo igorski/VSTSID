@@ -93,6 +93,27 @@
             mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
             transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
 
+        <!-- pitch module -->
+        <!-- pitch bend range slider -->
+        <view control-tag="Unit1::PBRange" origin="402, 20" size="126, 18" class="CSlider"
+            background-offset="0, 0" bitmap="slider_background"
+            bitmap-offset="0, 0" default-value="1" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
+            mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
+
+        <!-- portamento slider -->
+        <view control-tag="Unit1::Portamento" origin="402, 44" size="126, 18" class="CSlider"
+            background-offset="0, 0" bitmap="slider_background"
+            bitmap-offset="0, 0" default-value="0" draw-back="false" draw-back-color="~ WhiteCColor" draw-frame="false"
+            draw-frame-color="~ WhiteCColor" draw-value="false" draw-value-color="~ WhiteCColor" draw-value-from-center="false"
+            draw-value-inverted="false" handle-bitmap="slider_handle" handle-offset="0, 4" max-value="1" min-value="0"
+            mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" reverse-orientation="false"
+            transparent="true" transparent-handle="true" wheel-inc-value="0.1" zoom-factor="10" />
+
+        <view class="CView" size="69, 9" origin="690, 214" bitmap="version" transparent="false" />
+
     </template>
     <variables/>
     <custom>
@@ -117,24 +138,29 @@
         <attributes SelectedRow="-1" name="UIFontsDataSource"/>
     </custom>
     <bitmaps>
-        <bitmap name="background" path="background.png"/>
-        <bitmap name="slider_background" path="slider_background.png"/>
-        <bitmap name="slider_handle" path="slider_handle.png"/>
-        <bitmap name="slider_handle#2x" path="slider_handle_2.0x.png" scale-factor="2"/>
+        <bitmap name="background" path="background.png" />
+        <bitmap name="version" path="version.png" />
+        <bitmap name="slider_background" path="slider_background.png" />
+        <bitmap name="slider_handle" path="slider_handle.png" />
+        <bitmap name="slider_handle#2x" path="slider_handle_2.0x.png" scale-factor="2" />
     </bitmaps>
 
     <!-- map the controllers listed above to their paramids by tag index -->
 
     <control-tags>
-        <control-tag name="UI::SendMessage"    tag="1000"/>
-        <control-tag name="Unit1::Attack"      tag="0"/>
-        <control-tag name="Unit1::Decay"       tag="1"/>
-        <control-tag name="Unit1::Sustain"     tag="2"/>
-        <control-tag name="Unit1::Release"     tag="3"/>
-        <control-tag name="Unit1::Cutoff"      tag="4"/>
-        <control-tag name="Unit1::Resonance"   tag="5"/>
-        <control-tag name="Unit1::LFORate"     tag="6"/>
-        <control-tag name="Unit1::RingModRate" tag="7"/>
-        <control-tag name="Unit1::LFODepth"    tag="8"/>
+        <control-tag name="UI::SendMessage"    tag="1000" />
+        <control-tag name="Unit1::Attack"      tag="0" />
+        <control-tag name="Unit1::Decay"       tag="1" />
+        <control-tag name="Unit1::Sustain"     tag="2" />
+        <control-tag name="Unit1::Release"     tag="3" />
+        <control-tag name="Unit1::Cutoff"      tag="4" />
+        <control-tag name="Unit1::Resonance"   tag="5" />
+        <control-tag name="Unit1::LFORate"     tag="6" />
+        <control-tag name="Unit1::RingModRate" tag="7" />
+        <control-tag name="Unit1::LFODepth"    tag="8" />
+        <control-tag name="Unit1::Bypass"      tag="9" />
+        <control-tag name="Unit1::Tuning"      tag="10" />
+        <control-tag name="Unit1::PBRange"     tag="11" />
+        <control-tag name="Unit1::Portamento"  tag="12" />
     </control-tags>
 </vstgui-ui-description>

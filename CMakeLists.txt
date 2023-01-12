@@ -11,10 +11,10 @@ set(CMAKE_COLOR_MAKEFILE ON)
 project(VSTSID)
 set(PROJECT_VERSION 1)
 set(target vstsid)
-set(copyright "igorski.nl 2018-2022")
+set(copyright "igorski.nl 2018-2023")
 set(major_version 1)
-set(minor_version 0)
-set(release_number 3)
+set(minor_version 1)
+set(release_number 0)
 set(build_number 1) # TODO supply through CLI (build number is not included in public facing version strings)
 set(SMTG_CREATE_MODULE_INFO false)
 
@@ -116,6 +116,7 @@ endif()
 
 set(vst_sources
     src/global.h
+    src/calc.h
     src/miditable.h
     src/paramids.h
     src/lfo.h
@@ -149,6 +150,7 @@ set(vst_resources
     "resource/slider_background.png"
     "resource/slider_handle.png"
     "resource/slider_handle_2.0x.png"
+    "resource/version.png"
 )
 set(vst_ui_descr "resource/plugin.uidesc")
 
@@ -169,7 +171,7 @@ if (CREATE_AUDIO_UNIT)
     set(steinberg_libs ${steinberg_libs} "auwrapper" "sdk_hosting")
     smtg_target_add_auv2(${target}-au
         BUNDLE_NAME ${target}
-        BUNDLE_IDENTIFIER nl.igorski.vst.vstsid.audiounit
+        BUNDLE_IDENTIFIER nl.igorski.vst.${target}.audiounit
         INFO_PLIST_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/audio-unit/Info.plist
         VST3_PLUGIN_TARGET ${target}
     )

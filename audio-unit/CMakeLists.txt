@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.15.0)
 
 project(smtg-vst3-vstsid
-    VERSION 1.0.3.1
+    VERSION 1.1.0.1
     DESCRIPTION "igorski.nl VSTSID"
 )
 
@@ -12,6 +12,7 @@ endif()
 
 set(vstsid_sources
     src/global.h
+    src/calc.h
     src/miditable.h
     src/paramids.h
     src/lfo.h
@@ -59,6 +60,7 @@ smtg_target_add_plugin_resources(${target}
         resource/slider_background.png
         resource/slider_handle_2.0x.png
         resource/slider_handle.png
+        resource/version.png
 )
 
 #smtg_target_add_plugin_snapshots (${target}

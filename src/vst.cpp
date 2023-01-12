@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,6 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "global.h"
+#include "calc.h"
 #include "vst.h"
 #include "synth.h"
 #include "filter.h"
@@ -40,8 +41,7 @@
 
 float Igorski::VST::SAMPLE_RATE = 44100.f; // updated in setupProcessing()
 
-namespace Steinberg {
-namespace Vst {
+namespace Igorski {
 
 //------------------------------------------------------------------------
 // VSTSID Implementation
@@ -52,10 +52,12 @@ VSTSID::VSTSID ()
 , fSustain( .5f )
 , fRelease( 0.f )
 , fCutoff( .5f )
-, fResonance( 1.f )
+, fResonance( 0.f )
 , fLFORate( 0.f )
 , fLFODepth( 1.f )
 , fRingModRate( 0.f )
+, fPitchBendRange( 1.f )
+, fPortamento( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
 {
     // register its editor class (the same as used in entry.cpp)
@@ -132,6 +134,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                 ParamValue value;
                 int32 sampleOffset;
                 int32 numPoints = paramQueue->getPointCount();
+
+                if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) != kResultTrue ) {
+                    continue;
+                }
+
                 switch ( paramQueue->getParameterId())
                 {
                     // we use in this example only the last point of the queue.
@@ -139,53 +146,57 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     // and process the whole audio block in small blocks.
 
                     case kAttackId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fAttack = ( float ) value;
+                        fAttack = ( float ) value;
                         break;
 
                     case kDecayId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fDecay = ( float ) value;
+                        fDecay = ( float ) value;
                         break;
 
                     case kSustainId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fSustain = ( float ) value;
+                        fSustain = ( float ) value;
                         break;
 
                     case kReleaseId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fRelease = ( float ) value;
+                        fRelease = ( float ) value;
                         break;
 
                     case kCutoffId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fCutoff = ( float ) value;
+                        fCutoff = ( float ) value;
                         break;
 
                     case kResonanceId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fResonance = ( float ) value;
+                        fResonance = ( float ) value;
                         break;
 
                     case kLFORateId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFORate = ( float ) value;
+                        fLFORate = ( float ) value;
                         break;
 
                     case kLFODepthId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fLFODepth = ( float ) value;
+                        fLFODepth = ( float ) value;
                         break;
 
                     case kRingModRateId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            fRingModRate = ( float ) value;
+                        fRingModRate = ( float ) value;
                         break;
 
                     case kBypassId:
-                        if ( paramQueue->getPoint( numPoints - 1, sampleOffset, value ) == kResultTrue )
-                            _bypass = ( value > 0.5f );
+                        _bypass = ( value > 0.5f );
+                        break;
+
+                    case kMasterTuningId:
+						fMasterTuning = 2 * ( value - 0.5f ); // -1 to +1 range
+                        scaleTuning();
+						break;
+
+                    case kPitchBendRangeId:
+                        fPitchBendRange = ( float ) value;
+                        scaleTuning();
+                        break;
+
+                    case kPortamentoId:
+                        fPortamento = ( float ) value;
                         break;
                 }
                 syncModel();
@@ -214,7 +225,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
                     //----------------------
                     case Event::kNoteOnEvent:
                         // event has properties: channel, pitch, velocity, length, tuning, noteId
-                        synth->noteOn( event.noteOn.pitch );
+                        synth->noteOn( event.noteOn.pitch, event.noteOn.velocity, event.noteOn.tuning );
                         break;
 
                     //----------------------
@@ -309,7 +320,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     if ( streamer.readFloat( savedLFORate ) == false )
         return kResultFalse;
 
-    float savedLFODepth = 1.f;
+    float savedLFODepth = 0.f;
     if ( streamer.readFloat( savedLFODepth ) == false )
         return kResultFalse;
 
@@ -323,6 +334,26 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
         _bypass = savedBypass > 0;
     }
 
+    // may fail as these were only added in version 1.1.0
+    float savedTuning = 0.f;
+    if ( streamer.readFloat( savedTuning ) != false ) {
+        fMasterTuning = savedTuning;
+    } else {
+        // in v1.1.0 we fixed a bug with the way resonance was saved
+        // correct value to ensure saved presets in older plugin versions sound the same
+        savedResonance = Calc::inverseNormalize( savedResonance );
+    }
+
+    float savedPBrange = 0.f;
+    if ( streamer.readFloat( savedPBrange ) != false ) {
+        fPitchBendRange = savedPBrange;
+    }
+
+    float savedPortamento = 0;
+    if ( streamer.readFloat( savedPortamento ) != false ) {
+        fPortamento = savedPortamento;
+    }
+
     fAttack      = savedAttack;
     fDecay       = savedDecay;
     fSustain     = savedSustain;
@@ -333,6 +364,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     fLFODepth    = savedLFODepth;
     fRingModRate = savedRingModRate;
 
+    scaleTuning();
     syncModel();
 
     // Example of using the IStreamAttributes interface
@@ -385,6 +417,9 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     streamer.writeFloat( fLFODepth );
     streamer.writeFloat( fRingModRate );
     streamer.writeInt32( _bypass ? 1 : 0 );
+    streamer.writeFloat( fMasterTuning );
+    streamer.writeFloat( fPitchBendRange );
+    streamer.writeFloat( fPortamento );
 
     return kResultOk;
 }
@@ -411,18 +446,18 @@ tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int3
     if ( numIns == 1 && numOuts == 1 )
     {
         // the host wants Mono => Mono (or 1 channel -> 1 channel)
-        if ( SpeakerArr::getChannelCount( inputs[0])  == 1 &&
-             SpeakerArr::getChannelCount( outputs[0]) == 1 )
+        if ( SpeakerArr::getChannelCount( inputs[ 0 ])  == 1 &&
+             SpeakerArr::getChannelCount( outputs[ 0 ]) == 1 )
         {
             AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
             if ( bus )
             {
                 // check if we are Mono => Mono, if not we need to recreate the buses
-                if ( bus->getArrangement () != inputs[0])
+                if ( bus->getArrangement () != inputs[ 0 ])
                 {
                     removeAudioBusses();
-                    addAudioInput ( STR16( "Mono In" ),  inputs[0] );
-                    addAudioOutput( STR16( "Mono Out" ), inputs[0] );
+                    addAudioInput ( STR16( "Mono In" ),  inputs[ 0 ] );
+                    addAudioOutput( STR16( "Mono Out" ), inputs[ 0 ] );
                 }
                 return kResultOk;
             }
@@ -430,25 +465,25 @@ tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int3
         // the host wants something else than Mono => Mono, in this case we are always Stereo => Stereo
         else
         {
-            AudioBus* bus = FCast<AudioBus> (audioInputs.at (0));
+            AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
             if ( bus )
             {
                 tresult result = kResultFalse;
 
                 // the host wants 2->2 (could be LsRs -> LsRs)
-                if ( SpeakerArr::getChannelCount (inputs[0]) == 2 && SpeakerArr::getChannelCount( outputs[0]) == 2 )
+                if ( SpeakerArr::getChannelCount (inputs[ 0 ]) == 2 && SpeakerArr::getChannelCount( outputs[ 0 ]) == 2 )
                 {
                     removeAudioBusses();
-                    addAudioInput  ( STR16( "Stereo In"),  inputs[0] );
-                    addAudioOutput ( STR16( "Stereo Out"), outputs[0]);
+                    addAudioInput  ( STR16( "Stereo In" ),  inputs[ 0 ] );
+                    addAudioOutput ( STR16( "Stereo Out" ), outputs[ 0 ]);
                     result = kResultTrue;
                 }
                 // the host want something different than 1->1 or 2->2 : in this case we want stereo
                 else if ( bus->getArrangement () != SpeakerArr::kStereo )
                 {
                     removeAudioBusses();
-                    addAudioInput ( STR16( "Stereo In"),  SpeakerArr::kStereo );
-                    addAudioOutput( STR16( "Stereo Out"), SpeakerArr::kStereo );
+                    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
+                    addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
                     result = kResultFalse;
                 }
 
@@ -486,7 +521,7 @@ tresult PLUGIN_API VSTSID::notify( IMessage* message )
         {
             // we are in UI thread
             // size should be 100
-            if ( size == 100 && ((char*)data)[1] == 1 ) // yeah...
+            if ( size == 100 && (( char* )data )[ 1 ] == 1 ) // yeah...
             {
                 fprintf( stderr, "[VSTSID] received the binary message!\n" );
             }
@@ -512,12 +547,16 @@ void VSTSID::initPlugin( float sampleRate )
     syncModel();
 }
 
+void VSTSID::scaleTuning()
+{
+    _scaledTuning = Calc::pitchShiftFactor( fMasterTuning * round( fPitchBendRange * VST::MAX_PITCH_BEND ));
+}
+
 void VSTSID::syncModel()
 {
-    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate );
-    filter->updateProperties( fCutoff, fResonance, fLFORate, fLFODepth );
+    synth->updateProperties( fAttack, fDecay, fSustain, fRelease, fRingModRate, _scaledTuning, fPortamento );
+    filter->updateProperties( fCutoff, Calc::inverseNormalize( fResonance ), fLFORate, fLFODepth );
 }
 
 //------------------------------------------------------------------------
-} // namespace Vst
-} // namespace Steinberg
+} // namespace Igorski

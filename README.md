@@ -45,10 +45,10 @@ Which will allow you to compile a single, "fat" binary that supports all archite
 
 ```
 cmake.exe -G "Visual Studio 16 2019" -A Win64 -S .. -B "build64"
-cmake.exe --build build64 --config Release
+cmake.exe --build . --config Release
 
 cmake.exe -G "Visual Studio 16 2019" -A Win32 -S .. -B "build32"
-cmake.exe --build build32 --config Release
+cmake.exe --build . --config Release
 ```
 
 Which is a little more cumbersome as you compile separate binaries for the separate architectures.

@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,6 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "synth.h"
+#include "calc.h"
 #include "miditable.h"
 #include <algorithm>
 #include <math.h>
@@ -29,9 +30,9 @@ using namespace Steinberg;
 
 namespace Igorski {
 
-Synthesizer::Synthesizer() {
-    doArpeggiate = false;
-    TEMPO        = 120.f;
+Synthesizer::Synthesizer()
+{
+    TEMPO = 120.f;
 
     TWO_PI_OVER_SR       = TWO_PI / 44100.f;
     SAMPLE_RATE          = 44100;
@@ -62,19 +63,54 @@ void Synthesizer::init( int sampleRate, double tempo )
     TEMPO = tempo;
 }
 
-void Synthesizer::noteOn( int16 pitch )
+void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float tuning )
 {
     // do not allow a noteOn for the same pitch twice
     if ( getExistingNote( pitch ) != nullptr )
         removeNote( getExistingNote( pitch ));
 
-    Note* note = new Note();
+    Note* note = nullptr;
 
-    note->id             = ++note_ids;
+    if ( props.glide > 0.f ) {
+
+        // when glide/portamento is enabled, get the previous sounding note
+        // that currently isn't gliding
+
+        for ( size_t i = 0, l = notes.size(); i < l; ++i ) {
+            auto compareNote = notes.at( i );
+            if ( !compareNote->portamento.enabled && !compareNote->released ) {
+                note = compareNote;
+                note->pitch = pitch;
+                break;
+            }
+        }
+
+        if ( note != nullptr ) {
+            float targetFrequency = MIDITable::frequencies[ pitch ];
+
+            note->portamento.enabled   = true;
+            note->portamento.steps     = Igorski::Calc::millisecondsToBuffer( 1000.f * props.glide );
+            note->portamento.increment = ( targetFrequency - note->frequency ) / note->portamento.steps;
+
+            return;
+        }
+    }
+
+    float tuningDelta = 1.f;
+
+    if ( tuning != 0.f ) {
+        // given tuning defines a detuning in cents (e.g. 1.f = +1 cent, -1.f = -1 cent)
+        tuningDelta = Calc::pitchShiftFactor( tuning / 100.f );
+    }
+
+    note = new Note();
+
+    note->id             = generateNextNoteId();
     note->pitch          = pitch;
+    note->volume         = normalizedVelocity;
     note->released       = false;
     note->muted          = false;
-    note->baseFrequency  = MIDITable::frequencies[ pitch ];
+    note->baseFrequency  = MIDITable::frequencies[ pitch ] * tuningDelta;
     note->frequency      = note->baseFrequency;
     note->phase          = 0.f;
     note->pwm            = 0.f;
@@ -120,7 +156,7 @@ void Synthesizer::noteOff( int16 pitch )
         return;
     };
 
-    // apply release envelope to this event (will be disposed in render loop)
+    // apply release envelope to this note (will be disposed in render loop)
 
     if ( !note->released ) {
         note->adsr.release          = props.release;
@@ -242,14 +278,16 @@ void Synthesizer::handleNoteAmountChange()
     }
 }
 
-void Synthesizer::updateProperties( float fAttack, float fDecay, float fSustain, float fRelease, float fRingModRate )
+void Synthesizer::updateProperties( float attack, float decay, float sustain, float release, float ringModRate, float pitchBend, float portamento )
 {
-    props.attack  = fAttack;
-    props.decay   = fDecay;
-    props.sustain = fSustain;
-    props.release = fRelease;
+    props.attack    = attack;
+    props.decay     = decay;
+    props.sustain   = sustain;
+    props.release   = release;
+    props.pitchBend = pitchBend;
+    props.glide     = portamento;
 
-    ringModulator->setRate( fRingModRate );
+    ringModulator->setRate( ringModRate );
 }
 
 bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int bufferSize, uint32 sampleFramesSize )
@@ -261,7 +299,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     if ( notes.size() == 0 )
         return false; // nothing to do
 
-    float pmv, dpw, amp, phase, envelope, tmp;
+    float pmv, dpw, amp, frequency, phase, envelope, tmp;
 
     int voiceAmount = notes.size();
     int arpIndex    = -1;
@@ -274,47 +312,48 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     int32 j = notes.size();
     while ( j-- )
     {
-        Note* event = notes.at( j );
+        Note* note = notes.at( j );
 
-        bool doAttack  = event->adsr.attack  > 0.f;
-        bool doDecay   = event->adsr.decay   > 0.f && event->adsr.sustain != 1.f;
-        bool doRelease = event->adsr.release > 0.f && event->released;
+        bool doAttack  = note->adsr.attack  > 0.f;
+        bool doDecay   = note->adsr.decay   > 0.f && note->adsr.sustain != 1.f;
+        bool doRelease = note->adsr.release > 0.f && note->released;
 
-        // is event muted (e.g. is the amount of notes above the arpeggio threshold) ?
+        // is note muted (e.g. is the amount of notes above the arpeggio threshold) ?
 
-        if ( event->muted ) {
+        if ( note->muted ) {
             if ( doRelease ) {
-                // if event is released, increments it release value, if the resulting
-                // envelope is silent, remove the event
-                event->adsr.releaseValue += ( event->adsr.releaseIncrement * bufferSize );
-                if ( event->adsr.sustain - event->adsr.releaseValue < 0.f ) {
-                    removeNote( event );
+                // if note is released, increments it release value, if the resulting
+                // envelope is silent, remove the note
+                note->adsr.releaseValue += ( note->adsr.releaseIncrement * bufferSize );
+                if ( note->adsr.sustain - note->adsr.releaseValue < 0.f ) {
+                    removeNote( note );
                 }
             }
             continue;
         }
 
-        bool arpeggiate = doArpeggiate && isArpeggiatedNote( event );
+        bool portamento = note->portamento.enabled;
+        bool arpeggiate = !portamento && doArpeggiate && isArpeggiatedNote( note );
 
-        if ( arpIndex == -1 && arpeggiate )
-            arpIndex = event->arpIndex;
+        if ( arpIndex == -1 && arpeggiate ) {
+            arpIndex = note->arpIndex;
+        }
+        bool disposeNote = false;
 
-        bool disposeEvent = false;
-
-        phase = event->phase;
+        phase = note->phase;
 
         for ( int32 i = 0; i < bufferSize; ++i )
         {
             // update note's frequency when arpeggiators offset
             // has exceeded the current length
 
-            if ( arpeggiate && event->arpOffset == 0 ) {
+            if ( arpeggiate && note->arpOffset == 0 ) {
 
-                if ( ++arpIndex == voiceAmount )
+                if ( ++arpIndex == voiceAmount ) {
                     arpIndex = 0;
-
-                event->frequency = getArpeggiatorFrequency( arpIndex );
-                event->arpOffset = ARPEGGIO_DURATION;
+                }
+                note->frequency = getArpeggiatorFrequency( arpIndex );
+                note->arpOffset = ARPEGGIO_DURATION;
 
                 // WebSID had a maximum voice count, not sure why we'd want that actually =)
 //                    if ( voiceAmount > 4 )
@@ -323,8 +362,15 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
             // synthesize waveform
 
-            // TODO: portamento
-            float frequency = event->frequency; 
+            if ( portamento ) {
+                note->frequency += note->portamento.increment;
+                if ( --note->portamento.steps == 0 ) {
+                    note->portamento.enabled = false; // glide completed
+                    portamento = false;
+                }
+            }
+            // apply global pitch bend onto note pitch
+            float frequency = note->frequency * props.pitchBend;
 
             switch ( waveform )
             {
@@ -352,7 +398,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
                 case Waveforms::PWM:
                     // 1 == PWM
-                    pmv   = i + ( ++event->pwm );
+                    pmv   = i + ( ++note->pwm );
                     dpw   = sinf( pmv / ( float ) 0x4800 ) * PWR;
                     amp   = phase < PI - dpw ? PW_AMP : -PW_AMP;
                     phase = phase + ( TWO_PI_OVER_SR * frequency );
@@ -363,8 +409,9 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
                     break;
             }
 
-            if ( event->arpOffset > 0 )
-                --event->arpOffset;
+            if ( note->arpOffset > 0 ) {
+                --note->arpOffset;
+            }
 
             // apply envelopes
 
@@ -374,60 +421,62 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
 
             if ( doRelease ) {
 
-                envelope = event->adsr.sustain - event->adsr.releaseValue;
+                envelope = note->adsr.sustain - note->adsr.releaseValue;
 
                 if ( envelope < 0.f ) {
                     envelope = 0.f;
-                    disposeEvent = true;
+                    disposeNote = true;
                 }
-                event->adsr.releaseValue += event->adsr.releaseIncrement;
+                note->adsr.releaseValue += note->adsr.releaseIncrement;
                 amp *= envelope;
             }
             else {
 
                 // attack phase
-                if ( doAttack && event->adsr.attackValue < event->adsr.attack ) {
+                if ( doAttack && note->adsr.attackValue < note->adsr.attack ) {
 
-                    event->adsr.envelope     = event->adsr.attackValue;
-                    event->adsr.attackValue += event->adsr.attackIncrement;
+                    note->adsr.envelope     = note->adsr.attackValue;
+                    note->adsr.attackValue += note->adsr.attackIncrement;
 
-                    amp *= event->adsr.envelope;
+                    amp *= note->adsr.envelope;
                 }
                 // decay phase
-                else if ( doDecay && event->adsr.envelope > event->adsr.sustain ) {
+                else if ( doDecay && note->adsr.envelope > note->adsr.sustain ) {
 
-                    event->adsr.envelope -= event->adsr.decayIncrement;
-                    amp *= event->adsr.envelope;
+                    note->adsr.envelope -= note->adsr.decayIncrement;
+                    amp *= note->adsr.envelope;
                 }
                 // sustain phase
                 else {
-                    amp *= event->adsr.sustain;
+                    amp *= note->adsr.sustain;
                 }
             }
 
             // write into output buffers
             // this is (currently?) essentially a mono synth
 
-            for ( int32 c = 0; c < numChannels; ++c )
-                outputBuffers[ c ][ i ] += amp;
+            for ( int32 c = 0; c < numChannels; ++c ) {
+                outputBuffers[ c ][ i ] += ( amp * note->volume );
+            }
 
-            // if event can be disposed, break this evens write loop
+            // if note can be disposed, break this notes write loop
 
-            if ( disposeEvent ) {
+            if ( disposeNote ) {
                 break;
             }
         }
 
-        if ( disposeEvent ) {
-            // remove event from the list
-            removeNote( event );
+        if ( disposeNote ) {
+            // remove note from the list
+            removeNote( note );
         }
         else {
-            // commit updated properties back into event
-            event->phase = phase;
+            // commit updated properties back into note
+            note->phase = phase;
 
-            if ( arpeggiate )
-                event->arpIndex = arpIndex;
+            if ( arpeggiate ) {
+                note->arpIndex = arpIndex;
+            }
         }
     }
 
@@ -478,6 +527,16 @@ int Synthesizer::getArpeggiatorSpeedByTempo( float tempo )
 
     // what kind of ominous, slow chiptune music are you creating??
     return 128;
+}
+
+uint16 Synthesizer::generateNextNoteId()
+{
+    uint16 id = ++note_ids;
+
+    if ( note_ids >= SHRT_MAX ) {
+        note_ids = 0;
+    }
+    return id;
 }
 
 bool Synthesizer::isArpeggiatedNote( Note* note )

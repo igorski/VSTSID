@@ -25,6 +25,7 @@ namespace VST {
     static const float FILTER_MAX_FREQ      = 10000.f;
     static const float FILTER_MIN_RESONANCE = 0.1f;
     static const float FILTER_MAX_RESONANCE = 0.7071067811865476f; //sqrt( 2.f ) / 2.f;
+    static const float MAX_PITCH_BEND       = 12.f; // in semitones
 
     // maximum and minimum rate of oscillation in Hz
     // also see plugin.uidesc to update the controls to match
