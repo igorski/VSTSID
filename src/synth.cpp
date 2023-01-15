@@ -71,16 +71,22 @@ void Synthesizer::noteOn( int16 pitch, float normalizedVelocity, float tuning )
 
     Note* note = nullptr;
 
-    if ( props.glide > 0.f ) {
+    if ( doGlide() ) {
 
         // when glide/portamento is enabled, get the previous sounding note
         // that currently isn't gliding
 
         for ( size_t i = 0, l = notes.size(); i < l; ++i ) {
             auto compareNote = notes.at( i );
-            if ( !compareNote->portamento.enabled && !compareNote->released ) {
+            if ( /*!compareNote->portamento.enabled &&*/ !compareNote->released ) {
+                // store the last/original pitch that the note is synthesizing in the orgPitches list
+                // so we can return to the pitch (if it hasn't been noteOff'ed yet) on noteOff
+                auto list = compareNote->portamento.orgPitches;
+                if ( std::find( std::begin( list ), std::end( list ), compareNote->pitch ) == std::end( list )) {
+                    compareNote->portamento.orgPitches.push_back( compareNote->pitch );
+                }
                 note = compareNote;
-                note->pitch = pitch;
+                note->pitch = pitch; // update "ownership" of note by adjusting pitch
                 break;
             }
         }
@@ -146,15 +152,36 @@ void Synthesizer::noteOff( int16 pitch )
 {
     Note* note = getExistingNote( pitch );
 
-    if ( note == nullptr )
-        return;
+    if ( doGlide() ) {
+        std::vector<int16> found; // keep track of current pitches of notes having given pitch in portamento history
+
+        for ( Note* compareNote : notes ) {
+            auto pitchList = &compareNote->portamento.orgPitches;
+            if ( std::find( pitchList->begin(), pitchList->end(), pitch ) != pitchList->end()) {
+                // remove pitch from other notes pitch list
+                pitchList->erase( std::find( pitchList->begin(), pitchList->end(), pitch ));
+                // add pitch of compare note to the found list
+                if ( std::find( found.begin(), found.end(), compareNote->pitch ) == found.end()) {
+                    found.push_back( compareNote->pitch );
+                }
+            }
+        }
+
+        if ( note != nullptr && restorePitchOnRelease( note )) {
+            return; // pitch is restored on existing note, keep note in list
+        }
+    }
+
+    if ( note == nullptr ) {
+        return; // likely first note in a portamento sequence (Note has changed "pitch ownership")
+    }
 
     // instant removal when release is at 0 or note's sustain level is at 0
 
     if ( props.release == 0 || note->adsr.sustain == 0 ) {
         removeNote( note );
         return;
-    };
+    }
 
     // apply release envelope to this note (will be disposed in render loop)
 
@@ -179,8 +206,9 @@ void Synthesizer::noteOff( int16 pitch )
 Note* Synthesizer::getExistingNote( int16 pitch )
 {
     for ( int32 i = 0; i < notes.size(); ++i ) {
-        if ( notes.at( i )->pitch == pitch )
+        if ( notes.at( i )->pitch == pitch ) {
             return notes.at( i );
+        }
     }
     return nullptr;
 }
@@ -206,8 +234,7 @@ bool Synthesizer::removeNote( Note* note )
 
     // and lastly, remove from notes vector and free memory
 
-    if ( std::find( notes.begin(), notes.end(), note ) != notes.end())
-    {
+    if ( std::find( notes.begin(), notes.end(), note ) != notes.end()) {
         notes.erase( std::find( notes.begin(), notes.end(), note ));
         handleNoteAmountChange();
         delete note;
@@ -218,11 +245,10 @@ bool Synthesizer::removeNote( Note* note )
 
 void Synthesizer::reset()
 {
-    while ( notes.size() > 0 )
+    while ( notes.size() > 0 ) {
         removeNote( notes.at( 0 ));
-
+    }
     arpeggiatedNotes.clear();
-
     note_ids = 0;
 }
 
@@ -293,12 +319,13 @@ void Synthesizer::updateProperties( float attack, float decay, float sustain, fl
 bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int bufferSize, uint32 sampleFramesSize )
 {
     // clear existing output buffer contents
-    for ( int32 i = 0; i < numChannels; i++ )
+    for ( int32 i = 0; i < numChannels; i++ ) {
         memset( outputBuffers[ i ], 0, sampleFramesSize );
+    }
 
-    if ( notes.size() == 0 )
+    if ( notes.size() == 0 ) {
         return false; // nothing to do
-
+    }
     float pmv, dpw, amp, frequency, phase, envelope, tmp;
 
     int voiceAmount = notes.size();
@@ -332,7 +359,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             continue;
         }
 
-        bool portamento = note->portamento.enabled;
+        bool portamento = note->portamento.enabled && note->portamento.steps > 0;
         bool arpeggiate = !portamento && doArpeggiate && isArpeggiatedNote( note );
 
         if ( arpIndex == -1 && arpeggiate ) {
@@ -365,7 +392,7 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
             if ( portamento ) {
                 note->frequency += note->portamento.increment;
                 if ( --note->portamento.steps == 0 ) {
-                    note->portamento.enabled = false; // glide completed
+                    // glide completed, disable portamento for this render iteration
                     portamento = false;
                 }
             }
@@ -487,11 +514,28 @@ bool Synthesizer::synthesize( float** outputBuffers, int numChannels, int buffer
     return true;
 }
 
+bool Synthesizer::restorePitchOnRelease( Note* note )
+{
+    if ( !note->portamento.enabled || note->portamento.orgPitches.size() == 0 ) {
+        return false;
+    }
+    auto lastPitch = note->portamento.orgPitches.back();
+    float targetFrequency = MIDITable::frequencies[ lastPitch ];
+
+    note->pitch = lastPitch;
+    note->portamento.orgPitches.pop_back();
+
+    note->portamento.steps     = Igorski::Calc::millisecondsToBuffer( 1000.f * props.glide );
+    note->portamento.increment = ( targetFrequency - note->frequency ) / note->portamento.steps;
+
+    return true;
+}
+
 float Synthesizer::getArpeggiatorFrequency( int index )
 {
-    if ( arpeggiatedNotes.size() == 0 )
+    if ( arpeggiatedNotes.size() == 0 ) {
         return 0.f;
-
+    }
     index = std::min( index, ( int ) ( arpeggiatedNotes.size() - 1 ));
 
     for ( int32 i = index; i < arpeggiatedNotes.size(); ++i ) {

@@ -51,8 +51,9 @@ namespace Igorski {
 
         struct PORTAMENTO {
             bool enabled;
-            int steps;       // amount of samples over which portamento is executed
-            float increment; // pitch increment in Hz (per step)
+            int steps;          // amount of samples over which portamento is executed
+            float increment;    // pitch increment in Hz (per step)
+            std::vector<int16> orgPitches; // history of pitches played before latest note was synthesizd
 
             PORTAMENTO() {
                 enabled   = false;
@@ -187,6 +188,10 @@ namespace Igorski {
 
             bool doArpeggiate = false;
 
+            inline bool doGlide() {
+                return props.glide > 0.f;
+            }
+
             // retrieves an existing Note for given arguments, if none
             // could be found, nullptr is returned
             Note* getExistingNote( int16 pitch );
@@ -206,6 +211,7 @@ namespace Igorski {
             void handleNoteAmountChange();
             uint16 generateNextNoteId();
             uint16 note_ids;
+            bool restorePitchOnRelease( Note* note );
 
             float getArpeggiatorFrequency( int index );
             bool isArpeggiatedNote( Note* note );
