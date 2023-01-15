@@ -153,17 +153,11 @@ void Synthesizer::noteOff( int16 pitch )
     Note* note = getExistingNote( pitch );
 
     if ( doGlide() ) {
-        std::vector<int16> found; // keep track of current pitches of notes having given pitch in portamento history
-
         for ( Note* compareNote : notes ) {
             auto pitchList = &compareNote->portamento.orgPitches;
+            // remove pitch from other playing notes pitch history
             if ( std::find( pitchList->begin(), pitchList->end(), pitch ) != pitchList->end()) {
-                // remove pitch from other notes pitch list
                 pitchList->erase( std::find( pitchList->begin(), pitchList->end(), pitch ));
-                // add pitch of compare note to the found list
-                if ( std::find( found.begin(), found.end(), compareNote->pitch ) == found.end()) {
-                    found.push_back( compareNote->pitch );
-                }
             }
         }
 
