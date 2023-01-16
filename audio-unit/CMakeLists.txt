@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.15.0)
 
 project(smtg-vst3-vstsid
-    VERSION 1.1.0.1
+    VERSION 1.1.1.1
     DESCRIPTION "igorski.nl VSTSID"
 )
 
