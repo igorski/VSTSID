@@ -130,7 +130,7 @@ You can copy the build output into your system VST(3) folder and run it directly
 When debugging, you can also choose to run the plugin against Steinbergs validator and editor host utilities:
 
 ```
-{VST3_SDK_ROOT}/build/bin/validator  build/VST3/vstsid.vst3
+{VST3_SDK_ROOT}/build/bin/validator  build/VST3/*.vst3
 {VST3_SDK_ROOT}/build/bin/editorhost build/VST3/vstsid.vst3
 ```
 
