@@ -36,8 +36,8 @@ class RingModulator
         RingModulator();
         ~RingModulator();
 
-        void apply( float** outputBuffers, int numChannels,
-                    int bufferSize, uint32 sampleFramesSize );
+        template <typename SampleType>    
+        void apply( SampleType** outputBuffers, int numChannels, int bufferSize, uint32 sampleFramesSize );
 
         // set the rate of the ring modulator to a percentage (0 - 1) range
         // of its maximum range (see global.h)
@@ -61,5 +61,7 @@ class RingModulator
 };
 
 }}}
+
+#include "ringmod.tcc"
 
 #endif

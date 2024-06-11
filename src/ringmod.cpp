@@ -67,63 +67,6 @@ float RingModulator::getRate()
     return _rate;
 }
 
-void RingModulator::apply( float** outputBuffers, int numChannels,
-                           int bufferSize, uint32 sampleFramesSize )
-{
-    // if ring modulation is off, don't do anything
-    if ( _rate == 0.f )
-        return;
-
-    int32 sampleFrames = bufferSize;
-
-    float* in1  = outputBuffers[ 0 ];
-    float* in2  = outputBuffers[ 1 ];
-    float* out1 = outputBuffers[ 0 ];
-    float* out2 = outputBuffers[ 1 ];
-
-    float a, b, c, d, g;
-    float p, dp, tp = twoPi, fb, fp, fp2;
-
-    p  = fPhi;
-    dp = fdPhi;
-    fb = ffb;
-    fp = fprev;
-
-    --in1;
-    --in2;
-    --out1;
-    --out2;
-
-    while (--sampleFrames >= 0)
-    {
-        a = *++in1;
-        b = *++in2;
-
-        g = ( float ) sin( p );
-
-        // the SID used a square wave for ring modulation
-        // note: as the volume gets a huge boost we
-        // normalize the square wave to .5f
-
-        g = ( g >= 0.f ) ? .5f : -.5f;
-
-        // E.O. SID-ifying
-
-        p = ( float ) fmod( p + dp, tp );
-
-        fp  = ( fb * fp + a ) * g;
-        fp2 = ( fb * fp + b ) * g;
-
-        c = fp;
-        d = fp2;
-
-        *++out1 = c;
-        *++out2 = d;
-    }
-    fPhi  = p;
-    fprev = fp;
-}
-
 //-----------------------------------------------------------------------------
 void RingModulator::recalculate ()
 {

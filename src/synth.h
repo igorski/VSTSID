@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2024 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -143,10 +143,8 @@ namespace Igorski {
 
             // the whole point of this exercise: synthesizing sweet, sweet PWM !
 
-            bool synthesize(
-                float** outputBuffers, int numChannels,
-                int bufferSize, Steinberg::uint32 sampleFramesSize
-            );
+            template <typename SampleType>
+            bool synthesize( SampleType** outputBuffers, int numChannels, int bufferSize, Steinberg::uint32 sampleFramesSize );
 
             // the amount of simultaneous notes at which arpeggiation begins
 
@@ -220,5 +218,7 @@ namespace Igorski {
             int getArpeggiatorSpeedByTempo( float tempo );
     };
 }
+
+#include "synth.tcc"
 
 #endif

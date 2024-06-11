@@ -50,7 +50,7 @@ extern void* moduleHandle;
 
 BEGIN_FACTORY_DEF( "igorski.nl",
                    "https://www.igorski.nl",
-                   "mailto:info@igorski.nl")
+                   "mailto:support@igorski.nl")
 
     //---First Plug-in included in this factory-------
     // its kVstAudioEffectClass component

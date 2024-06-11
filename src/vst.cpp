@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2024 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -67,7 +67,6 @@ VSTSID::VSTSID ()
     initPlugin( Igorski::VST::SAMPLE_RATE );
 }
 
-//------------------------------------------------------------------------
 VSTSID::~VSTSID ()
 {
     // free all allocated resources
@@ -75,7 +74,6 @@ VSTSID::~VSTSID ()
     delete filter;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::initialize( FUnknown* context )
 {
     tresult result = AudioEffect::initialize( context );
@@ -93,17 +91,15 @@ tresult PLUGIN_API VSTSID::initialize( FUnknown* context )
     return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::terminate()
 {
     // nothing to do here yet...except calling our parent terminate
     return AudioEffect::terminate();
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setActive (TBool state)
 {
-    if (state)
+    if ( state )
         sendTextMessage( "VSTSID::setActive (true)" );
     else
         sendTextMessage( "VSTSID::setActive (false)" );
@@ -112,15 +108,10 @@ tresult PLUGIN_API VSTSID::setActive (TBool state)
     return AudioEffect::setActive( state );
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::process( ProcessData& data )
 {
-    // In this example there are 4 steps:
-    // 1) Read inputs parameters coming from host (in order to adapt our model values)
-    // 2) Read inputs events coming from host (note on/off events)
-    // 3) Process the gain of the input buffer to the output buffer
+    // read input parameter changes (and update our model accordingly)
 
-    //---1) Read input parameter changes-----------
     IParameterChanges* paramChanges = data.inputParameterChanges;
     if ( paramChanges )
     {
@@ -222,13 +213,11 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
             {
                 switch ( event.type )
                 {
-                    //----------------------
                     case Event::kNoteOnEvent:
                         // event has properties: channel, pitch, velocity, length, tuning, noteId
                         synth->noteOn( event.noteOn.pitch, event.noteOn.velocity, event.noteOn.tuning );
                         break;
 
-                    //----------------------
                     case Event::kNoteOffEvent:
                         // noteOff reset the reduction
                         synth->noteOff( event.noteOff.pitch );
@@ -238,9 +227,7 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
         }
     }
 
-    //-------------------------------------
-    //---3) Process Audio---------------------
-    //-------------------------------------
+    // --- synthesize audio
 
     if ( data.numOutputs == 0 ) {
         // nothing to do
@@ -254,17 +241,29 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
 //    void** in  = getChannelBuffersPointer( processSetup, data.inputs [ 0 ] );
     void** out = getChannelBuffersPointer( processSetup, data.outputs[ 0 ] );
 
+    bool isDoublePrecision = data.symbolicSampleSize == kSample64;
     bool hasContent = false;
 
     if ( !_bypass )
     {
         // synthesize !
-        hasContent = synth->synthesize(
-            ( float** ) out, numChannels, data.numSamples, sampleFramesSize
-        );
 
-        if ( hasContent ) {
-            filter->process(( float** ) out, numChannels, data.numSamples );
+        if ( isDoublePrecision ) {
+            hasContent = synth->synthesize<double>(
+                ( double** ) out, numChannels, data.numSamples, sampleFramesSize
+            );
+
+            if ( hasContent ) {
+                filter->process<double>(( double** ) out, numChannels, data.numSamples );
+            }
+        } else {
+            hasContent = synth->synthesize<float>(
+                ( float** ) out, numChannels, data.numSamples, sampleFramesSize
+            );
+
+            if ( hasContent ) {
+                filter->process<float>(( float** ) out, numChannels, data.numSamples );
+            }
         }
     }
 
@@ -274,7 +273,6 @@ tresult PLUGIN_API VSTSID::process( ProcessData& data )
     return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult VSTSID::receiveText( const char* text )
 {
     // received from Controller
@@ -285,7 +283,6 @@ tresult VSTSID::receiveText( const char* text )
     return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setState( IBStream* state )
 {
     IBStreamer streamer( state, kLittleEndian );
@@ -368,6 +365,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
     syncModel();
 
     // Example of using the IStreamAttributes interface
+    /*
     FUnknownPtr<IStreamAttributes> stream (state);
     if ( stream )
     {
@@ -379,7 +377,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
             if ( list->getString( PresetAttributes::kStateType, string, 128 * sizeof( TChar )) == kResultTrue )
             {
                 UString128 tmp( string );
-                char ascii[128];
+                char ascii[ 128 ];
                 tmp.toAscii( ascii, 128 );
                 if ( !strncmp( ascii, StateType::kProject, strlen( StateType::kProject )))
                 {
@@ -388,7 +386,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
             }
 
             // get the full file path of this state
-            TChar fullPath[1024];
+            TChar fullPath[ 1024 ];
             memset( fullPath, 0, 1024 * sizeof( TChar ));
             if ( list->getString( PresetAttributes::kFilePathStringType,
                  fullPath, 1024 * sizeof( TChar )) == kResultTrue )
@@ -397,10 +395,10 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
             }
         }
     }
+    */
     return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::getState( IBStream* state )
 {
     // here we save the model values
@@ -424,7 +422,6 @@ tresult PLUGIN_API VSTSID::getState( IBStream* state )
     return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
 {
     // called before the process call, always in a disabled state (not active)
@@ -439,85 +436,36 @@ tresult PLUGIN_API VSTSID::setupProcessing( ProcessSetup& newSetup )
     return AudioEffect::setupProcessing( newSetup );
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::setBusArrangements( SpeakerArrangement* inputs,  int32 numIns,
                                                SpeakerArrangement* outputs, int32 numOuts )
 {
-    if ( numIns == 1 && numOuts == 1 )
-    {
-        // the host wants Mono => Mono (or 1 channel -> 1 channel)
-        if ( SpeakerArr::getChannelCount( inputs[ 0 ])  == 1 &&
-             SpeakerArr::getChannelCount( outputs[ 0 ]) == 1 )
-        {
-            AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
-            if ( bus )
-            {
-                // check if we are Mono => Mono, if not we need to recreate the buses
-                if ( bus->getArrangement () != inputs[ 0 ])
-                {
-                    removeAudioBusses();
-                    addAudioInput ( STR16( "Mono In" ),  inputs[ 0 ] );
-                    addAudioOutput( STR16( "Mono Out" ), inputs[ 0 ] );
-                }
-                return kResultOk;
-            }
-        }
-        // the host wants something else than Mono => Mono, in this case we are always Stereo => Stereo
-        else
-        {
-            AudioBus* bus = FCast<AudioBus>( audioInputs.at( 0 ));
-            if ( bus )
-            {
-                tresult result = kResultFalse;
-
-                // the host wants 2->2 (could be LsRs -> LsRs)
-                if ( SpeakerArr::getChannelCount (inputs[ 0 ]) == 2 && SpeakerArr::getChannelCount( outputs[ 0 ]) == 2 )
-                {
-                    removeAudioBusses();
-                    addAudioInput  ( STR16( "Stereo In" ),  inputs[ 0 ] );
-                    addAudioOutput ( STR16( "Stereo Out" ), outputs[ 0 ]);
-                    result = kResultTrue;
-                }
-                // the host want something different than 1->1 or 2->2 : in this case we want stereo
-                else if ( bus->getArrangement () != SpeakerArr::kStereo )
-                {
-                    removeAudioBusses();
-                    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
-                    addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
-                    result = kResultFalse;
-                }
-
-                return result;
-            }
-        }
-    }
-    return kResultFalse;
+    // we only support one stereo output bus
+	if ( numIns == 0 && numOuts == 1 && outputs[ 0 ] == SpeakerArr::kStereo ) {
+		return AudioEffect::setBusArrangements( inputs, numIns, outputs, numOuts );
+	}
+	return kResultFalse;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::canProcessSampleSize( int32 symbolicSampleSize )
 {
-    if ( symbolicSampleSize == kSample32 )
-        return kResultTrue;
+    // we support both float and double precision
 
-    // we support double processing
-    if ( symbolicSampleSize == kSample64 )
+    if ( symbolicSampleSize == kSample32 || symbolicSampleSize == kSample64 )
         return kResultTrue;
 
     return kResultFalse;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API VSTSID::notify( IMessage* message )
 {
-    if ( !message )
+	if ( !message )
         return kInvalidArgument;
 
     if ( !strcmp( message->getMessageID(), "BinaryMessage" ))
     {
         const void* data;
         uint32 size;
-        if ( message->getAttributes ()->getBinary( "MyData", data, size ) == kResultOk )
+		if ( message->getAttributes ()->getBinary( "MyData", data, size ) == kResultOk )
         {
             // we are in UI thread
             // size should be 100
@@ -558,5 +506,4 @@ void VSTSID::syncModel()
     filter->updateProperties( fCutoff, Calc::inverseNormalize( fResonance ), fLFORate, fLFODepth );
 }
 
-//------------------------------------------------------------------------
-} // namespace Igorski
+} // E.O. namespace Igorski

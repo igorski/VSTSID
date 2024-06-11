@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2013-2018 Igor Zinken - http://www.igorski.nl
+ * Copyright (c) 2013-2024 Igor Zinken - http://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -49,7 +49,8 @@ namespace Igorski {
             void updateProperties( float cutoffPercentage, float resonancePercentage, float LFORatePercentage, float fLFODepth );
 
             // apply filter to incoming sampleBuffer contents
-            void process( float** sampleBuffer, int amountOfChannels, int bufferSize );
+            template <typename SampleType>  
+            void process( SampleType** sampleBuffer, int amountOfChannels, int bufferSize );
     
         private:
             float _cutoff;
@@ -80,5 +81,7 @@ namespace Igorski {
             void cacheLFOProperties();
     };
 }
+
+#include "filter.tcc"
 
 #endif

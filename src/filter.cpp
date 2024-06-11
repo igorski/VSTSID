@@ -104,49 +104,6 @@ void Filter::updateProperties( float cutoffPercentage, float resonancePercentage
     }
 }
 
-void Filter::process( float** sampleBuffer, int amountOfChannels, int bufferSize )
-{
-    float initialLFOOffset = _hasLFO ? _lfo->getAccumulator() : 0.f;
-    float orgCutoff        = _tempCutoff;
-
-    for ( int32 c = 0; c < amountOfChannels; ++c )
-    {
-        // when processing each new channel restore to the same LFO offset to get the same movement ;)
-        if ( _hasLFO && c > 0 )
-        {
-            _lfo->setAccumulator( initialLFOOffset );
-            _tempCutoff = orgCutoff;
-            calculateParameters();
-        }
-
-        for ( int32 i = 0; i < bufferSize; ++i )
-        {
-            float input  = sampleBuffer[ c ][ i ];
-            float output = _a1 * input + _a2 * _in1[ c ] + _a3 * _in2[ c ] - _b1 * _out1[ c ] - _b2 * _out2[ c ];
-
-            _in2 [ c ] = _in1[ c ];
-            _in1 [ c ] = input;
-            _out2[ c ] = _out1[ c ];
-            _out1[ c ] = output;
-
-            // oscillator attached to Filter ? travel the cutoff values
-            // between the minimum and maximum frequencies
-
-            if ( _hasLFO )
-            {
-                // multiply by .5 and add .5 to make bipolar waveform unipolar
-                float lfoValue = _lfo->peek() * .5f  + .5f;
-                _tempCutoff = std::min( _lfoMax, _lfoMin + _lfoRange * lfoValue );
-
-                calculateParameters();
-            }
-
-            // commit the effect
-            sampleBuffer[ c ][ i ] = output;
-        }
-    }
-}
-
 void Filter::setCutoff( float frequency )
 {
     // in case LFO is moving, set the current temp cutoff (last LFO value)

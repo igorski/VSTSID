@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2024 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -83,9 +83,7 @@ class VSTSID : public AudioEffect
         /** We want to receive message. */
         tresult PLUGIN_API notify( IMessage* message ) SMTG_OVERRIDE;
 
-    //------------------------------------------------------------------------
     protected:
-        //==============================================================================
 
         // our model values, these are all 0 - 1 range
         // (normalized) RangeParameter values
