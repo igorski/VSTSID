@@ -25,6 +25,7 @@
 #include "miditable.h"
 #include <algorithm>
 #include <math.h>
+#include <climits>
 
 using namespace Steinberg;
 
