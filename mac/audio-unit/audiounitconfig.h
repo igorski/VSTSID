@@ -19,7 +19,7 @@
 
 // The full name of the audio unit.
 // This is derived from the manufacturer and description key values
-#define kAUcomponentName igorski.nl: VSTSID
+#define kAUcomponentName Igorski: VSTSID
 
 // Displayed Tags
 #define kAUcomponentTag Effects
