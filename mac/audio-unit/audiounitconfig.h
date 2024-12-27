@@ -6,13 +6,13 @@
 
 // A subtype code (unique ID) for the audio unit, such as gav3.
 // This value must be exactly 4 alphanumeric characters
-#define kAUcomponentSubType 'dist'
-#define kAUcomponentSubType1 dist
+#define kAUcomponentSubType 'synt'
+#define kAUcomponentSubType1 synt
 
 // A manufacturer code for the audio unit, such as Aaud.
 // This value must be exactly 4 alphanumeric characters
-#define kAUcomponentManufacturer 'synt'
-#define kAUcomponentManufacturer1 synt
+#define kAUcomponentManufacturer 'IGOR'
+#define kAUcomponentManufacturer1 IGOR
 
 // A product name for the audio unit
 #define kAUcomponentDescription AUv3WrapperExtension
