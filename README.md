@@ -2,7 +2,7 @@
 
 A VST plug-in version of the [WebSID](https://www.igorski.nl/experiment/websid) Commodore 64 synthesizer.
 
-If you want to hear what it sounds like, you can [view the example videos](https://www.igorski.nl/download/vstsid--sid-synthesizer-instrument).
+If you want to hear what it sounds like, you can [view the example videos](https://www.igorski.nl/download/vstsid).
 
 ## Build instructions
 
