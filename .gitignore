@@ -1,4 +1,5 @@
 build
+vst3sdk
 *.cmake
 Makefile
 CMakeCache.txt

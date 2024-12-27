@@ -16,6 +16,7 @@ function(create_audio_unit vst3_target)
     set(au_app_ui_resources
         ${audio_unit_src_dir}/resource/Main.storyboard
         ${audio_unit_src_dir}/resource/plugin.icns
+        ${audio_unit_src_dir}/resource/loop.wav
     )
     
     # these redefine values set in SMTG_AddVST3AuV3.cmake ---

@@ -34,8 +34,19 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 //-----------------------------------------------------------------------------
 
-#import <Cocoa/Cocoa.h>
+#import "AppDelegate.h"
 
-@interface ViewController : NSViewController
+@implementation AppDelegate
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+}
+
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+}
+
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
+{
+	return YES;
+}
 
 @end

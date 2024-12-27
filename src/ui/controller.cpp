@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2023 Igor Zinken - https://www.igorski.nl
+ * Copyright (c) 2018-2024 Igor Zinken - https://www.igorski.nl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -86,13 +86,13 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Decay time" ), kDecayId, USTRING( "seconds" ),
-        0.f, 1.f, 0.f,
+        0.f, 1.f, 1.f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
     parameters.addParameter( new RangeParameter(
         USTRING( "Sustain volume" ), kSustainId, USTRING( "0 - 1" ),
-        0.f, 1.f, 0.f,
+        0.f, 1.f, 0.5f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
@@ -104,9 +104,11 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     // filter controls
 
+    float co = Igorski::VST::FILTER_MIN_FREQ + ( 0.5f * ( Igorski::VST::FILTER_MAX_FREQ - Igorski::VST::FILTER_MIN_FREQ ));
+    
     parameters.addParameter( new RangeParameter(
         USTRING( "Cutoff frequency" ), kCutoffId, USTRING( "Hz" ),
-        Igorski::VST::FILTER_MIN_FREQ, Igorski::VST::FILTER_MAX_FREQ, Igorski::VST::FILTER_MIN_FREQ,
+        Igorski::VST::FILTER_MIN_FREQ, Igorski::VST::FILTER_MAX_FREQ, co,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 
@@ -124,7 +126,7 @@ tresult PLUGIN_API VSTSIDController::initialize( FUnknown* context )
 
     parameters.addParameter( new RangeParameter(
         USTRING( "LFO depth" ), kLFODepthId, USTRING( "%" ),
-        0.f, 1.f, 0.f,
+        0.f, 1.f, 1.f,
         0, ParameterInfo::kCanAutomate, unitId
     ));
 

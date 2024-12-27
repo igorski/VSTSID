@@ -33,7 +33,6 @@ if [ "$platform" == "mac" ]; then
     fi
     cmake -GXcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" ${FLAGS} ..
 else
-    sh "../tools/setup_linux_packages_for_vst3sdk.sh"
     echo "Building for Linux..."
     cmake -DCMAKE_BUILD_TYPE=Release ..
 fi
