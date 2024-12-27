@@ -42,9 +42,6 @@
 
 @interface ViewController ()
 {
-	// Button for playback
-	IBOutlet NSButton* playButton;
-
 	AUv3AudioEngine* audioEngine;
 
 	// Container for the custom view.
@@ -52,12 +49,11 @@
 }
 
 @property IBOutlet NSView *containerView;
--(IBAction)togglePlay:(id)sender;
--(void)handleMenuSelection:(id)sender;
 
 @end
 
 @implementation ViewController
+
 //------------------------------------------------------------------------
 - (void)viewDidLoad
 {
@@ -74,24 +70,13 @@
     desc.componentFlags = kAUcomponentFlags;
     desc.componentFlagsMask = kAUcomponentFlagsMask;
 	
-	if (desc.componentType == 'aufx' || desc.componentType == 'aumf')
-		[self addFileMenuEntry];
-	
     [AUAudioUnit registerSubclass: AUv3Wrapper.class asComponentDescription:desc name:@"Local AUv3" version: UINT32_MAX];
 	
 	audioEngine = [[AUv3AudioEngine alloc] initWithComponentType:desc.componentType];
 	
 	[audioEngine loadAudioUnitWithComponentDescription:desc completion:^{
 		auV3ViewController.audioUnit = (AUv3Wrapper*)audioEngine.currentAudioUnit;
-
-		NSString* fileName = @kAudioFileName;
-		NSString* fileFormat = @kAudioFileFormat;
-		NSURL* fileURL = [[NSBundle mainBundle] URLForResource:fileName withExtension:fileFormat];
-		NSError* error = [audioEngine loadAudioFile:fileURL];
-		if (error)
-		{
-			NSLog (@"Error setting up audio or midi file: %@", [error description]);
-		}
+		[audioEngine startStop];
 	}];
 }
 
@@ -112,72 +97,19 @@
         
     view.translatesAutoresizingMaskIntoConstraints = NO;
     
-    NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat: @"H:|-[view]-|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)];
+    NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat: @"H:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)];
     [_containerView addConstraints: constraints];
     
-    constraints = [NSLayoutConstraint constraintsWithVisualFormat: @"V:|-[view]-|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)];
+    constraints = [NSLayoutConstraint constraintsWithVisualFormat: @"V:|[view]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(view)];
     [_containerView addConstraints: constraints];
 }
 
 //------------------------------------------------------------------------
--(void)addFileMenuEntry
+- (void)viewDidDisappear
 {
-	NSApplication *app = [NSApplication sharedApplication];
-	NSMenu *fileMenu = [[app.mainMenu itemWithTag:123] submenu];
-	
-	NSMenuItem *openFileItem = [[NSMenuItem alloc] initWithTitle:@"Load file..."
-														  action:@selector(handleMenuSelection:)
-												   keyEquivalent:@"O"];
-	[fileMenu insertItem:openFileItem atIndex:0];
+	[audioEngine shutdown];
+	audioEngine = nil;
+	auV3ViewController = nil;
 }
 
-//------------------------------------------------------------------------
--(void)handleMenuSelection:(NSMenuItem *)sender
-{
-	// create the open dialog
-	NSOpenPanel* openPanel = [NSOpenPanel openPanel];
-	openPanel.title = @"Choose an audio file";
-	openPanel.showsResizeIndicator = YES;
-	openPanel.canChooseFiles = YES;
-	openPanel.allowsMultipleSelection = NO;
-	openPanel.canChooseDirectories = NO;
-	openPanel.canCreateDirectories = YES;
-	openPanel.allowedFileTypes = @[@"aac", @"aif", @"aiff", @"caf", @"m4a", @"mp3", @"wav"];
-	
-	if ( [openPanel runModal] == NSModalResponseOK )
-	{
-		NSArray* urls = [openPanel URLs];
-		
-		// Loop through all the files and process them.
-		for(int i = 0; i < [urls count]; i++ )
-		{
-			NSError* error = [audioEngine loadAudioFile:[urls objectAtIndex:i]];
-			
-			if (error != nil)
-			{
-				NSAlert *alert = [[NSAlert alloc] init];
-				[alert setMessageText:@"Error loading file"];
-				[alert setInformativeText:@"Something went wrong loading the audio file. Please make sure to select the correct format and try again."];
-				[alert addButtonWithTitle:@"Ok"];
-				[alert runModal];
-			}
-		}
-	}
-}
-
-//------------------------------------------------------------------------
--(IBAction)togglePlay:(id)sender
-{
-	BOOL isPlaying = [audioEngine startStop];
-	
-	[playButton setTitle: isPlaying ? @"Stop" : @"Play"];
-}
-
-#pragma mark <NSWindowDelegate>
-//------------------------------------------------------------------------
-- (void)windowWillClose:(NSNotification *)notification
-{
-    // Main applicaiton window closing, we're done
-    auV3ViewController = nil;
-}
 @end

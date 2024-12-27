@@ -36,6 +36,21 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface ViewController : NSViewController
+//------------------------------------------------------------------------
+@interface MyWindowController : NSWindowController
 
+@end
+
+//------------------------------------------------------------------------
+@implementation MyWindowController
+
+//------------------------------------------------------------------------
+- (void)windowDidLoad
+{
+	[self.window layoutIfNeeded];
+	[self.window center];
+	[super windowDidLoad];
+}
+
+//------------------------------------------------------------------------
 @end

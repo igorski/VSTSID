@@ -22,7 +22,7 @@
 #define kAUcomponentName Igorski: VSTSID
 
 // Displayed Tags
-#define kAUcomponentTag Effects
+#define kAUcomponentTag Synthesizer
 
 // A version number for the Audio Unit app extension (decimal value of hexadecimal representation with zeros between subversions)
 // Hexadecimal indexes representing: [0] = main version, [1] = 0 = dot, [2] = sub version, [3] = 0 = dot, [4] = sub-sub version,
@@ -35,23 +35,10 @@
 // [3]=2nd output count, etc.
 // e.g. 1122 == config1: [mono input, mono output], config2: [stereo input, stereo output]
 // see channelCapabilities for discussion
-#define kSupportedNumChannels 1122
-
-// The preview audio file name.
-// To add your own custom audio file (for standalone effects), add an audio file to the project (AUv3WrappermacOS and AUv3WrapperiOS targets) and
-// enter the file name here
-#define kAudioFileName "loop"
-
-// The preview audio file format.
-// To add your own custom audio file (for standalone effects), add an audio file to the project (AUv3WrappermacOS and AUv3WrapperiOS targets) and
-// enter the file format here
-#define kAudioFileFormat "wav"
+#define kSupportedNumChannels 02
 
 // componentFlags (leave at 0)
 #define kAUcomponentFlags 0
 
 // componentFlagsMask (leave at 0)
 #define kAUcomponentFlagsMask 0
-
-// class name for the application delegate
-#define kAUapplicationDelegateClassName AppDelegate

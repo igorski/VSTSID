@@ -5,6 +5,7 @@ function(create_audio_unit vst3_target)
     set(audio_unit_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/mac/audio-unit)
     
     set(au_app_sources
+        ${audio_unit_src_dir}/src/WindowController.m
         ${audio_unit_src_dir}/src/ViewController.m
         ${audio_unit_src_dir}/src/ViewController.h
         ${audio_unit_src_dir}/src/AppDelegate.m

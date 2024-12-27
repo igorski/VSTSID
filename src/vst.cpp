@@ -82,11 +82,10 @@ tresult PLUGIN_API VSTSID::initialize( FUnknown* context )
         return result;
 
     //---create Audio In/Out buses------
-    addAudioInput ( STR16( "Stereo In" ),  SpeakerArr::kStereo );
     addAudioOutput( STR16( "Stereo Out" ), SpeakerArr::kStereo );
 
     //---create Event In/Out buses (1 bus with only 1 channel)------
-    addEventInput( STR16( "Event In" ), 1 );
+    addEventInput( STR16( "Event Input" ), 1 );
 
     return kResultOk;
 }
