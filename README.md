@@ -1,6 +1,6 @@
 # VSTSID
 
-A VST plug-in version of the [WebSID](https://www.igorski.nl/experiment/websid) Commodore 64 synthesizer.
+A VST plug-in version of the [WebSID](https://www.igorski.nl/application/websid) Commodore 64 synthesizer.
 
 If you want to hear what it sounds like, you can [view the example videos](https://www.igorski.nl/download/vstsid).
 
