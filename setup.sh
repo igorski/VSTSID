@@ -36,4 +36,5 @@ else
     echo "Building for Linux..."
     cmake -DCMAKE_BUILD_TYPE=Release ..
 fi
-make -j 4
+
+cmake --build . --config Release
