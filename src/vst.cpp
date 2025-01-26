@@ -56,6 +56,7 @@ VSTSID::VSTSID ()
 , fLFORate( 0.f )
 , fLFODepth( 1.f )
 , fRingModRate( 0.f )
+, fMasterTuning( 0.f )
 , fPitchBendRange( 1.f )
 , fPortamento( 0.f )
 , currentProcessMode( -1 ) // -1 means not initialized
@@ -345,7 +346,7 @@ tresult PLUGIN_API VSTSID::setState( IBStream* state )
         fPitchBendRange = savedPBrange;
     }
 
-    float savedPortamento = 0;
+    float savedPortamento = 0.f;
     if ( streamer.readFloat( savedPortamento ) != false ) {
         fPortamento = savedPortamento;
     }
@@ -496,7 +497,8 @@ void VSTSID::initPlugin( float sampleRate )
 
 void VSTSID::scaleTuning()
 {
-    _scaledTuning = Calc::pitchShiftFactor( fMasterTuning * round( fPitchBendRange * VST::MAX_PITCH_BEND ));
+    float roundedPitchBend = round( fPitchBendRange * VST::MAX_PITCH_BEND );
+    _scaledTuning = Calc::pitchShiftFactor( fMasterTuning == 0 ? roundedPitchBend : fMasterTuning * roundedPitchBend );
 }
 
 void VSTSID::syncModel()
